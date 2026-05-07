@@ -2,6 +2,8 @@ import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 
+import cloudflare from "@astrojs/cloudflare";
+
 // TODO: replace with the real production domain before first deploy.
 const SITE = 'https://portfolio.ni-h1.workers.dev';
 
@@ -55,6 +57,7 @@ function rehypeImageFigure() {
 export default defineConfig({
   site: SITE,
   integrations: [mdx(), sitemap()],
+
   markdown: {
     shikiConfig: {
       themes: { light: 'github-light', dark: 'github-dark' },
@@ -63,4 +66,6 @@ export default defineConfig({
     },
     rehypePlugins: [rehypeImageFigure],
   },
+
+  adapter: cloudflare()
 });
