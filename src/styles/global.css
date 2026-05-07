@@ -25,33 +25,19 @@
    Design tokens — dark by default, overridden for light.
    ========================================================================= */
 
-:root,
-html[data-theme='dark'] {
+:root {
   color-scheme: dark;
 
-  --bg:        #16130e;
-  --bg-elev:   #1d1a14;
-  --fg:        #e8e3d8;
-  --fg-muted:  #a39c8e;
-  --border:    #2c2820;
-  --rule:      #25221c;
-  --accent:    #c89b3c;
-  --accent-fg: #16130e;
-  --selection: rgba(200, 155, 60, 0.28);
-}
-
-html[data-theme='light'] {
-  color-scheme: light;
-
-  --bg:        #faf7f2;
-  --bg-elev:   #f1ece2;
-  --fg:        #1a1714;
-  --fg-muted:  #5b554a;
-  --border:    #e3dccd;
-  --rule:      #ece5d6;
-  --accent:    #a06d1f;
-  --accent-fg: #faf7f2;
-  --selection: rgba(160, 109, 31, 0.20);
+  --bg:        #0a0c10;
+  --bg-elev:   #12141a;
+  --fg:        #d6cfb8;
+  --fg-muted:  #7e7866;
+  --border:    #1d2028;
+  --rule:      #16181f;
+  --accent:    #c8b270;
+  --accent-2:  #4a6a8e;
+  --accent-fg: #0a0c10;
+  --selection: rgba(74, 106, 142, 0.35);
 }
 
 /* Layout tokens */
@@ -260,6 +246,12 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.2;
 }
 
+/* Page titles (h1) read as inscribed rather than typed.
+   Reverses the heading default tightening; only applies to h1. */
+h1 {
+  letter-spacing: 0.02em;
+}
+
 /* =========================================================================
    Prose — long-form reading layout for posts.
    Applied as <article class="prose">.
@@ -277,7 +269,7 @@ h1, h2, h3, h4, h5, h6 {
 .prose h1 {
   font-size: 2rem;
   margin-bottom: 0.4rem;
-  letter-spacing: -0.015em;
+  letter-spacing: 0.02em;
 }
 
 .prose h2 {
@@ -426,28 +418,25 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* =========================================================================
-   Shiki dual-theme swap.
-   Astro wraps Shiki output as `.astro-code`. With `defaultColor: false`
-   in shikiConfig, both themes' colors are exposed as CSS variables on
-   each token's inline style; we pick which to apply based on data-theme.
+   The Mark — a small ringed-dot used as a post-end mark and a faint
+   preamble before standalone-page h1s. The SVG renders in currentColor
+   so each call site controls the hue via the wrapping element's color.
    ========================================================================= */
 
-html[data-theme='light'] .astro-code,
-html[data-theme='light'] .astro-code span {
-  color: var(--shiki-light);
-  background-color: var(--shiki-light-bg);
-  font-style: var(--shiki-light-font-style);
-  font-weight: var(--shiki-light-font-weight);
-  text-decoration: var(--shiki-light-text-decoration);
+.post-end-mark {
+  display: block;
+  text-align: center;
+  margin: 3rem auto 0;
+  color: var(--fg-muted);
+  line-height: 0;
 }
 
-html[data-theme='dark'] .astro-code,
-html[data-theme='dark'] .astro-code span {
-  color: var(--shiki-dark);
-  background-color: var(--shiki-dark-bg);
-  font-style: var(--shiki-dark-font-style);
-  font-weight: var(--shiki-dark-font-weight);
-  text-decoration: var(--shiki-dark-text-decoration);
+.page-mark {
+  display: inline-block;
+  vertical-align: 0.06em;
+  color: var(--fg-muted);
+  margin-right: 0.55em;
+  line-height: 0;
 }
 
 /* =========================================================================

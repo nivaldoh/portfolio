@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Prose from '../components/Prose.astro';
+import Mark from '../components/Mark.astro';
 ---
 
 <BaseLayout
@@ -8,7 +9,7 @@ import Prose from '../components/Prose.astro';
   description="About the author."
 >
   <Prose>
-    <h1>About</h1>
+    <h1><Mark size={10} class="page-mark" />About</h1>
 
     <h2>Bio</h2>
     <p>{/* TODO: a few sentences in your own voice. */}TODO: Bio paragraph.</p>

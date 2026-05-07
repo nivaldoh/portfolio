@@ -1,11 +1,15 @@
 ---
-import { SITE_TITLE, SOCIAL_LINKS } from '../consts';
-const year = new Date().getFullYear();
+import { SOCIAL_LINKS } from '../consts';
+import Mark from './Mark.astro';
 ---
 
 <footer class="site-footer">
   <div class="container">
-    <span>© {year} {SITE_TITLE}</span>
+    <span class="colophon">
+      Charted from a darker corner of the web
+      <span aria-hidden="true"> · </span>
+      <Mark size={11} />
+    </span>
     <span>
       <a href="/rss.xml">RSS</a>
       {SOCIAL_LINKS.map((l) => (
@@ -17,3 +21,16 @@ const year = new Date().getFullYear();
     </span>
   </div>
 </footer>
+
+<style>
+  .colophon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.05em;
+    font-style: italic;
+  }
+  .colophon svg {
+    margin-left: 0.15em;
+    vertical-align: middle;
+  }
+</style>

@@ -1,6 +1,5 @@
 ---
 import { SITE_TITLE } from '../consts';
-import ThemeToggle from './ThemeToggle.astro';
 
 const path = Astro.url.pathname;
 const isCurrent = (href: string) =>
@@ -22,7 +21,6 @@ const links = [
           {l.label}
         </a>
       ))}
-      <ThemeToggle />
     </nav>
   </div>
 </header>

@@ -1,6 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import PostMeta from '../components/PostMeta.astro';
+import Mark from '../components/Mark.astro';
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
@@ -23,6 +24,7 @@ const { title, description, pubDate, updatedDate, tags, draft } = post.data;
     <h1>{title}</h1>
     <PostMeta pubDate={pubDate} updatedDate={updatedDate} tags={tags} />
     <slot />
+    <Mark size={14} class="post-end-mark" />
   </article>
 </BaseLayout>
 
