@@ -1,0 +1,12 @@
+<!-- TODO: replace with a real favicon. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="4" fill="#16130e"/>
+  <text
+    x="50%" y="55%"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    font-family="Georgia, serif"
+    font-size="20"
+    font-weight="600"
+    fill="#c89b3c">N</text>
+</svg>

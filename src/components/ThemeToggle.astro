@@ -1,0 +1,40 @@
+---
+// Theme toggle button. The theme is bootstrapped in BaseHead before paint;
+// this script just handles user-driven toggling and persistence.
+---
+
+<button
+  type="button"
+  class="theme-toggle"
+  data-theme-toggle
+  aria-label="Toggle color theme"
+  aria-pressed="false"
+>
+  <span data-theme-toggle-label>theme</span>
+</button>
+
+<script>
+  const root = document.documentElement;
+  const button = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+  const label = document.querySelector<HTMLSpanElement>('[data-theme-toggle-label]');
+
+  function sync() {
+    const theme = root.dataset.theme === 'light' ? 'light' : 'dark';
+    if (button) button.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+    if (label) label.textContent = theme === 'dark' ? 'light' : 'dark';
+  }
+
+  sync();
+
+  button?.addEventListener('click', () => {
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    root.style.colorScheme = next;
+    try {
+      localStorage.setItem('theme', next);
+    } catch (_) {
+      /* ignore quota / privacy mode */
+    }
+    sync();
+  });
+</script>

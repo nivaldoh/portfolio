@@ -1,0 +1,51 @@
+---
+title: "Template: MDX post with an interactive component"
+description: "A template post showing how to embed an interactive component inside a writeup. Delete or replace before publishing."
+pubDate: 2026-05-02
+tags: ["template", "interactive"]
+draft: false
+interactive: true
+---
+
+import InteractiveDemo from '../../components/InteractiveDemo.astro';
+
+> This is a **template MDX post**. Use MDX (`.mdx`) when a post needs to
+> embed components — Astro islands, React, Solid, or just inline Astro
+> components like the placeholder below. Use plain `.md` otherwise.
+
+## Why MDX, sometimes
+
+Most posts should be plain markdown. Reach for MDX only when prose isn't
+enough on its own — when the argument actually wants a knob to turn, a
+plot to scrub through, or a small simulation the reader can poke at.
+Otherwise the extra ceremony isn't paying for itself.
+
+## A placeholder demo
+
+Below is a placeholder. Replace it with whatever you actually want to
+embed: an Astro island, a React component (`client:load`, `client:idle`,
+etc.), or anything else. The component itself lives at
+`src/components/InteractiveDemo.astro`.
+
+<InteractiveDemo label="interactive demo will go here" />
+
+## A second placeholder, with custom text
+
+You can pass props to swap copy without touching the component:
+
+<InteractiveDemo label="another demo slot" />
+
+## Rendering parity with markdown posts
+
+Inline code (`useEffect`), lists, and code blocks render the same way
+they do in plain markdown — MDX just lets you sprinkle JSX between them:
+
+```tsx
+function PosteriorPlot({ alpha, beta }: { alpha: number; beta: number }) {
+  // ...
+  return <svg>{/* render */}</svg>;
+}
+```
+
+That's the whole point. Regular prose for almost everything, components
+when the writing needs them.

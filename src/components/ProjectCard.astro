@@ -1,0 +1,25 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+}
+
+const { project } = Astro.props;
+const { title, description, year, links, status } = project.data;
+---
+
+<li class="project-card" data-status={status}>
+  <div class="project-card__head">
+    <h3 class="project-card__title">{title}</h3>
+    <span class="project-card__year">{year}</span>
+  </div>
+  <p class="project-card__desc">{description}</p>
+  {links.length > 0 && (
+    <div class="project-card__links">
+      {links.map((l) => (
+        <a href={l.url} rel="noopener">{l.label}</a>
+      ))}
+    </div>
+  )}
+</li>

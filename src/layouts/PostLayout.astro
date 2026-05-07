@@ -1,0 +1,34 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import PostMeta from '../components/PostMeta.astro';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'posts'>;
+}
+
+const { post } = Astro.props;
+const { title, description, pubDate, updatedDate, tags, draft } = post.data;
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  type="article"
+  pubDate={pubDate}
+  updatedDate={updatedDate}
+>
+  <article class="prose">
+    {draft && <span class="draft-banner">draft</span>}
+    <h1>{title}</h1>
+    <PostMeta pubDate={pubDate} updatedDate={updatedDate} tags={tags} />
+    <slot />
+  </article>
+</BaseLayout>
+
+<style>
+  /* Anchor wrapper around prose to give it some breathing room above the fold */
+  article.prose {
+    padding-top: 0.5rem;
+  }
+</style>

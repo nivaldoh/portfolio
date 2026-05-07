@@ -1,0 +1,11 @@
+---
+interface Props {
+  label?: string;
+}
+
+const { label = 'interactive demo will go here' } = Astro.props;
+---
+
+<div class="demo-placeholder" role="figure" aria-label={label}>
+  {label}
+</div>

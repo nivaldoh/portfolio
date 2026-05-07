@@ -1,0 +1,39 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostList from '../components/PostList.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (
+  await getCollection('posts', ({ data }) => import.meta.env.DEV || !data.draft)
+)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 5);
+---
+
+<BaseLayout>
+  <section>
+    <h1 style="font-size: 1.6rem; margin: 0 0 0.4rem;">
+      {/* TODO: replace with real intro line. Keep it short — one or two sentences. */}
+      TODO: One-line introduction.
+    </h1>
+    <p style="color: var(--fg-muted); margin: 0 0 0.4rem; max-width: 60ch;">
+      {/* TODO: a slightly longer second sentence describing what this site is for and who it's by. */}
+      TODO: A second sentence explaining what you write about and why someone might subscribe.
+    </p>
+  </section>
+
+  <h2 class="section-title">Recent writing</h2>
+  {posts.length === 0 ? (
+    <p style="color: var(--fg-muted);">
+      Nothing here yet. Add a post under <code>src/content/posts/</code>.
+    </p>
+  ) : (
+    <PostList posts={posts} />
+  )}
+
+  <h2 class="section-title">Currently</h2>
+  <p style="color: var(--fg-muted); max-width: 60ch;">
+    {/* TODO: a "now" block — what you're working on this season. Short. Update it occasionally or delete this section. */}
+    TODO: Short note on what you're focused on right now.
+  </p>
+</BaseLayout>

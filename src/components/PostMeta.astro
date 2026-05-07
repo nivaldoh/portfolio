@@ -1,0 +1,22 @@
+---
+import FormattedDate from './FormattedDate.astro';
+
+interface Props {
+  pubDate: Date;
+  updatedDate?: Date;
+  tags?: string[];
+}
+
+const { pubDate, updatedDate, tags = [] } = Astro.props;
+---
+
+<p class="post-meta">
+  <FormattedDate date={pubDate} />
+  {updatedDate && <FormattedDate date={updatedDate} format="long" />}
+  {tags.length > 0 && (
+    <>
+      <span aria-hidden="true"> · </span>
+      {tags.map((t) => <span class="tag">{t}</span>)}
+    </>
+  )}
+</p>

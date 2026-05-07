@@ -1,0 +1,38 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  src: ImageMetadata | string;
+  alt: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+}
+
+const { src, alt, caption, width, height } = Astro.props;
+
+if (alt === undefined || alt === null) {
+  throw new Error(
+    'Figure: `alt` is required. Use alt="" only for purely decorative images.'
+  );
+}
+
+const isLocal = typeof src === 'object' && src !== null && 'src' in src;
+---
+
+<figure>
+  {isLocal ? (
+    <Image src={src as ImageMetadata} alt={alt} />
+  ) : (
+    <img
+      src={src as string}
+      alt={alt}
+      width={width}
+      height={height}
+      loading="lazy"
+      decoding="async"
+    />
+  )}
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>

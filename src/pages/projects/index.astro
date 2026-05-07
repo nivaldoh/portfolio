@@ -1,0 +1,26 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+import { getCollection } from 'astro:content';
+
+const projects = (await getCollection('projects')).sort((a, b) => {
+  if (a.data.featured !== b.data.featured) return a.data.featured ? -1 : 1;
+  return b.data.year - a.data.year;
+});
+---
+
+<BaseLayout
+  title="Projects"
+  description="A selection of work — code, papers, experiments."
+>
+  <h1 style="font-size: 1.6rem; margin: 0 0 1.6rem;">Projects</h1>
+  {projects.length === 0 ? (
+    <p style="color: var(--fg-muted);">
+      Nothing here yet. Add a project under <code>src/content/projects/</code>.
+    </p>
+  ) : (
+    <ul class="project-list">
+      {projects.map((project) => <ProjectCard project={project} />)}
+    </ul>
+  )}
+</BaseLayout>
