@@ -3,7 +3,7 @@ import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 
 // TODO: replace with the real production domain before first deploy.
-const SITE = 'https://example.com';
+const SITE = 'https://portfolio.ni-h1.workers.dev';
 
 /**
  * Wrap standalone <img> (image-only paragraphs) in <figure>, using the
