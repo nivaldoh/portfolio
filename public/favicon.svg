@@ -1,5 +1,4 @@
+<!-- TODO: replace with a real favicon. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <rect width="32" height="32" rx="4" fill="#0a0c10"/>
-  <circle cx="16" cy="16" r="9" fill="none" stroke="#c8b270" stroke-width="1.4"/>
-  <circle cx="16" cy="16" r="2" fill="#c8b270"/>
 </svg>

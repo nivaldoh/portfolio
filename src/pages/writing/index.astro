@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostList from '../../components/PostList.astro';
-import Mark from '../../components/Mark.astro';
 import { getCollection } from 'astro:content';
 
 const posts = (
@@ -13,7 +12,7 @@ const posts = (
   title="Writing"
   description="Essays and technical writeups."
 >
-  <h1 style="font-size: 1.6rem; margin: 0 0 1.6rem;"><Mark size={10} class="page-mark" />Writing</h1>
+  <h1 style="font-size: 1.6rem; margin: 0 0 1.6rem;">Writing</h1>
   {posts.length === 0 ? (
     <p style="color: var(--fg-muted);">No posts yet.</p>
   ) : (

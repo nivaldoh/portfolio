@@ -418,28 +418,6 @@ h1 {
 }
 
 /* =========================================================================
-   The Mark — a small ringed-dot used as a post-end mark and a faint
-   preamble before standalone-page h1s. The SVG renders in currentColor
-   so each call site controls the hue via the wrapping element's color.
-   ========================================================================= */
-
-.post-end-mark {
-  display: block;
-  text-align: center;
-  margin: 3rem auto 0;
-  color: var(--fg-muted);
-  line-height: 0;
-}
-
-.page-mark {
-  display: inline-block;
-  vertical-align: 0.06em;
-  color: var(--fg-muted);
-  margin-right: 0.55em;
-  line-height: 0;
-}
-
-/* =========================================================================
    Post / project listings
    ========================================================================= */
 

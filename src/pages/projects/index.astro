@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ProjectCard from '../../components/ProjectCard.astro';
-import Mark from '../../components/Mark.astro';
 import { getCollection } from 'astro:content';
 
 const projects = (await getCollection('projects')).sort((a, b) => {
@@ -14,7 +13,7 @@ const projects = (await getCollection('projects')).sort((a, b) => {
   title="Projects"
   description="A selection of work — code, papers, experiments."
 >
-  <h1 style="font-size: 1.6rem; margin: 0 0 1.6rem;"><Mark size={10} class="page-mark" />Projects</h1>
+  <h1 style="font-size: 1.6rem; margin: 0 0 1.6rem;">Projects</h1>
   {projects.length === 0 ? (
     <p style="color: var(--fg-muted);">
       Nothing here yet. Add a project under <code>src/content/projects/</code>.
