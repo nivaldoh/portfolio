@@ -44,10 +44,10 @@ const units = Array.from({ length: audit.games }, (_, i) =>
 {variant === 'multi-deck' ? (
   <figure class:list={['tcgc', { 'tcgc--compact': compact, wide }]}>
     <figcaption class="tcgc__head">
-      <span class="tcgc__title">The training recipe mattered more than the architecture</span>
+      <span class="tcgc__title">Behavior cloning helped more than the custom policy</span>
       <span class="tcgc__scope">
         Pooled win rate, {multi.games_per_entry} seat-swapped mirror games per
-        entry against four fixed scripted teachers; reported evaluation, July 2026
+        entry against four fixed scripted teachers (reported evaluation, July 2026)
       </span>
     </figcaption>
 
@@ -109,9 +109,9 @@ const units = Array.from({ length: audit.games }, (_, i) =>
     {!compact && (
       <p class="tcgc__notes">
         Whiskers show 95% Wilson intervals. In a mirror game both sides play
-        the same deck; the teachers play Lucario, Abomasnow, Dragapult ex and
+        the same deck. The teachers play Lucario, Abomasnow, Dragapult ex and
         Iono decks, and a perfect copy of them would score about 50%. The
-        baseline is an earlier policy stack, reported approximately on 8 July;
+        baseline is an earlier policy stack, reported approximately on 8 July, and
         the other three entries are from the 9 July report.
       </p>
     )}
@@ -122,7 +122,7 @@ const units = Array.from({ length: audit.games }, (_, i) =>
       <span class="tcgc__title">One opponent: a high win rate, and every audited win a deck-out</span>
       <span class="tcgc__scope">
         Learner and scripted teacher both play Lucario. {spec.games} seat-swapped
-        games against that one fixed opponent; reported evaluation, 10 July 2026
+        games against that one fixed opponent (reported evaluation, 10 July 2026)
       </span>
     </figcaption>
 
@@ -154,8 +154,8 @@ const units = Array.from({ length: audit.games }, (_, i) =>
           </div>
         </div>
         <p class="tcgc__count">
-          <strong>{spec.wins} won</strong>, {spec.losses} lost, {spec.draws} drawn;
-          95% interval {range(spec.ci95)}%
+          <strong>{spec.wins} won</strong>, {spec.losses} lost, {spec.draws} drawn
+          (95% interval {range(spec.ci95)}%)
         </p>
       </div>
 
@@ -187,7 +187,7 @@ const units = Array.from({ length: audit.games }, (_, i) =>
       <tbody>
         <tr><th scope="row">Games in the evaluation</th><td>{spec.games}</td></tr>
         <tr><th scope="row">Won / lost / drawn</th><td>{spec.wins} / {spec.losses} / {spec.draws}</td></tr>
-        <tr><th scope="row">Win rate</th><td>{pct(spec.win_rate)} (95% interval {range(spec.ci95)}%); parity with the teacher is 50%</td></tr>
+        <tr><th scope="row">Win rate</th><td>{pct(spec.win_rate)} (95% interval {range(spec.ci95)}%), and parity with the teacher is 50%</td></tr>
         <tr><th scope="row">Games in the separate audit</th><td>{audit.games}</td></tr>
         <tr><th scope="row">Audit wins by opponent deck-out</th><td>{audit.model_wins_by_opponent_deck_exhaustion} of {audit.model_wins}</td></tr>
         <tr><th scope="row">Audit wins any other way</th><td>{otherWins}</td></tr>

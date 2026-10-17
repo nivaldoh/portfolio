@@ -9,10 +9,10 @@
     "games_note": "4 mirror cells x 200 games each",
     "reference_line": { "value": 50, "label": "Parity with the teachers" },
     "entries": [
-      { "label": "Earlier stock-policy RL baseline", "win_rate": 13.0, "ci95": [11.1, 15.8], "approx": true, "date": "2026-07-08", "note": "Approximate; from the 8 July report" },
+      { "label": "Earlier stock-policy RL baseline", "win_rate": 13.0, "ci95": [11.1, 15.8], "approx": true, "date": "2026-07-08", "note": "Approximate, from the 8 July report" },
       { "label": "Custom policy, PPO only", "win_rate": 13.9, "ci95": [11.6, 16.4], "approx": false, "date": "2026-07-09" },
-      { "label": "Behaviour cloning", "win_rate": 20.0, "ci95": [17.4, 22.9], "approx": false, "date": "2026-07-09" },
-      { "label": "Behaviour cloning, then tuned PPO", "win_rate": 24.0, "ci95": [21.1, 27.1], "approx": false, "date": "2026-07-09" }
+      { "label": "Behavior cloning", "win_rate": 20.0, "ci95": [17.4, 22.9], "approx": false, "date": "2026-07-09" },
+      { "label": "Behavior cloning, then tuned PPO", "win_rate": 24.0, "ci95": [21.1, 27.1], "approx": false, "date": "2026-07-09" }
     ],
     "caveat": "Local reported evaluation against four fixed scripted opponents. Every model remained below parity with the scripted teachers."
   },

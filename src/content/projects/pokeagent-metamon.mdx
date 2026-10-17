@@ -1,7 +1,7 @@
 ---
 title: PokéAgent and Metamon
 subtitle: Competition, a search hybrid, self-play infrastructure, and Metamon contributions
-description: 'Competing as MetaHorns in the PokéAgent Challenge (NeurIPS 2025): quarterfinalist in the Gen 1 OU and Gen 9 OU tournaments, a hybrid of Metamon and PokéChamp’s minimax search, containerised Metamon self-play on Cloud Run Jobs, and Metamon pull requests.'
+description: 'Competing as MetaHorns in the PokéAgent Challenge (NeurIPS 2025): quarterfinalist in the Gen 1 OU and Gen 9 OU tournaments, a hybrid of Metamon and PokéChamp’s minimax search, containerized Metamon self-play on Cloud Run Jobs, and Metamon pull requests.'
 summary: Quarterfinalist as MetaHorns in Gen 1 OU and Gen 9 OU of the PokéAgent Challenge (NeurIPS 2025), a Metamon–PokéChamp search hybrid, Metamon self-play on Cloud Run Jobs, and Metamon pull requests.
 period: '2025–2026'
 order: 3
@@ -20,10 +20,10 @@ credits:
   - Metamon (UT-Austin-RPL/metamon), maintained by Jake Grigsby, for the agents, data tooling and evaluation code the competition repository starts from.
   - Metamon’s pretrained SyntheticRLV2 checkpoint (and SyntheticRLV1 in the self-play manifests), downloaded from Hugging Face.
   - AMAGO (UT-Austin-RPL/amago), the reinforcement-learning framework Metamon builds on, installed in the container image.
-  - PokéChamp (sethkarten/pokechamp), by Seth Karten and colleagues, the LLM minimax agent my entry forks; its search, battle simulator and LLM prompts are theirs.
+  - PokéChamp (sethkarten/pokechamp), by Seth Karten and colleagues, the LLM minimax agent my entry forks (its search, battle simulator and LLM prompts are theirs).
   - Pokémon Showdown (smogon/pokemon-showdown), run as a local server inside each container.
   - poke-env, the battle backend the self-play runner uses with Showdown.
-  - The PokéAgent Challenge organisers, for the ladder, the tournament and the published brackets.
+  - The PokéAgent Challenge organizers, for the ladder, the tournament and the published brackets.
 ---
 
 import HybridSearch from '../../components/pokeagent/HybridSearch.astro';
@@ -49,9 +49,9 @@ In Gen 9 OU an earlier Metamon-based version played the qualifying week, and the
 
 <Details summary="Qualifying record on the official leaderboard">
 
-These figures come from the leaderboard data the organisers froze on 11 November 2025, after qualifying closed. Each covers one format’s qualifying week of ladder battles, against other entrants and organiser-hosted baselines.
+These figures come from the leaderboard data the organizers froze on 11 November 2025, after qualifying closed. Each covers one format’s qualifying week of ladder battles, against other entrants and organizer-hosted baselines.
 
-The top two players by Elo qualified automatically; the other six places went by History Rating, fitted to ladder battle outcomes.
+The top two players by Elo qualified automatically, and the other six places went by History Rating, fitted to ladder battle outcomes.
 
 |  | Gen 1 OU | Gen 9 OU |
 | --- | --- | --- |
@@ -63,11 +63,11 @@ The top two players by Elo qualified automatically; the other six places went by
 
 ## A Metamon and PokéChamp hybrid
 
-Metamon is an offline-RL agent trained on human battles; PokéChamp is an LLM agent that searches a minimax tree. PokéChamp's search looks ahead with a battle simulator but asks an LLM to score each position; Metamon has learned which moves are likely and how likely a position is to be won. In late October 2025 I combined them in [a fork of PokéChamp](https://github.com/nivaldoh/pokechamp/tree/635aa8d81a1fe73e817fd3d01e5c14a8485917e9). Metamon's policy proposes our candidate moves, PokéChamp predicts the opponent's replies and plays each pair one turn ahead, Metamon's critic scores every resulting position, and minimax takes the move whose worst case is best. A turn needs no LLM call; an earlier version still asked the LLM for the candidate moves.
+Metamon is an offline-RL agent trained on human battles. PokéChamp is an LLM agent that searches a minimax tree, looking ahead with a battle simulator but asking an LLM to score each position. Metamon has learned which moves are likely and how likely a position is to be won. In late October 2025 I combined them in [a fork of PokéChamp](https://github.com/nivaldoh/pokechamp/tree/635aa8d81a1fe73e817fd3d01e5c14a8485917e9). Metamon's policy proposes our candidate moves, PokéChamp predicts the opponent's replies and plays each pair one turn ahead, Metamon's critic scores every resulting position, and minimax takes the move whose worst case is best. A turn needs no LLM call (an earlier version still asked the LLM for the candidate moves).
 
 <HybridSearch />
 
-The hard part was the bridge between the two codebases. Metamon reads a battle as a sequence of observations, so [`metamon_bridge.py`](https://github.com/nivaldoh/pokechamp/blob/fb520c95a298518c929adb09cc4c105b68b29f3e/pokechamp/metamon_bridge.py) mirrors every message of the live battle into Metamon's trajectory format, normalises the simplified messages the simulator emits, and clones that context for every simulated branch, so the critic scores each leaf with the history that led to it. I kept no search logs, so the scores in the diagram are illustrative.
+The hard part was the bridge between the two codebases. Metamon reads a battle as a sequence of observations, so [`metamon_bridge.py`](https://github.com/nivaldoh/pokechamp/blob/fb520c95a298518c929adb09cc4c105b68b29f3e/pokechamp/metamon_bridge.py) mirrors every message of the live battle into Metamon's trajectory format, normalizes the simplified messages the simulator emits, and clones that context for every simulated branch, so the critic scores each leaf with the history that led to it. I kept no search logs, so the scores in the diagram are illustrative.
 
 ## Competition repository and experiments
 
@@ -106,10 +106,10 @@ The image is built with Cloud Build and pushed to Artifact Registry. Its entry p
 
 From January to March 2026 I worked on Metamon with Jake Grigsby, the PhD student at UT Austin's Robot Perception and Learning Lab who maintains it.
 
-The main change, in [#65](https://github.com/UT-Austin-RPL/metamon/pull/65), was to team validation. Metamon predicts opponents' teams from tens of thousands of team files taken from replays, and each one is checked against the format's rules with Pokémon Showdown's validator. The script started a new Showdown command-line process for every file. That process reloaded Showdown's game data, and because the script ran from the repository root, it also rebuilt Showdown from source before checking a single team. I replaced it with one long-running Node process that loads Showdown once, keeps a validator for each format and receives teams one line at a time over a pipe; the old command stays as a fallback.
+The main change, in [#65](https://github.com/UT-Austin-RPL/metamon/pull/65), was to team validation. Metamon predicts opponents' teams from tens of thousands of team files taken from replays, and each one is checked against the format's rules with Pokémon Showdown's validator. The script started a new Showdown command-line process for every file. That process reloaded Showdown's game data, and because the script ran from the repository root, it also rebuilt Showdown from source before checking a single team. I replaced it with one long-running Node process that loads Showdown once, keeps a validator for each format and receives teams one line at a time over a pipe. The old command stays as a fallback.
 
-To put a number on it, in October 2026 I timed both paths on my machine on the first 200 Gen 9 OU team files. The old path took a median of 1.0 s per team (0.27 s when Showdown didn't need rebuilding); the new one took about 1 ms per team after a third of a second to start. All 200 teams took 0.6 s instead of 3.4 minutes. At those rates the 25,192-team Gen 9 OU set would take about seven hours the old way and under a minute the new way. Both paths accepted and rejected the same teams, including seven I made invalid on purpose.
+In October 2026 I timed both paths on my machine on the first 200 Gen 9 OU team files. The old path took a median of 1.0 s per team (0.27 s when Showdown didn't need rebuilding), and the new one took about 1 ms per team after a third of a second to start. All 200 teams took 0.6 s instead of 3.4 minutes. At those rates the 25,192-team Gen 9 OU set would take about seven hours the old way and under a minute the new way. Both paths accepted and rejected the same teams, including seven I made invalid on purpose.
 
-The same pull request let the usage statistics be filtered by a Smogon rank baseline, and added exponential backoff and a concurrency limit to the Smogon scraper, which was timing out on some files. It was merged on 31 January 2026; [#70](https://github.com/UT-Austin-RPL/metamon/pull/70), a small fix needed once #65 reached `dev`, followed the next day. The maintainers kept the persistent validator and later added parallel workers around it; it is on `main`.
+The same pull request let the usage statistics be filtered by a Smogon rank baseline, and added exponential backoff and a concurrency limit to the Smogon scraper, which was timing out on some files. It was merged on 31 January 2026, and [#70](https://github.com/UT-Austin-RPL/metamon/pull/70), a small fix needed once #65 reached `dev`, followed the next day. The maintainers kept the persistent validator and later added parallel workers around it, and it's still on `main`.
 
-A third piece of work stayed an experiment. It started as timestep-encoder profiling in [#78](https://github.com/UT-Austin-RPL/metamon/pull/78) and continued as #111 in the lab's private development repository. There I rewrote the grouped timestep encoder to run under `torch.compile`'s `reduce-overhead` mode (CUDA graphs), and built a profiler so a coding agent could try many small optimisations. The profiler accepts a change only if its outputs match the baseline's and it is no slower. In inference-only A/B runs (single timesteps, batches of 1 to 16), the rewrite's forward pass was about 10% faster than the current encoder's. The two weren't compiled in the same mode, though, so I can't say how much of that came from the rewrite itself, and I never measured training speed.
+A third piece of work stayed an experiment. It started as timestep-encoder profiling in [#78](https://github.com/UT-Austin-RPL/metamon/pull/78) and continued as #111 in the lab's private development repository. There I rewrote the grouped timestep encoder to run under `torch.compile`'s `reduce-overhead` mode (CUDA graphs), and built a profiler so a coding agent could try many small optimizations. The profiler accepts a change only if its outputs match the baseline's and it is no slower. In inference-only A/B runs (single timesteps, batches of 1 to 16), the rewrite's forward pass was about 10% faster than the current encoder's. The two weren't compiled in the same mode, though, so I can't say how much of that came from the rewrite itself, and I never measured training speed.

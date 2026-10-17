@@ -140,11 +140,11 @@ const uid = `br-${Math.random().toString(36).slice(2, 8)}`;
 
     <figcaption class="caption br__caption" id={`${uid}-cap`}>
       {variant === 'full' && <Fragment>{r.meta.heading}. </Fragment>}
-      Chosen for the manoeuvre, not as a typical result: in this scenario {model} with
+      Picked for the maneuver (not a typical result): in this scenario {model} with
       {r.meta.effort} reasoning won 2 of its 9 recorded battles.
       {variant === 'full' && (
         <Fragment>
-          Positions were recorded about once a second and are never interpolated; outlines
+          Positions were recorded about once a second and never interpolated. Outlines
           mark the model’s view, and the game ran at 1×.
         </Fragment>
       )}
@@ -172,7 +172,7 @@ const uid = `br-${Math.random().toString(36).slice(2, 8)}`;
           </li>
           <li>
             <svg class="br__sw" viewBox="-14 -12 28 24" aria-hidden="true"><g class="u u--ai is-fleeing"><g class="mk"><path d="M0 -9.5L9.5 0 0 9.5-9.5 0Z" /></g></g></svg>
-            <span>Faded and dashed, labelled “fleeing”: fleeing</span>
+            <span>Faded and dashed, labeled “fleeing”: fleeing</span>
           </li>
           <li>
             <svg class="br__sw" viewBox="-14 -12 28 24" aria-hidden="true"><g class="u u--ai is-unseen"><g class="mk"><path d="M0 -9.5L9.5 0 0 9.5-9.5 0Z" /></g></g></svg>
@@ -180,7 +180,7 @@ const uid = `br-${Math.random().toString(36).slice(2, 8)}`;
           </li>
           <li>
             <svg class="br__sw" viewBox="0 -12 28 24" aria-hidden="true"><polyline class="tr tr--model" points="2,6 12,2 26,-4" /><polyline class="tr-now tr--model" points="12,2 26,-4" /></svg>
-            <span>Recorded movement over the last 20 s; fainter, <span class="br__nowrap">{model}’s</span> route since the start</span>
+            <span>Recorded movement over the last 20 s (fainter: <span class="br__nowrap">{model}’s</span> route since the start)</span>
           </li>
           <li>
             <svg class="br__sw" viewBox="-14 -12 28 24" aria-hidden="true"><line class="v-line" x1="-6" y1="3" x2="9" y2="-3" /><g class="v" transform="translate(-6 3)"><g class="mk"><circle r="7.5" /></g></g></svg>
@@ -204,7 +204,7 @@ const uid = `br-${Math.random().toString(36).slice(2, 8)}`;
           </li>
           <li>
             <svg class="br__sw" viewBox="0 0 28 24" aria-hidden="true"><rect class="sw-tick" x="5" y="7" width="2" height="12" /><rect class="sw-tick sw-tick--bad" x="11" y="2" width="2" height="17" /><rect class="sw-note" x="16" y="2" width="11" height="4" /></svg>
-            <span>Timeline: a tick for each reply the game applied (taller where an order was rejected); gold bands mark the analyst notes</span>
+            <span>Timeline: a tick for each reply the game applied (taller where an order was rejected), and gold bands mark the analyst notes</span>
           </li>
         </ul>
         <div class="br__names">

@@ -474,7 +474,7 @@ export function noteHTML(r: Replay, m: Moment): string {
   if (m.note < 0) return '';
   const n = r.notes[m.note];
   return (
-    `<p class="p-note-label">Analyst note — an interpretation written after the battle</p>` +
+    `<p class="p-note-label">Analyst note (an interpretation written after the battle)</p>` +
     `<p class="p-note-title">${esc(n.title)}</p><p class="p-note-text">${esc(n.text)}</p>`
   );
 }

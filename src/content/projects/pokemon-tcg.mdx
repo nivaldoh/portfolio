@@ -1,12 +1,12 @@
 ---
 title: 'Pokémon TCG: training and evaluating agents'
-subtitle: 'Built for a Kaggle competition: behaviour cloning, PPO fine-tuning, and a closer look at one strong result'
-description: 'A training and evaluation workflow for a supplied Pokémon TCG simulator: legal-action masking, a custom policy, behaviour cloning from scripted players, PPO fine-tuning, and an investigation of what a high win rate against one opponent meant.'
-summary: 'I trained Pokémon TCG agents by behaviour cloning from scripted players, then fine-tuned them with PPO.'
+subtitle: 'Built for a Kaggle competition: behavior cloning, PPO fine-tuning, and a closer look at one strong result'
+description: 'A training and evaluation workflow for a supplied Pokémon TCG simulator: legal-action masking, a custom policy, behavior cloning from scripted players, PPO fine-tuning, and an investigation of what a high win rate against one opponent meant.'
+summary: 'I trained Pokémon TCG agents by behavior cloning from scripted players, then fine-tuned them with PPO.'
 period: 'June–July 2026'
 order: 4
 credits:
-  - 'The Pokémon TCG game simulator and Python SDK supplied for a Kaggle competition. Its licence restricts redistribution, so none of it appears here.'
+  - 'The Pokémon TCG game simulator and Python SDK supplied for a Kaggle competition. Its license restricts redistribution, so none of it appears here.'
   - 'Stable-Baselines3 and sb3-contrib, including MaskablePPO'
   - 'A legacy Transformer and MCTS reinforcement-learning starter'
   - 'Four imported rule-based agents (Lucario, Abomasnow, Dragapult ex and Iono decks), used as teachers and as evaluation opponents'
@@ -19,7 +19,7 @@ import TrainingLoop from '../../components/tcg/TrainingLoop.astro';
 Pokémon TCG is a card game with hidden information and long chains of small
 decisions: which card to play, which attack to use, which cards to choose for an
 effect. In these experiments the learner makes about 70 recorded decisions per
-game. Metamon learns from a large archive of human games; this Kaggle
+game. Metamon learns from a large archive of human games, but this Kaggle
 competition came with no large training dataset. I built a
 workflow around the supplied game simulator to train policies by imitating
 scripted players and by reinforcement learning, then to evaluate them against
@@ -43,7 +43,7 @@ fixed scripted opponents.
 - A PyTorch policy that embeds card and attack identities and scores every
   legal option against the board, the hand, the open menu and the cards already
   picked.
-- Behaviour cloning from games between four imported scripted teachers, with
+- Behavior cloning from games between four imported scripted teachers, with
   whole games held out for validation. The cloned weights then move into a
   custom Stable-Baselines3 policy for PPO fine-tuning against mixtures of
   opponents.
@@ -73,21 +73,21 @@ fixed scripted opponents.
   embeddings for the 12 board slots, pooled hand and discard embeddings, and
   averages over the menu options and the options already picked, so each pick
   of a multi-select is conditioned on the earlier ones.
-- One shared scorer turns every option into a logit; a separate head estimates
+- One shared scorer turns every option into a logit, and a separate head estimates
   the value of the position.
 
 </Details>
 
 ## Learning from four scripted teachers
 
-The first question was how much of the scripted players' behaviour the policy
+The first question was how much of the scripted players' behavior the policy
 could learn. Each model played mirror matches, where both sides use the same
 deck, against each of the four teachers.
 
 <ResultsChart variant="multi-deck" />
 
-PPO alone reached 13.9%, close to the earlier baseline of about 13%. Behaviour
-cloning reached 20.0%; tuning PPO after cloning reached 24.0%.
+PPO alone reached 13.9%, close to the earlier baseline of about 13%. Behavior
+cloning reached 20.0%, and tuning PPO after cloning reached 24.0%.
 
 Every model remained below parity with the teachers. The clone matched the
 teacher's move on 79.6% of held-out decisions, leaving room for errors to
@@ -115,7 +115,7 @@ accumulate over a game.
   (95% interval 17.3–28.8), the first per-deck gain from PPO in these
   experiments that was separated from the clone by its interval.
 - The 9 July entries were evaluated over 200 seat-swapped games per deck and
-  opponent, with the policy sampling its actions; the pooled figure combines
+  opponent, with the policy sampling its actions. The pooled figure combines
   the four mirror pairings.
 
 </Details>
@@ -132,12 +132,12 @@ for this matchup.
 ## How the specialist won
 
 I recorded a separate 100-game audit to examine how the games ended. All 82
-model wins came from the opponent running out of cards to draw; the
+model wins came from the opponent running out of cards to draw, and the
 simulator's own end-of-game reason and a count of the cards left agreed in
 every game. A later 800-game re-run found the same in all 678 of its wins, and
 in almost all of them the model was behind on prizes when it won. Deck-out is a
 legal win, so this isn't a scoring bug: the model learned one fixed opponent's
-habits, and the 82.6% says nothing on its own about how it plays anyone else.
+habits, and the 82.6% alone doesn't show how it plays against anyone else.
 
 <Details summary="The specialist's training stages">
 
@@ -162,4 +162,4 @@ The simulator is licensed for competition use only, so this page uses an
 original diagram and the figures from my dated evaluation reports (9 and 10
 July 2026) rather than code, replays or game data. The checkpoints, evaluation logs and audit recordings stay
 local. My own July re-runs reproduced the headline numbers within their
-confidence intervals; nobody else has reproduced them.
+confidence intervals, but nobody else has reproduced them.

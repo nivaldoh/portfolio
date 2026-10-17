@@ -20,10 +20,10 @@ links:
   - label: Slay the Spire run notes
     url: https://github.com/nivaldoh/slay_the_spire_ai/blob/main/docs/spire/fullrun/README.md
 credits:
-  - 'Total War: WARHAMMER III, by Creative Assembly, published by SEGA. The game, its battle engine and its AI opponent are theirs; I built the evaluation mod and the tools around it.'
+  - 'Total War: WARHAMMER III, by Creative Assembly, published by SEGA. The game, its battle engine and its AI opponent are theirs, and I built the evaluation mod and the tools around it.'
   - 'rxi/json.lua for JSON inside the Total War mod, twpatcher (Frodo45127) to skip the startup video, and RPFM’s schemas to decode game tables locally.'
   - 'Slay the Spire, by Mega Crit, played through the community mods ModTheSpire, BaseMod and CommunicationMod.'
-  - 'Language models from OpenAI (gpt-6-luna, gpt-6-sol, gpt-6.1-sol) and, through OpenRouter, Z.ai (GLM-5.3) and Moonshot AI (Kimi K3). I evaluate these models; I didn’t train them. Qwen3-0.6B was the base model for a small LoRA pilot in Slay the Spire.'
+  - 'Language models from OpenAI (gpt-6-luna, gpt-6-sol, gpt-6.1-sol) and, through OpenRouter, Z.ai (GLM-5.3) and Moonshot AI (Kimi K3). I evaluate these models (I didn’t train them). Qwen3-0.6B was the base model for a small LoRA pilot in Slay the Spire.'
 ---
 
 import Plate from '../../components/Plate.astro';
@@ -42,7 +42,7 @@ import comparisonNarrow from '../../assets/work/game-agents/wh3-comparison-narro
 import advisorShot from '../../assets/work/game-agents/wh3-ingame-advisor.jpg';
 import siegeShot from '../../assets/work/game-agents/wh3-ingame-siege.jpg';
 
-I build the interfaces and evaluation tools that let language models play two commercial games with very different decisions, and record every decision so it can be inspected and replayed. Most of this page is about Total War; [Slay the Spire](#slay-the-spire), with the small training pilots I ran there, is at the end.
+I build the interfaces and evaluation tools that let language models play two commercial games with very different decisions, and record every decision so it can be inspected and replayed. Most of this page is about Total War, and [Slay the Spire](#slay-the-spire) (with the small training pilots I ran there) is at the end.
 
 The two games share one Python package for everything around the model: the client that calls it and retries replies that break the rules, spend limits, a record of the exact code each run used, and the supervisor that starts the game. Each game has its own interface, controllers, prompts, trace format and replay tools.
 
@@ -56,11 +56,11 @@ In Total War: WARHAMMER III the battle keeps moving while a language model decid
 
 ## What you’re looking at
 
-Halberds are built to stop cavalry. Here four Empire halberd units screen two units of handgunners and a cannon, which are weak in melee. The model commands six mounted Bretonnian units; its first reply set the plan: “Advance the cavalry around the south side of the central obstruction to approach the enemy flank.”
+Halberds are built to stop cavalry. Here four Empire halberd units screen two units of handgunners and a cannon, which are weak in melee. The model commands six mounted Bretonnian units, and its first reply set the plan: “Advance the cavalry around the south side of the central obstruction to approach the enemy flank.”
 
 The recorded path follows it: west along the south of the central block, then north up its western side to the guns. The gun line broke between 3:06 and 3:56, and the game declared a win at 8:07.
 
-The records don’t show that the route decided the battle; they point instead to the knights that kept fighting the halberd line afterwards. Quoted reasons are what the model wrote in its replies, not a view of its internal reasoning.
+The records don’t show that the route decided the battle, but they do point to the knights that kept fighting the halberd line afterwards. Quoted reasons are what the model wrote in its replies, not a view of its internal reasoning.
 
 ## Why latency matters
 
@@ -69,27 +69,27 @@ The battle runs unpaused at normal speed while the model thinks. In this battle 
 <Details summary="This battle in numbers">
 
 - **Setup.** Cavalry assault with a stronger enemy: enemy stats raised by 10%, the game’s AI on very hard, unit size scaled to 0.75, a 20-minute limit. gpt-6-sol ran with low reasoning effort and the rules-only prompt, which explains the objectives and the interface but gives no tactical advice.
-- **Replies.** The model was asked 84 times. 83 replies were applied; the last, requested at 8:04, came after the battle had ended. 13 applied replies sent no new orders. Twice the harness refused a reply that broke the interface’s rules and asked again.
-- **Orders.** 211 attack, 89 move, 22 ability and 7 behaviour orders. The game rejected 10: four Mounted Yeomen Archers moves to unreachable destinations and the four shots queued behind them, one ability the unit doesn’t support, and one order to a fleeing unit.
+- **Replies.** The model was asked 84 times. 83 replies were applied (the last one, requested at 8:04, came after the battle had ended). 13 applied replies sent no new orders. Twice the harness refused a reply that broke the interface’s rules and asked again.
+- **Orders.** 211 attack, 89 move, 22 ability and 7 behavior orders. The game rejected 10: four Mounted Yeomen Archers moves to unreachable destinations and the four shots queued behind them, one ability the unit doesn’t support, and one order to a fleeing unit.
 - **Timing.** Age of the view behind each applied batch: median 5.4 s, mean 5.8 s, range 3.0 to 13.5 s across the 83 applied replies. Model reply time on the wall clock: median 4.8 s.
-- **The approach.** The Grail Knights were in melee with halberds from 1:36. The Lord came within 40 m of the guns at 2:03 and was in melee from 2:13; a Knights of the Realm unit and the Questing Knights reached the guns by 2:51. At 3:06 the four knight regiments still had 162 of their 171 riders.
+- **The approach.** The Grail Knights were in melee with halberds from 1:36. The Lord came within 40 m of the guns at 2:03 and was in melee from 2:13. A Knights of the Realm unit and the Questing Knights reached the guns by 2:51. At 3:06 the four knight regiments still had 162 of their 171 riders.
 
 </Details>
 
 ## How it works
 
-A Lua mod I built is the only interface to the game. It publishes structured state, showing enemy units only while the army can see them, and carries out orders; nothing reads the screen or moves the mouse. Python controllers exchange JSON with the mod, and a model can command in two ways.
+A Lua mod I built is the only interface to the game. It publishes structured state, showing enemy units only while the army can see them, and carries out orders. Nothing reads the screen or moves the mouse. Python controllers exchange JSON with the mod, and a model can command in two ways.
 
 <ControllerModes />
 
-Scripted rules give reference results. Each scenario’s setup is declared up front and checked in the game’s lobby, and a rematch replays the same start. After a battle, an offline report joins the recorded movement, orders, stated reasons and outcome; the replay at the top of this page is rebuilt from the same records.
+Scripted rules give reference results. Each scenario’s setup is declared up front and checked in the game’s lobby, and a rematch replays the same start. After a battle, an offline report joins the recorded movement, orders, stated reasons and outcome, and the replay at the top of this page is rebuilt from the same records.
 
 <Plate
   wide
   src={reportShot}
   widths={[480, 800, 1136]}
-  alt="Dark battle map with blue cavalry markers and gold enemy markers clustered at the top left, grey terrain blocks, a timeline below, and a side panel quoting the model’s reply and listing its orders."
-  caption="The offline report at 2:46 of the same battle. Blue circles are gpt-6-sol’s units, gold diamonds the game AI; outlines show where units stood in the observation behind the model’s latest reply, 9.1 s earlier. The panel quotes the reply the game accepted at 2:43."
+  alt="Dark battle map with blue cavalry markers and gold enemy markers clustered at the top left, gray terrain blocks, a timeline below, and a side panel quoting the model’s reply and listing its orders."
+  caption="The offline report at 2:46 of the same battle. Blue circles are gpt-6-sol’s units and gold diamonds the game AI. Outlines show where units stood in the observation behind the model’s latest reply, 9.1 s earlier. The panel quotes the reply the game accepted at 2:43."
 />
 
 <Details summary="Interface, timing and what the model can see">
@@ -104,10 +104,10 @@ Scripted rules give reference results. Each scenario’s setup is declared up fr
 
 <Details summary="Controllers and reference rules">
 
-- `llm` orders units directly with a tactical prompt. `llm_rules` does the same with a rules-only prompt that covers objectives and the interface but no tactics; the matched round below uses it.
+- `llm` orders units directly with a tactical prompt. `llm_rules` does the same with a rules-only prompt that covers objectives and the interface but no tactics (the matched round below uses it).
 - `commander` keeps one plan request in flight on a worker thread. Each plan sets standing skills (engage, shoot, hold, charge, move), and the scripted `skills` executor applies them on every observation, about three to four decisions a second.
 - Scripted references: `hold`, `attack_nearest`, `rush_nearest`, and `skills` on its own. Outside controllers plug in as a Python class.
-- The report keeps reasoning effort and controller settings beside each model’s results. Mixed settings are labelled; the matched round below uses low reasoning effort throughout.
+- The report keeps reasoning effort and controller settings beside each model’s results. Mixed settings are labeled, and the matched round below uses low reasoning effort throughout.
 - An offline exporter turns saved battles into training-oriented traces and has been checked on 304 saved episodes. Capturing providers’ reasoning summaries is implemented but not yet used in a paid battle.
 
 </Details>
@@ -123,11 +123,11 @@ The benchmark has six scenarios, each built around a different tactical decision
     { media: '(max-width: 30rem)', src: scenariosNarrow },
     { media: '(max-width: 48rem)', src: scenariosMedium },
   ]}
-  alt="Six small dark maps showing blue and gold unit starting positions over grey terrain, each labelled with a scenario name and small comparison bars."
+  alt="Six small dark maps showing blue and gold unit starting positions over gray terrain, each labeled with a scenario name and small comparison bars."
   caption="The six scenarios, with terrain and starting positions: cavalry assault, command a swarm, survive a swarm, caster assault, the last reserve (siege defence) and reinforcement defence."
 />
 
-In one small matched round, gpt-6-sol and gpt-6-luna each played three battles per scenario under fixed settings, against the game’s AI on very hard. In four scenarios gpt-6-sol won more battles; in the other two, both models lost all three. Three battles per model is too few to rank them, and I developed the prompts on these same scenarios.
+In one small matched round, gpt-6-sol and gpt-6-luna each played three battles per scenario under fixed settings, against the game’s AI on very hard. In four scenarios gpt-6-sol won more battles, and in the other two both models lost all three. Three battles per model is too few to rank them, and I developed the prompts on these same scenarios.
 
 <Details summary="The matched round, scenario by scenario">
 
@@ -154,7 +154,7 @@ Fixed harness, rules-only prompt, low reasoning effort, the game’s AI on very 
   src={comparisonShot}
   sources={[{ media: '(max-width: 30rem)', src: comparisonNarrow }]}
   alt="Three panels, one per model, each with loss curves over battle time, rows of order marks, and a small map tracing the army’s routes toward the enemy."
-  caption="Same scenario, different plans: three models on the cavalry scenario. Lines show soldiers lost (thin for each battle, thick for the mean), strips show accepted orders, and maps trace army routes. † pools every recorded cavalry battle for that model, across rounds and settings."
+  caption="Three models on the cavalry scenario made different plans. Lines show soldiers lost (thin for each battle, thick for the mean), strips show accepted orders, and maps trace army routes. † pools every recorded cavalry battle for that model, across rounds and settings."
 />
 
 ### Making a scenario harder
@@ -172,7 +172,7 @@ The mod can also show each reply inside the game. Both captures are from early d
     src={advisorShot}
     widths={[480, 800, 1200, 1600]}
     sizes="(min-width: 76rem) 35rem, (min-width: 52rem) 48vw, 100vw"
-    alt="Total War: WARHAMMER III battle on a volcanic map; the advisor panel at the top left reads “122 s: gpt-6-luna saw us 11/13u 362m seen 13/13u 591m. Send the idle harpies into active fights…”, with unit cards along the bottom."
+    alt="Total War: WARHAMMER III battle on a volcanic map. The advisor panel at the top left reads “122 s: gpt-6-luna saw us 11/13u 362m seen 13/13u 591m. Send the idle harpies into active fights…”, with unit cards along the bottom."
     caption="A development battle on 13 October 2026. The advisor panel shows gpt-6-luna’s reply: “122 s” is the battle time of the observation it answered, then a summary of that observation, its stated reason and its orders. The game clock puts the battle about 2:17 in, so the panel is roughly 14 s behind the action."
   />
   <Plate
@@ -180,27 +180,27 @@ The mod can also show each reply inside the game. Both captures are from early d
     widths={[480, 800, 1200, 1600]}
     sizes="(min-width: 76rem) 35rem, (min-width: 52rem) 48vw, 100vw"
     alt="Total War: WARHAMMER III siege: a fortified town with walls and gates in the background, blue-bannered Dwarf regiments crossing open ground toward it, unit cards and a supplies counter in the interface."
-    caption="A siege-defence smoke test from 14 October 2026: a scripted controller (every unit attacks the nearest visible enemy; no language model) defends a walled settlement with five Khorne units as five Dwarf units advance."
+    caption="A siege-defence smoke test from 14 October 2026: a scripted controller (every unit attacks the nearest visible enemy, no language model) defends a walled settlement with five Khorne units as five Dwarf units advance."
   />
 </PlatePair>
 
-<h2 id="slay-the-spire">Slay the Spire: a whole run of consequences</h2>
+<h2 id="slay-the-spire">Slay the Spire: full runs</h2>
 
-In Slay the Spire a bad choice can end a run an hour later. A model plays complete Ironclad runs via CommunicationMod: at each decision it sees a summary of the public game state, the legal choices labelled one by one, its recent decisions and its own notes. When a recorded run shows a mistake, I change one part of the prompt, memory or interface and run again.
+In Slay the Spire a bad choice can end a run an hour later. A model plays complete Ironclad runs via CommunicationMod: at each decision it sees a summary of the public game state, the legal choices labeled one by one, its recent decisions and its own notes. When a recorded run shows a mistake, I change one part of the prompt, memory or interface and run again.
 
 <RunProgress class="wide" />
 
 No run has won yet.
 
-Some mistakes came from the interface rather than from the model’s decisions. With the Gambling Chip relic, the game asks at the start of a fight which cards to discard and redraw. The prompt said only “Choose up to 99 card(s) from your hand”, with the same select-and-confirm choices the model used to pick a card to upgrade, so it sometimes picked cards it meant to play. On floor 42 of one run it selected Impervious+ “to block the Transient’s full 30 damage and avoid dying this turn”, and the card went to the discard pile. The same misreading came back in later versions. The newest prompt adds one line naming what asked for the selection; replayed over the saved traces it changes only the 385 hand-selection prompts, but it hasn’t had a full run yet.
+Some mistakes came from the interface rather than from the model’s decisions. With the Gambling Chip relic, the game asks at the start of a fight which cards to discard and redraw. The prompt said only “Choose up to 99 card(s) from your hand”, with the same select-and-confirm choices the model used to pick a card to upgrade, so it sometimes picked cards it meant to play. On floor 42 of one run it selected Impervious+ “to block the Transient’s full 30 damage and avoid dying this turn”, and the card went to the discard pile. The same misreading came back in later versions. The newest prompt adds one line naming what asked for the selection. Replayed over the saved traces it changes only the 385 hand-selection prompts, but it hasn’t had a full run yet.
 
-I also ran small first-combat training pilots, now paused; training on full runs is planned (details below).
+I also ran small first-combat training pilots (paused for now), and training on full runs is planned (details below).
 
 <Details summary="Interface, pilots and plans">
 
 - CommunicationMod exposes the public game state. The draw pile is shown unordered unless the Frozen Eye relic is held, and the model gets no seed, random-number state, or card and relic text.
-- Runs use the Ironclad at Ascension 0 with gpt-6-luna on low reasoning effort. The prompt, memory and interface are on their tenth version, each changing one thing; the furthest run was on version 8.
-- The first-combat pilots compared a scripted heuristic, PPO and a LoRA fine-tune of Qwen3-0.6B, run locally on fixed floor-1 fights. The LoRA matched the heuristic’s average remaining HP on a three-encounter development set (76.33 against 76.00, over 12 attempts); PPO changed its weights without improving play.
+- Runs use the Ironclad at Ascension 0 with gpt-6-luna on low reasoning effort. The prompt, memory and interface are on their tenth version, each changing one thing, and the furthest run was on version 8.
+- The first-combat pilots compared a scripted heuristic, PPO and a LoRA fine-tune of Qwen3-0.6B, run locally on fixed floor-1 fights. The LoRA matched the heuristic’s average remaining HP on a three-encounter development set (76.33 against 76.00, over 12 attempts), but PPO changed its weights without improving play.
 - Planned, with only a code skeleton so far: reinforcement learning on full runs with open-weight models on remote hardware, starting with Qwen3.6-35B-A3B and then GLM-5.3.
 
 </Details>

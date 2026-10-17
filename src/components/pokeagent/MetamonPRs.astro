@@ -53,7 +53,7 @@ const REPO = 'https://github.com/UT-Austin-RPL/metamon';
 // What was slow, what changed, what came of it.
 const validator = [
   { label: 'Before', text: 'A new Showdown process per team file. Each one reloaded the game data, and rebuilt Showdown first because the script ran from the repository root' },
-  { label: 'After', text: 'One validator process for the whole run; teams arrive one line at a time over a pipe' },
+  { label: 'After', text: 'One validator process for the whole run, with teams sent one line at a time over a pipe' },
   { label: 'Result', text: '200 Gen 9 OU teams in 0.6 s instead of 3.4 minutes, re-timed in October 2026' },
 ];
 
@@ -151,7 +151,7 @@ const also = [
           <li class="mpr__step"><span class="mpr__chip mpr__chip--keep">Keep</span></li>
         </ol>
         <p class="mpr__why">
-          Built so a coding agent could try many small optimisations and keep
+          Built so a coding agent could try many small optimizations and keep
           only the ones that pass. The baseline ran in a different compile
           mode, so the 10% isn’t the rewrite alone.
         </p>

@@ -117,7 +117,7 @@ const index = [
       <section class="game" id="slay-the-spire" aria-labelledby="spire-title">
         <div class="game__head">
           <h3 class="game__title" id="spire-title">Slay the Spire</h3>
-          <p class="game__kind">Whole runs, one decision at a time</p>
+          <p class="game__kind">Turn-based full runs</p>
         </div>
         <p class="feature__point">
           A model plays complete Ironclad runs. When one goes wrong, I first
@@ -129,7 +129,7 @@ const index = [
           With the Gambling Chip relic the game asks which cards to discard,
           but the prompt read like any other card choice, so the model
           sometimes discarded cards it meant to play. The latest prompt says
-          the selection is Gambling Chip’s; it hasn’t had a full run yet.
+          the selection is Gambling Chip’s, but it hasn’t had a full run yet.
         </p>
         <ul class="link-row game__links">
           <li><a href="https://github.com/nivaldoh/slay_the_spire_ai/blob/main/docs/spire/fullrun/README.md" rel="noopener">Run notes</a></li>
@@ -202,7 +202,7 @@ const index = [
           eyebrow="04 / Kaggle competition"
           title="Pokémon TCG agents"
           href={`/projects/${tcg.id}/`}
-          summary="A Kaggle competition close to Metamon’s problem, but with no archive of human games to learn from. I recorded games between four scripted players, cloned them, then fine-tuned with PPO. A later specialist won 82.6% against one teacher; checking how, I found every win came from the opponent running out of cards."
+          summary="A Kaggle competition close to Metamon’s problem, but with no archive of human games to learn from. I recorded games between four scripted players, cloned them, then fine-tuned with PPO. A later specialist won 82.6% against one teacher, but when I checked, every win came from the opponent running out of cards."
           links={[{ label: 'Case study', url: `/projects/${tcg.id}/` }]}
           layout="wide"
           size="small"
@@ -219,7 +219,7 @@ const index = [
           level={3}
           eyebrow="05 / Robot evaluation"
           title="Changing goals during robot execution"
-          summary="I extended RoboCasa365, a kitchen simulation benchmark from the same UT Austin lab as Metamon, so the goal or the scene can change mid-episode, and recorded when each controller received the change. In 4 goal-change episodes, GR00T N1.5 completed the original task every time and the new goal never. Astra, my code-writing LLM agent with ground-truth state and evaluator feedback, met the new goal in 1 of 5 episodes. The clips are not from the evaluation."
+          summary="I extended RoboCasa365, a kitchen simulation benchmark from the same UT Austin lab as Metamon, so the goal or the scene can change mid-episode, and recorded when each controller received the change. In 4 goal-change episodes, GR00T N1.5 always completed the original task, but never the new goal. Astra, my code-writing LLM agent with ground-truth state and evaluator feedback, met the new goal in 1 of 5 episodes. The clips are not from the evaluation."
           links={[
             { label: 'Paper (PDF, workshop submission, under review)', url: '/media/robocasa/teleporting-bread-and-changing-goals.pdf' },
             { label: 'Code', url: 'https://github.com/nivaldoh/robocasa/tree/main/robocasa/scenarios' },
@@ -242,7 +242,7 @@ const index = [
         building cloud and data systems, I now work on agents in games and
         robotics while studying for an MS in Computer Science at UT Austin.
         The agent work began in 2025, when a post by Prof. Yuke Zhu pointed
-        me to the PokéAgent Challenge; Metamon and RoboCasa365 both come from
+        me to the PokéAgent Challenge. Metamon and RoboCasa365 both come from
         his lab.
       </p>
     </div>
