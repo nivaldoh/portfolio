@@ -308,6 +308,25 @@ const uid = `br-${Math.random().toString(36).slice(2, 8)}`;
     }
   }
 
+  @container (max-width: 24rem) {
+    .br__svg {
+      --mk: 1.9;
+    }
+  }
+
+  @container (max-width: 20rem) {
+    .br__svg {
+      --mk: 2.2;
+    }
+  }
+
+  /* A phone on its side: keep the whole map on screen with the controls. */
+  @media (orientation: landscape) and (max-height: 32rem) {
+    .br__svg {
+      max-height: calc(100svh - 6rem);
+    }
+  }
+
   /* Stacked: the panel sits below the map, so it may grow; a minimum height keeps
      short replies from pulling the caption up and down. */
   .br__panel {
