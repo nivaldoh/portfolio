@@ -1,44 +1,46 @@
 ---
-// My Metamon pull requests as cards: the two merged into the public
-// UT-Austin-RPL/metamon (maintained by Jake Grigsby), then an experiment in
-// the lab's private development repository (still an open PR there; the
-// owner asked to present it as an experiment, without its PR state). Each card has its date and
-// target branch, lines added and deleted (the bar is each one's share of the
-// lines changed) and, where it matters, its changes in a few words each.
-// The panel around it names and links the repository. Static HTML, no script.
+// My Metamon work as two cards: PR #65, merged into the public
+// UT-Austin-RPL/metamon (maintained by Jake Grigsby), with its one-line
+// follow-up #70; then an experiment in the lab's private development
+// repository (still an open PR there; presented as an experiment, without its
+// PR state). Each card says what was slow, what changed and what was checked;
+// no diff sizes. The panel around it names and links the repository. Static
+// HTML, no script.
 //
-// Read with gh on 17 Oct 2026; dates are UTC:
-//   gh pr view 65 -R UT-Austin-RPL/metamon: "Team prediction improvements",
-//     merged 2026-01-31T23:01:23Z into dev_staging (merge commit b9a6d6e),
-//     +982 −172 in 16 files. The change rows paraphrase its description;
-//     "not one per team" follows validate.py, which before #65 ran one
-//     `pokemon-showdown validate-team` process per team string. The backoff
-//     icon's hops double in width, as stat_scraper.py's retry delay does
-//     (backoff_base * 2^attempt).
-//   gh pr view 68: dev_staging into dev, body "merges #65", merged
-//     2026-02-01T01:08:03Z (merge commit cfd0bb4).
-//   gh pr view 70: "Fix error when creating usage stats JSON files", merged
-//     2026-02-01T03:08:01Z into dev (merge commit 2816b58), +3 −3 in
-//     create_usage_jsons.py, body "Quick fix for #68".
-//   "now on main": at main 0a00a75, tools/persistent_showdown_validator.js
-//     exists and validate.py still validates through PersistentShowdownValidator;
-//     both arrived, revised, in the maintainer's "may 2026 metamon-dev sync"
-//     (a790b62). main does not contain the merge commits themselves.
-//   gh pr view 111 -R UT-Austin-RPL/metamon-dev (private): "Grouped encoder
-//     improvements", opened 2026-02-06T15:45:24Z into dev, still open,
-//     +1984 −5 in 5 files; it continues the closed public #78 (timestep
-//     encoder profiling). From the PR and its review comments: a rewritten
-//     grouped timestep encoder (MetamonGroupedTstepEncoderV2Niv) that keeps
-//     working under torch.compile mode "reduce-overhead" (CUDA graphs), which
-//     the V2 encoder ignores, and which "runs ~10% faster than the V2" in the
-//     author's own A/B runs; and profiling/profile_tstep_encoders.py, whose
-//     gates pass a candidate only if its outputs match the baseline's
-//     (atol 3e-6, rtol 1e-5) and it is not slower at the primary batch shape
-//     nor more than 5% slower at any other. Review comment of 2 Mar 2026: the
-//     gates were "to get an LLM to test a bunch of small experiments in
-//     parallel and be able to automatically reject or accept these changes".
-//     Not linked: the repository is private.
-// The merged PRs' speed-ups were not measured, so none is shown.
+// Read with gh and git on 17 Oct 2026; dates are UTC:
+//   PR #65 "Team prediction improvements", merged 2026-01-31T23:01:23Z.
+//     Before (579ccc1fb~1, metamon/backend/team_prediction/validate.py): one
+//     `npx pokemon-showdown validate-team <format>` subprocess per team file.
+//     That CLI runs `node build` (esbuild over Showdown's TypeScript) whenever
+//     ./dist is missing in the working directory, as it is at the repo root.
+//     After (579ccc1fb): tools/persistent_showdown_validator.js, one node
+//     process that loads Showdown once, keeps TeamValidator.get(format) per
+//     format and reads one JSON line per team; the CLI stays as a fallback.
+//     On 2026-01-28 the 25,192-file gen9ou modern_replays set went through
+//     the new path, and a gen1ou run that included a Mewtwo team (banned in
+//     Gen 1 OU) rejected exactly that file. The maintainers extended it
+//     (jakegrigsby, 2026-05-21, multiprocessing Pool) and it is on main.
+//     Re-measured on 2026-10-17 (Ryzen 5 5600X, WSL2, Node 18.20.8,
+//     pokemon-showdown 0.11.10) on the first 200 gen9ou files: old CLI with
+//     the rebuild, median 1.008 s per team (205.9 s for 200); without the
+//     rebuild 0.268 s; the persistent validator started in 0.33 s, then a
+//     median of 1.1 ms per team (0.61 s for all 200). All paths agreed,
+//     including on 7 deliberately invalid teams. Driver and raw timings:
+//     dev/metamon-validator-bench/ (local, git-ignored).
+//   PR #70 "Fix error when creating usage stats JSON files", merged
+//     2026-02-01T03:08:01Z, a follow-up once #65 reached dev.
+//   metamon-dev #111 "Grouped encoder improvements" (private), opened
+//     2026-02-06, still open; continues the closed public #78. The ~10% is
+//     the owner's review comment of 2 Mar 2026 ("runs ~10% faster than the
+//     V2"), from profiling/profile_tstep_encoders.py: median latency of one
+//     encoder forward pass in torch.inference_mode at B1_L1, B4_L1 and B16_L1.
+//     run_ab_comparison.sh passes reduce-overhead, which reaches only the
+//     rewrite's constructor, so the baseline ran in torch.compile's default
+//     mode; training speed was never measured. Gates: outputs match the
+//     baseline (atol 3e-6, rtol 1e-5) and no slowdown at B4_L1 nor more than
+//     5% at any other shape; built "to get an LLM to test a bunch of small
+//     experiments in parallel" (review comment, 2 Mar 2026). Not linked: the
+//     repository is private.
 
 interface Props {
   class?: string;
@@ -46,194 +48,115 @@ interface Props {
 
 const { class: className } = Astro.props;
 
-type Change = { icon: 'loop' | 'funnel' | 'backoff' | 'bolt' | 'gate'; text: string; tag?: string };
-type PR = {
-  number: number;
-  title: string;
-  /** Omitted for the private repository. */
-  url?: string;
-  state: 'merged' | 'experiment';
-  /** Merge time, or opening time for an experiment. */
-  at: string;
-  date: string;
-  base: string;
-  /** Shown under the title, e.g. where an unlinked PR lives. */
-  where?: string;
-  additions: number;
-  deletions: number;
-  files: number;
-  changes?: Change[];
-  note?: string;
-  /** The profiler's accept/reject gates, drawn after the changes. */
-  gates?: boolean;
-};
-
 const REPO = 'https://github.com/UT-Austin-RPL/metamon';
 
-const prs: PR[] = [
-  {
-    number: 65,
-    title: 'Team prediction improvements',
-    url: `${REPO}/pull/65`,
-    state: 'merged',
-    at: '2026-01-31T23:01:23Z',
-    date: '31 Jan 2026',
-    base: 'dev_staging',
-    additions: 982,
-    deletions: 172,
-    files: 16,
-    changes: [
-      { icon: 'loop', text: 'One persistent validator, not one per team', tag: 'now on main' },
-      { icon: 'funnel', text: 'Usage stats filtered by Smogon rank baseline' },
-      { icon: 'backoff', text: 'Scraper: exponential backoff, concurrency cap' },
-    ],
-  },
-  {
-    number: 70,
-    title: 'Fix error when creating usage stats JSON files',
-    url: `${REPO}/pull/70`,
-    state: 'merged',
-    at: '2026-02-01T03:08:01Z',
-    date: '1 Feb 2026',
-    base: 'dev',
-    additions: 3,
-    deletions: 3,
-    files: 1,
-    note: 'Follow-up fix once #65 reached dev',
-  },
-  {
-    number: 111,
-    title: 'Grouped encoder improvements',
-    state: 'experiment',
-    at: '2026-02-06T15:45:24Z',
-    date: 'Feb 2026',
-    base: 'dev',
-    where: 'In the lab’s private development repository',
-    additions: 1984,
-    deletions: 5,
-    files: 5,
-    changes: [
-      { icon: 'bolt', text: 'Encoder rewrite that runs under CUDA graphs', tag: '~10% faster in my A/B runs' },
-      { icon: 'gate', text: 'A profiler that keeps a change only if it passes two gates' },
-    ],
-    gates: true,
-  },
+// What was slow, what changed, what came of it.
+const validator = [
+  { label: 'Before', text: 'A new Showdown process per team file. Each one reloaded the game data, and rebuilt Showdown first because the script ran from the repository root' },
+  { label: 'After', text: 'One validator process for the whole run; teams arrive one line at a time over a pipe' },
+  { label: 'Result', text: '200 Gen 9 OU teams in 0.6 s instead of 3.4 minutes, re-timed in October 2026' },
 ];
 
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+const also = [
+  { icon: 'funnel', text: 'Usage statistics filtered by Smogon rank' },
+  { icon: 'backoff', text: 'Scraper: exponential backoff and a concurrency cap, after timeouts' },
+];
 ---
 
 <div class:list={['mpr', className]}>
-  <ul class="mpr__list" aria-label="My pull requests to Metamon">
-    {prs.map((pr) => (
-      <li class:list={['mpr__card', `mpr__card--${pr.state}`, { 'mpr__card--slim': !pr.changes }]}>
-        <p class="mpr__meta">
-          <span class="mpr__state">
-            {pr.state === 'merged' ? (
-              <svg class="mpr__merge" viewBox="0 0 16 16" aria-hidden="true">
-                <circle cx="4.5" cy="3.5" r="1.9" />
-                <circle cx="4.5" cy="12.5" r="1.9" />
-                <circle cx="11.5" cy="8" r="1.9" />
-                <path d="M4.5 5.4v5.2M4.5 5.4c0 1.6 1.2 2.6 3 2.6h2.1" />
-              </svg>
-            ) : (
-              <svg class="mpr__merge" viewBox="0 0 16 16" aria-hidden="true">
-                <path d="M6 1.8h4M6.6 1.8v4.4L2.9 12.6a1.1 1.1 0 0 0 1 1.6h8.2a1.1 1.1 0 0 0 1-1.6L9.4 6.2V1.8" />
-                <path d="M4.6 9.6h6.8" />
-              </svg>
-            )}
-            {pr.state === 'merged' ? 'Merged' : 'Experiment'}
-          </span>
-          <span class="mpr__num">#{pr.number}</span>
-          <span class="mpr__when">
-            <time datetime={pr.at}>{pr.date}</time>
-            <span aria-hidden="true">→</span>
-            <span class="visually-hidden">into</span>
-            <code>{pr.base}</code>
-          </span>
-        </p>
+  <ul class="mpr__list" aria-label="My work on Metamon">
+    <li class="mpr__card mpr__card--merged">
+      <p class="mpr__meta">
+        <span class="mpr__state">
+          <svg class="mpr__merge" viewBox="0 0 16 16" aria-hidden="true">
+            <circle cx="4.5" cy="3.5" r="1.9" />
+            <circle cx="4.5" cy="12.5" r="1.9" />
+            <circle cx="11.5" cy="8" r="1.9" />
+            <path d="M4.5 5.4v5.2M4.5 5.4c0 1.6 1.2 2.6 3 2.6h2.1" />
+          </svg>
+          Merged
+        </span>
+        <span class="mpr__num">#65</span>
+        <span class="mpr__when"><time datetime="2026-01-31T23:01:23Z">31 Jan 2026</time> · still on main</span>
+      </p>
+      <p class="mpr__title">
+        <a href={`${REPO}/pull/65`}>Faster team validation<svg class="mpr__out" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4" /></svg></a>
+      </p>
 
-        <p class="mpr__title">
-          {pr.url ? (
-            <a href={pr.url}>{pr.title}<svg class="mpr__out" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4" /></svg></a>
-          ) : (
-            pr.title
-          )}
-        </p>
-        {pr.where && <p class="mpr__where">{pr.where}</p>}
-
-        <div class="mpr__stat">
-          <p class="mpr__counts">
-            <span class="mpr__add">+{pr.additions.toLocaleString('en-US')}</span><span class="visually-hidden"> lines added,</span>
-            <span class="mpr__del">−{pr.deletions}</span><span class="visually-hidden"> lines deleted,</span>
-            <span class="mpr__files"><span aria-hidden="true">·</span> {plural(pr.files, 'file')}</span>
-          </p>
-          {pr.changes ? (
-            <span
-              class="mpr__bar"
-              style={`--add: ${pr.additions}; --del: ${pr.deletions};`}
-              aria-hidden="true"
-            >
-              <span class="mpr__bar-add" />
-              <span class="mpr__bar-del" />
-            </span>
-          ) : (
-            <p class="mpr__note">{pr.note}</p>
-          )}
-        </div>
-
-        {pr.changes && (
-          <ul class="mpr__changes">
-            {pr.changes.map((change) => (
-              <li class="mpr__change">
-                <svg class="mpr__icon" viewBox="0 0 16 16" aria-hidden="true">
-                  {change.icon === 'loop' && (
-                    <>
-                      <path d="M12.6 5.4A5 5 0 1 0 13 8.6" />
-                      <path d="M13 2.4v3.3H9.7" />
-                    </>
-                  )}
-                  {change.icon === 'funnel' && <path d="M2 3h12l-4.6 5.4v4.8l-2.8-1.4V8.4z" />}
-                  {change.icon === 'backoff' && <path d="M1 10.5a1 1 0 0 1 2 0a2 2 0 0 1 4 0a4 4 0 0 1 8 0" />}
-                  {change.icon === 'bolt' && <path d="M9 1.5 3.5 9h4L6.5 14.5 12.5 7h-4z" />}
-                  {change.icon === 'gate' && (
-                    <>
-                      <path d="M2 4.5h12M2 11.5h12" />
-                      <path d="M5.5 2.5v4M10.5 9.5v4" />
-                    </>
-                  )}
-                </svg>
-                <span class="mpr__text">
-                  {change.text}
-                  {change.tag && <span class="mpr__tag">{change.tag}</span>}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {pr.gates && (
-          <div class="mpr__gates-wrap">
-            <ol class="mpr__gates" aria-label="How the profiler decides">
-              <li class="mpr__step"><span class="mpr__chip mpr__chip--in">A change</span></li>
-              <li class="mpr__step">
-                <span class="mpr__chip">Same outputs?</span>
-                <span class="mpr__drop">else drop</span>
-              </li>
-              <li class="mpr__step">
-                <span class="mpr__chip">Not slower?</span>
-                <span class="mpr__drop">else drop</span>
-              </li>
-              <li class="mpr__step"><span class="mpr__chip mpr__chip--keep">Keep</span></li>
-            </ol>
-            <p class="mpr__why">
-              Built so a coding agent could try many small optimisations and
-              keep only the ones that pass.
-            </p>
+      <dl class="mpr__ba">
+        {validator.map((row) => (
+          <div class:list={['mpr__ba-row', `mpr__ba-row--${row.label.toLowerCase()}`]}>
+            <dt>{row.label}</dt>
+            <dd>{row.text}</dd>
           </div>
-        )}
-      </li>
-    ))}
+        ))}
+      </dl>
+
+      <ul class="mpr__changes" aria-label="Also in this pull request">
+        {also.map((change) => (
+          <li class="mpr__change">
+            <svg class="mpr__icon" viewBox="0 0 16 16" aria-hidden="true">
+              {change.icon === 'funnel' && <path d="M2 3h12l-4.6 5.4v4.8l-2.8-1.4V8.4z" />}
+              {change.icon === 'backoff' && <path d="M1 10.5a1 1 0 0 1 2 0a2 2 0 0 1 4 0a4 4 0 0 1 8 0" />}
+            </svg>
+            <span class="mpr__text">{change.text}</span>
+          </li>
+        ))}
+      </ul>
+      <p class="mpr__note">
+        Follow-up: <a href={`${REPO}/pull/70`}>#70</a>, a small fix merged the next day.
+      </p>
+    </li>
+
+    <li class="mpr__card mpr__card--experiment">
+      <p class="mpr__meta">
+        <span class="mpr__state">
+          <svg class="mpr__merge" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M6 1.8h4M6.6 1.8v4.4L2.9 12.6a1.1 1.1 0 0 0 1 1.6h8.2a1.1 1.1 0 0 0 1-1.6L9.4 6.2V1.8" />
+            <path d="M4.6 9.6h6.8" />
+          </svg>
+          Experiment
+        </span>
+        <span class="mpr__num">#111</span>
+        <span class="mpr__when"><time datetime="2026-02-06">Feb–Mar 2026</time> · not merged</span>
+      </p>
+      <p class="mpr__title">Grouped encoder rewrite</p>
+      <p class="mpr__where">In the lab’s private development repository</p>
+
+      <ul class="mpr__changes">
+        <li class="mpr__change">
+          <svg class="mpr__icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M9 1.5 3.5 9h4L6.5 14.5 12.5 7h-4z" /></svg>
+          <span class="mpr__text">
+            An encoder rewrite that runs under CUDA graphs
+            <span class="mpr__tag">~10% faster at inference</span>
+          </span>
+        </li>
+        <li class="mpr__change">
+          <svg class="mpr__icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12" /><path d="M5.5 2.5v4M10.5 9.5v4" /></svg>
+          <span class="mpr__text">A profiler that keeps a change only if it passes two gates</span>
+        </li>
+      </ul>
+
+      <div class="mpr__gates-wrap">
+        <ol class="mpr__gates" aria-label="How the profiler decides">
+          <li class="mpr__step"><span class="mpr__chip mpr__chip--in">A change</span></li>
+          <li class="mpr__step">
+            <span class="mpr__chip">Same outputs?</span>
+            <span class="mpr__drop">else drop</span>
+          </li>
+          <li class="mpr__step">
+            <span class="mpr__chip">Not slower?</span>
+            <span class="mpr__drop">else drop</span>
+          </li>
+          <li class="mpr__step"><span class="mpr__chip mpr__chip--keep">Keep</span></li>
+        </ol>
+        <p class="mpr__why">
+          Built so a coding agent could try many small optimisations and keep
+          only the ones that pass. The baseline ran in a different compile
+          mode, so the 10% isn’t the rewrite alone.
+        </p>
+      </div>
+    </li>
   </ul>
 </div>
 
@@ -244,7 +167,6 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
   .mpr__meta,
   .mpr__title,
-  .mpr__counts,
   .mpr__note {
     margin: 0;
   }
@@ -309,21 +231,12 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
     white-space: nowrap;
   }
 
-  .mpr__when code {
-    font-size: inherit;
-    color: var(--fg);
-  }
-
   .mpr__title {
     margin-top: 0.45rem;
     font-size: var(--step-1);
     font-weight: 460;
     line-height: 1.2;
     text-wrap: balance;
-  }
-
-  .mpr__card--slim .mpr__title {
-    font-size: var(--step-0);
   }
 
   .mpr__title a {
@@ -350,56 +263,44 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
     stroke-linejoin: round;
   }
 
-  /* +982 −172 · 16 files  [=========|==] */
-  .mpr__stat {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.35rem 0.9rem;
-    margin-top: 0.7rem;
+  /* Before / After / Result, with the label in a narrow mono column. */
+  .mpr__ba {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0.85rem 0 0;
   }
 
-  .mpr__counts {
-    font-family: var(--font-mono);
-    font-size: var(--step--2);
-    line-height: 1.4;
-    white-space: nowrap;
+  .mpr__ba-row {
+    display: grid;
+    grid-template-columns: 4.2rem minmax(0, 1fr);
+    gap: 0.7rem;
+    align-items: baseline;
+  }
+
+  .mpr__ba dt {
+    font: var(--step--2)/1.4 var(--font-mono);
     color: var(--fg-muted);
   }
 
-  .mpr__add {
+  .mpr__ba dd {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.4;
+    color: var(--fg);
+    text-wrap: pretty;
+  }
+
+  .mpr__ba-row--result dt {
     color: var(--data-ok);
   }
 
-  .mpr__del {
-    color: var(--data-miss);
-  }
-
-  .mpr__bar {
-    flex: 1 1 8rem;
-    display: flex;
-    gap: 2px;
-    height: 5px;
-  }
-
-  .mpr__bar-add,
-  .mpr__bar-del {
-    border-radius: 1px;
-  }
-
-  .mpr__bar-add {
-    flex: var(--add) 1 0;
-    background: var(--data-ok);
-  }
-
-  .mpr__bar-del {
-    flex: var(--del) 1 0;
-    background: var(--data-miss);
+  .mpr__ba-row--result dd {
+    color: var(--fg-strong);
   }
 
   .mpr__note {
+    margin-top: 0.8rem;
     font-size: var(--step--1);
-    font-style: italic;
     line-height: 1.4;
     color: var(--fg-muted);
   }
