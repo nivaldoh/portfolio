@@ -1,5 +1,6 @@
 ---
-import { SITE_TITLE, SITE_DESCRIPTION, OG_DEFAULT } from '../consts';
+import { SITE_TITLE, HOME_TITLE, SITE_DESCRIPTION, OG_DEFAULT } from '../consts';
+import { getCollection } from 'astro:content';
 
 interface Props {
   title?: string;
@@ -19,9 +20,10 @@ const {
   updatedDate,
 } = Astro.props;
 
-const fullTitle = title ? `${title} — ${SITE_TITLE}` : SITE_TITLE;
+const fullTitle = title ? `${title} — ${SITE_TITLE}` : HOME_TITLE;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const imageURL = new URL(image, Astro.site);
+const hasPublishedPosts = (await getCollection('posts', ({ data }) => !data.draft)).length > 0;
 ---
 
 <meta charset="utf-8" />
@@ -33,7 +35,7 @@ const imageURL = new URL(image, Astro.site);
 <link rel="canonical" href={canonicalURL} />
 
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href="/rss.xml" />
+{hasPublishedPosts && <link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href="/rss.xml" />}
 <link rel="sitemap" href="/sitemap-index.xml" />
 
 <link

@@ -1,0 +1,108 @@
+---
+// Homepage entry for a case study: real media, title, status, the
+// collection's summary, and a link to the full page.
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  /** `wide`: media and text side by side. `stacked`: media above text. */
+  layout?: 'wide' | 'stacked';
+  /** Put the media on the right in the wide layout. */
+  flip?: boolean;
+}
+
+const { project, layout = 'stacked', flip = false } = Astro.props;
+const { title, subtitle, status, summary } = project.data;
+const href = `/projects/${project.id}/`;
+const headingId = `panel-${project.id}`;
+---
+
+<article
+  class:list={['panel', `panel--${layout}`, { 'panel--flip': flip }]}
+  aria-labelledby={headingId}
+>
+  <div class="panel__media">
+    <slot name="media" />
+  </div>
+  <div class="panel__text">
+    <h2 class="panel__title" id={headingId}>
+      <a href={href}>{title}</a>
+    </h2>
+    {subtitle && <p class="panel__subtitle">{subtitle}</p>}
+    <p class="status">{status}</p>
+    <p class="panel__summary">{summary}</p>
+    <a class="panel__more" href={href}>Read the case study</a>
+  </div>
+</article>
+
+<style>
+  .panel {
+    display: grid;
+    gap: 1.4rem;
+    align-items: start;
+  }
+
+  /* Side-by-side stacked panels share their parent's rows, so titles line
+     up even when the media differ in height. */
+  .panel--stacked {
+    grid-row: span 2;
+    grid-template-rows: subgrid;
+    row-gap: 1.4rem;
+  }
+
+  .panel__media {
+    min-width: 0;
+  }
+
+  .panel__text {
+    min-width: 0;
+  }
+
+  .panel__title {
+    font-size: var(--step-2);
+    font-weight: 460;
+    margin: 0;
+    line-height: 1.15;
+  }
+
+  .panel__title a {
+    color: var(--fg-strong);
+    text-decoration: none;
+  }
+
+  .panel__title a:hover {
+    color: var(--accent);
+  }
+
+  .panel__subtitle {
+    margin: 0.35rem 0 0;
+    font-style: italic;
+    color: var(--fg);
+    line-height: 1.4;
+  }
+
+  .panel .status {
+    margin-top: 0.5rem;
+  }
+
+  .panel__summary {
+    margin: 0.9rem 0 1rem;
+    max-width: 60ch;
+  }
+
+  .panel__more {
+    font-size: 1rem;
+  }
+
+  @media (min-width: 60rem) {
+    .panel--wide {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: 3rem;
+      align-items: center;
+    }
+
+    .panel--wide.panel--flip .panel__media {
+      order: 2;
+    }
+  }
+</style>

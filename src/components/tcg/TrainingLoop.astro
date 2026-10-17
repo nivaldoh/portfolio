@@ -1,0 +1,284 @@
+---
+// The Pokémon TCG training and evaluation workflow as implemented. Steps read
+// left to right and wrap like lines of text; on narrow screens they stack.
+// Supplied foundations are marked in words ("Supplied") and by a dashed
+// outline; the steps built for this project have a solid outline.
+interface Props {
+  /** Span the full case-study container. */
+  wide?: boolean;
+}
+
+const { wide = true } = Astro.props;
+
+type Step = { name: string; text: string; supplied?: boolean; uses?: string };
+
+const steps: Step[] = [
+  {
+    name: 'Competition simulator and SDK',
+    text: 'The compiled game engine and its Python interface, used as supplied.',
+    supplied: true,
+  },
+  {
+    name: 'Gymnasium wrapper',
+    text: 'Turns each decision into a choice among legal options, with a mask. A multi-card selection becomes a sequence of picks that ends with STOP.',
+  },
+  {
+    name: 'PyTorch policy',
+    text: 'Embeds card and attack identities and scores each legal option against the board, hand, open menu and cards already picked.',
+  },
+  {
+    name: 'Behaviour cloning',
+    text: 'Learns from games played between scripted teachers, with training and holdout sets split by game.',
+    uses: 'Teachers: four imported rule-based agents (supplied)',
+  },
+  {
+    name: 'Weight transfer',
+    text: 'Loads the cloned network into a custom Stable-Baselines3 policy and checks that its outputs are unchanged.',
+    uses: 'Library: Stable-Baselines3 (supplied)',
+  },
+  {
+    name: 'PPO fine-tuning',
+    text: 'Trains against mixtures of opponents. Frozen self-play snapshots are supported.',
+    uses: 'Library: MaskablePPO from sb3-contrib (supplied)',
+  },
+  {
+    name: 'Seat-swapped evaluation',
+    text: 'Plays each deck against each scripted opponent from both seats and reports 95% intervals.',
+  },
+  {
+    name: 'Recorded-game inspection',
+    text: 'Records every decision of a game, with the options, the choice and the policy’s probabilities, to step through afterwards.',
+  },
+];
+---
+
+<figure class:list={['tl', { wide }]}>
+  <div class="tl__frame">
+    <ol class="tl__flow">
+      {steps.map((s) => (
+        <li class:list={['tl__step', s.supplied ? 'tl__step--supplied' : 'tl__step--built']}>
+          <p class="tl__who">{s.supplied ? 'Supplied' : 'Built for this project'}</p>
+          <p class="tl__name">{s.name}</p>
+          <p class="tl__text">{s.text}</p>
+          {s.uses && <p class="tl__uses">{s.uses}</p>}
+          <span class="tl__c tl__c--next" aria-hidden="true"></span>
+          <span class="tl__c tl__c--down" aria-hidden="true"></span>
+          <span class="tl__c tl__c--in" aria-hidden="true"></span>
+        </li>
+      ))}
+    </ol>
+  </div>
+  <figcaption>
+    The workflow as implemented. Dashed outlines mark supplied foundations;
+    solid outlines mark what I built. Behaviour cloning and PPO train the same
+    policy network.
+  </figcaption>
+</figure>
+
+<style>
+  .tl {
+    margin: 0;
+  }
+
+  .tl__frame {
+    container-type: inline-size;
+    hyphens: manual;
+    padding: clamp(1rem, 3vw, 2rem);
+    background: var(--bg-plate);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-plate);
+  }
+
+  .tl figcaption {
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    line-height: 1.5;
+    font-style: italic;
+    margin-top: 0.7rem;
+    max-width: 72ch;
+  }
+
+  /* --cols is the number of steps per row; connectors are derived from it. */
+  .tl__flow {
+    --cols: 1;
+    --cg: 1.9rem;
+    --rg: 2.2rem;
+    --line: color-mix(in srgb, var(--fg-muted) 75%, transparent);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    column-gap: var(--cg);
+    row-gap: var(--rg);
+  }
+
+  .tl__step {
+    position: relative;
+    min-width: 0;
+    margin: 0;
+    padding: 0.85rem 1rem 0.95rem;
+    border-radius: var(--radius-plate);
+  }
+
+  .tl__step--built {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+  }
+
+  .tl__step--supplied {
+    background: transparent;
+    border: 1px dashed color-mix(in srgb, var(--fg-muted) 70%, transparent);
+  }
+
+  /* Override the prose column's automatic hyphenation inside the boxes. */
+  .tl__step p {
+    hyphens: manual;
+  }
+
+  .tl__who {
+    margin: 0;
+    color: var(--fg-muted);
+    font-size: var(--step--2);
+    font-style: italic;
+    line-height: 1.3;
+  }
+
+  .tl__name {
+    margin: 0.15rem 0 0;
+    color: var(--fg-strong);
+    font-size: 1.05rem;
+    font-weight: 560;
+    line-height: 1.25;
+  }
+
+  .tl__text {
+    margin: 0.4rem 0 0;
+    color: var(--fg);
+    font-size: var(--step--1);
+    line-height: 1.45;
+  }
+
+  .tl__step--supplied .tl__name,
+  .tl__step--supplied .tl__text {
+    color: var(--fg-muted);
+  }
+
+  .tl__uses {
+    margin: 0.55rem 0 0;
+    padding-top: 0.45rem;
+    border-top: 1px solid var(--rule);
+    color: var(--fg-muted);
+    font-size: var(--step--2);
+    font-style: italic;
+    line-height: 1.35;
+  }
+
+  /* ---------- Connectors ---------- */
+  .tl__c {
+    position: absolute;
+    display: none;
+    pointer-events: none;
+  }
+
+  /* To the next step in the same row. */
+  .tl__c--next {
+    left: 100%;
+    top: 50%;
+    width: var(--cg);
+    height: 1px;
+    background: var(--line);
+  }
+
+  .tl__c--next::after {
+    content: '';
+    position: absolute;
+    right: 3px;
+    top: -4px;
+    border-left: 6px solid var(--line);
+    border-block: 4.5px solid transparent;
+  }
+
+  /* From the last step of a row down into the gap below it. */
+  .tl__c--down {
+    top: 100%;
+    left: 50%;
+    width: 1px;
+    height: calc(var(--rg) / 2 + 1px);
+    background: var(--line);
+  }
+
+  /* From the gap back to the first step of the next row: a line across to
+     this step's centre, then down into it. */
+  .tl__c--in {
+    bottom: 100%;
+    left: 50%;
+    width: calc((var(--cols) - 1) * (100% + var(--cg)));
+    height: calc(var(--rg) / 2);
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+  }
+
+  .tl__c--in::after {
+    content: '';
+    position: absolute;
+    left: -5px;
+    bottom: 3px;
+    border-top: 6px solid var(--line);
+    border-inline: 4.5px solid transparent;
+  }
+
+  /* One column: every step flows straight down into the next. */
+  .tl__step:not(:last-child) .tl__c--down,
+  .tl__step:not(:first-child) .tl__c--in {
+    display: block;
+  }
+
+  /* With a single column the return line has no width; drop its top edge. */
+  .tl__c--in {
+    border-top-width: 0;
+  }
+
+  @container (min-width: 34rem) {
+    .tl__flow {
+      --cols: 2;
+    }
+
+    .tl__c--in {
+      border-top-width: 1px;
+    }
+
+    .tl__flow .tl__step .tl__c {
+      display: none;
+    }
+
+    .tl__step:nth-child(2n + 1):not(:last-child) .tl__c--next,
+    .tl__step:nth-child(2n):not(:last-child) .tl__c--down,
+    .tl__step:nth-child(2n + 1):not(:first-child) .tl__c--in {
+      display: block;
+    }
+  }
+
+  @container (min-width: 56rem) {
+    .tl__flow {
+      --cols: 4;
+    }
+
+    .tl__flow .tl__step .tl__c {
+      display: none;
+    }
+
+    .tl__step:not(:nth-child(4n)):not(:last-child) .tl__c--next,
+    .tl__step:nth-child(4n):not(:last-child) .tl__c--down,
+    .tl__step:nth-child(4n + 1):not(:first-child) .tl__c--in {
+      display: block;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .tl__c--next,
+    .tl__c--down {
+      background: CanvasText;
+    }
+  }
+</style>

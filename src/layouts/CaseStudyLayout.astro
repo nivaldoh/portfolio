@@ -1,0 +1,256 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  entry: CollectionEntry<'projects'>;
+  prev?: CollectionEntry<'projects'>;
+  next?: CollectionEntry<'projects'>;
+}
+
+const { entry, prev, next } = Astro.props;
+const { title, subtitle, description, status, period, links, credits, cover } =
+  entry.data;
+---
+
+<BaseLayout title={title} description={description} image={cover?.src.src}>
+  <article class="case">
+    <header class="case__head container">
+      <a class="case__back" href="/#work">All work</a>
+      <h1 class="case__title">{title}</h1>
+      {subtitle && <p class="case__subtitle">{subtitle}</p>}
+      <dl class="case__facts">
+        <div>
+          <dt>Status</dt>
+          <dd>{status}</dd>
+        </div>
+        <div>
+          <dt>When</dt>
+          <dd>{period}</dd>
+        </div>
+        {links.length > 0 && (
+          <div>
+            <dt>Inspect</dt>
+            <dd>
+              <ul class="link-row">
+                {links.map((l) => (
+                  <li><a href={l.url} rel="noopener">{l.label}</a></li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        )}
+      </dl>
+    </header>
+
+    <div class="container">
+      <div class="case__content prose">
+        <slot />
+
+        {credits.length > 0 && (
+          <aside class="case__credits" aria-labelledby="built-on">
+            <h2 id="built-on">Built on</h2>
+            <ul>
+              {credits.map((c) => <li>{c}</li>)}
+            </ul>
+          </aside>
+        )}
+      </div>
+    </div>
+
+    {(prev || next) && (
+      <nav class="case__pager container" aria-label="More work">
+        {prev ? (
+          <a class="case__pager-link" href={`/projects/${prev.id}/`} rel="prev">
+            <span class="case__pager-dir">Previous</span>
+            <span class="case__pager-title">{prev.data.title}</span>
+          </a>
+        ) : <span />}
+        {next && (
+          <a class="case__pager-link case__pager-link--next" href={`/projects/${next.id}/`} rel="next">
+            <span class="case__pager-dir">Next</span>
+            <span class="case__pager-title">{next.data.title}</span>
+          </a>
+        )}
+      </nav>
+    )}
+  </article>
+</BaseLayout>
+
+<style>
+  .case__head {
+    padding-top: clamp(1.5rem, 4vw, 3.5rem);
+    padding-bottom: clamp(1.5rem, 3vw, 2.5rem);
+  }
+
+  .case__back {
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    text-decoration: none;
+  }
+
+  .case__back::before {
+    content: '←';
+    margin-right: 0.4em;
+  }
+
+  .case__back:hover {
+    color: var(--fg);
+  }
+
+  .case__title {
+    font-size: var(--step-4);
+    font-weight: 400;
+    line-height: 1.02;
+    margin: 0.9rem 0 0;
+    max-width: 18ch;
+  }
+
+  .case__subtitle {
+    font-size: var(--step-1);
+    font-style: italic;
+    color: var(--fg-muted);
+    margin: 0.9rem 0 0;
+    max-width: 48ch;
+    line-height: 1.4;
+  }
+
+  .case__facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: 1rem 2.5rem;
+    margin: 2.2rem 0 0;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--border);
+    max-width: 60rem;
+  }
+
+  .case__facts div {
+    min-width: 0;
+  }
+
+  .case__facts dt {
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-style: italic;
+  }
+
+  .case__facts dd {
+    margin: 0.15rem 0 0;
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+
+  /* Text sits in a left-aligned reading column; anything marked .wide
+     (figures, recordings, interactive panels) spans the full container. */
+  .case__content {
+    max-width: none;
+    display: grid;
+    grid-template-columns:
+      [full-start content-start] minmax(0, 42rem)
+      [content-end] minmax(0, 1fr) [full-end];
+  }
+
+  /* Grid items don't collapse margins, so space flows one way only. */
+  .case__content > :global(*) {
+    grid-column: content;
+    min-width: 0;
+    margin-block: 0 1.1em;
+  }
+
+  .case__content > :global(.wide) {
+    grid-column: full;
+    margin-block: 1.4rem 2.6rem;
+  }
+
+  .case__content > :global(h2) {
+    margin-top: 2.2em;
+    margin-bottom: 0.55em;
+  }
+
+  .case__content > :global(h3) {
+    margin-top: 1.8em;
+    margin-bottom: 0.45em;
+  }
+
+  .case__content > :global(.details) {
+    margin-block: 1.4rem;
+  }
+
+  .case__content > :global(.details + .details) {
+    margin-top: -1.4rem;
+  }
+
+  .case__content > :global(:first-child) {
+    margin-top: 0;
+  }
+
+  .case__credits {
+    margin-top: 3.5rem;
+    padding: 1.2rem 1.4rem 1.3rem;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-plate);
+    font-size: var(--step--1);
+    color: var(--fg-muted);
+  }
+
+  .case__credits h2 {
+    font-size: 1.05rem;
+    margin: 0 0 0.5rem;
+    color: var(--fg);
+  }
+
+  .case__credits ul {
+    margin: 0;
+    padding-left: 1.1em;
+  }
+
+  .case__pager {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: var(--space-section);
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .case__pager-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    text-decoration: none;
+    color: var(--fg);
+  }
+
+  .case__pager-link--next {
+    text-align: right;
+    grid-column: 2;
+  }
+
+  .case__pager-dir {
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-style: italic;
+  }
+
+  .case__pager-title {
+    font-size: var(--step-1);
+    line-height: 1.25;
+  }
+
+  .case__pager-link:hover .case__pager-title {
+    color: var(--accent);
+  }
+
+  @media (max-width: 40rem) {
+    .case__pager {
+      grid-template-columns: 1fr;
+    }
+
+    .case__pager-link--next {
+      grid-column: 1;
+      text-align: left;
+    }
+  }
+</style>

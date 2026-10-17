@@ -9,6 +9,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
+    "test:replay": "node --test scripts/replay.test.cjs",
     "astro": "astro"
   },
   "dependencies": {

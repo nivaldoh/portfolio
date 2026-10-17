@@ -1,0 +1,32 @@
+---
+// Two Plates side by side on wide screens, stacked on narrow ones.
+// Pass the Plates as children; add class="wide" to span a case study.
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div class:list={['pair', className]}>
+  <slot />
+</div>
+
+<style>
+  .pair {
+    display: grid;
+    gap: 2.2rem 1.75rem;
+    align-items: start;
+  }
+
+  .pair > :global(*) {
+    margin: 0;
+    min-width: 0;
+  }
+
+  @media (min-width: 52rem) {
+    .pair {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+</style>

@@ -2,7 +2,6 @@ import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 
-// TODO: replace with the real production domain before first deploy.
 const SITE = 'https://portfolio-818.pages.dev';
 
 /**
@@ -55,6 +54,11 @@ function rehypeImageFigure() {
 export default defineConfig({
   site: SITE,
   integrations: [mdx(), sitemap()],
+  // About, contact and the project index live on the homepage.
+  redirects: {
+    '/about': '/#about',
+    '/projects': '/#work',
+  },
   markdown: {
     shikiConfig: {
       theme: 'github-dark',

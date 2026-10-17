@@ -1,0 +1,611 @@
+---
+// Reported Pokémon TCG evaluation results, rendered at build time from
+// public/media/pokemon-tcg/results.json. Two separate figures that must never
+// be merged: the multi-deck comparison against four scripted teachers, and the
+// single-opponent Lucario specialist with its win-mode audit.
+import results from '../../../public/media/pokemon-tcg/results.json';
+
+interface Props {
+  variant: 'multi-deck' | 'specialist';
+  /** Homepage panel version: shorter notes, smaller type. */
+  compact?: boolean;
+  /** Span the full case-study container. Defaults to true unless compact. */
+  wide?: boolean;
+}
+
+const { variant, compact = false, wide = !compact } = Astro.props;
+
+const pct = (n: number) => `${n.toFixed(1)}%`;
+const range = ([lo, hi]: number[]) => `${lo.toFixed(1)}–${hi.toFixed(1)}`;
+const gridlines = [25, 75, 100];
+const ticks = [0, 25, 50, 75, 100];
+
+const multi = results.multi_deck;
+const rows = multi.entries.map((e) => ({
+  ...e,
+  baseline: e.approx,
+  value: e.approx ? `about ${Math.round(e.win_rate)}%` : pct(e.win_rate),
+  // The homepage version keeps only the baseline's note; intervals stay as whiskers.
+  detail: compact
+    ? e.note
+    : [e.note, `95% interval ${range(e.ci95)}`].filter(Boolean).join('; '),
+}));
+
+const spec = results.specialist;
+const audit = spec.audit;
+const notWon = audit.games - audit.model_wins;
+const otherWins = audit.model_wins - audit.model_wins_by_opponent_deck_exhaustion;
+const units = Array.from({ length: audit.games }, (_, i) =>
+  i < audit.model_wins ? 'won' : 'lost'
+);
+---
+
+{variant === 'multi-deck' ? (
+  <figure class:list={['tcgc', { 'tcgc--compact': compact, wide }]}>
+    <figcaption class="tcgc__head">
+      <span class="tcgc__title">All four models stayed below parity with the teachers</span>
+      <span class="tcgc__scope">
+        Pooled win rate, {multi.games_per_entry} seat-swapped mirror games per
+        entry against four fixed scripted teachers; reported evaluation, July 2026
+      </span>
+    </figcaption>
+
+    <div class="tcgc__plot" aria-hidden="true">
+      <div class="tcgc__row tcgc__row--ref">
+        <span class="tcgc__label"></span>
+        <span class="tcgc__track">
+          <span class="tcgc__ref"></span>
+          <span class="tcgc__reflabel">{multi.reference_line.label} ({multi.reference_line.value}%)</span>
+        </span>
+      </div>
+      {rows.map((r) => (
+        <div class:list={['tcgc__row', { 'tcgc__row--baseline': r.baseline }]}>
+          <span class="tcgc__label">
+            <span class="tcgc__name">{r.label}</span>
+            {r.detail && <span class="tcgc__detail">{r.detail}</span>}
+          </span>
+          <span class="tcgc__track">
+            {gridlines.map((g) => <span class="tcgc__grid" style={`--x:${g}`} />)}
+            <span class="tcgc__ref"></span>
+            <span class="tcgc__bar" style={`--v:${r.win_rate}`}></span>
+            <span class="tcgc__whisker" style={`--lo:${r.ci95[0]};--hi:${r.ci95[1]}`}></span>
+            <span class="tcgc__value" style={`--hi:${r.ci95[1]}`}>{r.value}</span>
+          </span>
+        </div>
+      ))}
+      <div class="tcgc__row tcgc__row--axis">
+        <span class="tcgc__label"></span>
+        <span class="tcgc__track">
+          {ticks.map((t) => <span class="tcgc__tick" style={`--x:${t}`}>{t}%</span>)}
+        </span>
+      </div>
+    </div>
+
+    <div class="visually-hidden">
+    <table>
+      <caption>
+        Reported pooled mirror win rate against four fixed scripted teachers
+        (Lucario, Abomasnow, Dragapult ex and Iono decks), {multi.games_per_entry}
+        seat-swapped games per entry. A perfect copy of the teachers would score
+        about 50%.
+      </caption>
+      <thead>
+        <tr><th scope="col">Model</th><th scope="col">Win rate</th><th scope="col">95% interval</th><th scope="col">Note</th></tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr>
+            <th scope="row">{r.label}</th>
+            <td>{r.value}</td>
+            <td>{range(r.ci95)}%</td>
+            <td>{r.note ?? 'From the 9 July report'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    </div>
+
+    <p class="tcgc__notes">
+      {compact ? (
+        <>Whiskers show 95% intervals. The baseline comes from an earlier stack and is approximate.</>
+      ) : (
+        <>
+          Whiskers show 95% Wilson intervals. In a mirror game both sides play
+          the same deck; the teachers play Lucario, Abomasnow, Dragapult ex and
+          Iono decks, and a perfect copy of them would score about 50%. The
+          baseline is an earlier policy stack, reported approximately on 8 July;
+          the other three entries are from the 9 July report.
+        </>
+      )}
+    </p>
+  </figure>
+) : (
+  <figure class:list={['tcgc', 'tcgc--spec', { 'tcgc--compact': compact, wide }]}>
+    <figcaption class="tcgc__head">
+      <span class="tcgc__title">One opponent: a high win rate, and every audited win a deck-out</span>
+      <span class="tcgc__scope">
+        Learner and scripted teacher both play Lucario. {spec.games} seat-swapped
+        games against that one fixed opponent; reported evaluation, 10 July 2026
+      </span>
+    </figcaption>
+
+    <div class="tcgc__parts">
+      <div class="tcgc__part">
+        <p class="tcgc__parthead">Win rate over {spec.games} games</p>
+        <div class="tcgc__plot tcgc__plot--single" aria-hidden="true">
+          <div class="tcgc__row tcgc__row--ref">
+            <span class="tcgc__track">
+              <span class="tcgc__ref"></span>
+              <span class="tcgc__reflabel">{spec.reference_line.label} ({spec.reference_line.value}%)</span>
+            </span>
+          </div>
+          <div class="tcgc__row tcgc__row--meter">
+            <span class="tcgc__track">
+              <span class="tcgc__meter"></span>
+              {gridlines.map((g) => <span class="tcgc__grid" style={`--x:${g}`} />)}
+              <span class="tcgc__bar tcgc__bar--thick" style={`--v:${spec.win_rate}`}>
+                <span class="tcgc__inside" style={`--v:${spec.win_rate};--lo:${spec.ci95[0]}`}>{pct(spec.win_rate)}</span>
+              </span>
+              <span class="tcgc__ref"></span>
+              <span class="tcgc__whisker" style={`--lo:${spec.ci95[0]};--hi:${spec.ci95[1]}`}></span>
+            </span>
+          </div>
+          <div class="tcgc__row tcgc__row--axis">
+            <span class="tcgc__track">
+              {ticks.map((t) => <span class="tcgc__tick" style={`--x:${t}`}>{t}%</span>)}
+            </span>
+          </div>
+        </div>
+        <p class="tcgc__count">
+          <strong>{spec.wins} won</strong>, {spec.losses} lost, {spec.draws} drawn;
+          95% interval {range(spec.ci95)}%
+        </p>
+      </div>
+
+      <div class="tcgc__part">
+        <p class="tcgc__parthead">How the wins ended, in a separate {audit.games}-game recorded audit</p>
+        <div class="tcgc__units" aria-hidden="true">
+          {units.map((u) => <span class:list={['tcgc__unit', `tcgc__unit--${u}`]} />)}
+        </div>
+        <ul class="tcgc__legend">
+          <li>
+            <span class="tcgc__swatch tcgc__swatch--won" aria-hidden="true"></span>
+            <span><strong>{audit.model_wins_by_opponent_deck_exhaustion}</strong> won because the opponent ran out of cards to draw (deck-out)</span>
+          </li>
+          <li>
+            <span class="tcgc__swatch tcgc__swatch--none" aria-hidden="true"></span>
+            <span><strong>{otherWins}</strong> won any other way, such as by taking prize cards</span>
+          </li>
+          <li>
+            <span class="tcgc__swatch tcgc__swatch--lost" aria-hidden="true"></span>
+            <span><strong>{notWon}</strong> not won</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="visually-hidden">
+    <table>
+      <caption>Lucario specialist against one fixed Lucario teacher: reported results</caption>
+      <tbody>
+        <tr><th scope="row">Games in the evaluation</th><td>{spec.games}</td></tr>
+        <tr><th scope="row">Won / lost / drawn</th><td>{spec.wins} / {spec.losses} / {spec.draws}</td></tr>
+        <tr><th scope="row">Win rate</th><td>{pct(spec.win_rate)} (95% interval {range(spec.ci95)}%); parity with the teacher is 50%</td></tr>
+        <tr><th scope="row">Games in the separate audit</th><td>{audit.games}</td></tr>
+        <tr><th scope="row">Audit wins by opponent deck-out</th><td>{audit.model_wins_by_opponent_deck_exhaustion} of {audit.model_wins}</td></tr>
+        <tr><th scope="row">Audit wins any other way</th><td>{otherWins}</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p class="tcgc__notes">
+      Deck-out is a legal way to win. Against this one scripted opponent it was
+      the only way the model won in the audit, which points to exploiting that
+      opponent rather than general playing strength. The audit games are sorted
+      by outcome, not shown in the order played.
+    </p>
+  </figure>
+)}
+
+<style>
+  .tcgc {
+    container-type: inline-size;
+    margin: 0;
+    padding: clamp(1rem, 2.5vw, 1.75rem);
+    background: var(--bg-plate);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-plate);
+    font-variant-numeric: lining-nums;
+    hyphens: manual;
+  }
+
+  .tcgc p {
+    hyphens: manual;
+  }
+
+  .tcgc--compact {
+    padding: clamp(1rem, 2vw, 1.4rem);
+  }
+
+  /* ---------- Heading ---------- */
+  .tcgc__head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin: 0 0 1.4rem;
+    max-width: 60ch;
+    color: var(--fg);
+    font-size: 1rem;
+    font-style: normal;
+  }
+
+  .tcgc__title {
+    color: var(--fg-strong);
+    font-size: var(--step-1);
+    font-weight: 500;
+    line-height: 1.25;
+    text-wrap: balance;
+  }
+
+  .tcgc--compact .tcgc__title {
+    font-size: 1.12rem;
+  }
+
+  .tcgc__scope {
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-style: italic;
+    line-height: 1.45;
+  }
+
+  /* ---------- Plot: one row per entry, label above the bar on narrow
+     containers and beside it on wider ones. Rows abut so gridlines run on. */
+  .tcgc__plot {
+    --label-w: 0;
+    --bar-h: 16px;
+    display: grid;
+  }
+
+  .tcgc__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tcgc__label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.55rem 0 0.35rem;
+    min-width: 0;
+  }
+
+  .tcgc__row--ref .tcgc__label,
+  .tcgc__row--axis .tcgc__label {
+    display: none;
+  }
+
+  .tcgc__name {
+    color: var(--fg-strong);
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+
+  .tcgc__detail {
+    color: var(--fg-muted);
+    font-size: var(--step--2);
+    line-height: 1.35;
+  }
+
+  .tcgc__track {
+    position: relative;
+    display: block;
+    min-height: 1.9rem;
+    border-left: 1px solid var(--border);
+  }
+
+  .tcgc__row--ref .tcgc__track {
+    min-height: 1.6rem;
+    border-left-color: transparent;
+  }
+
+  .tcgc__row--axis .tcgc__track {
+    min-height: 1.6rem;
+    border-left-color: transparent;
+    border-top: 1px solid var(--border);
+  }
+
+  .tcgc__grid,
+  .tcgc__ref {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--x) * 1%);
+    width: 1px;
+    background: var(--data-grid);
+  }
+
+  .tcgc__ref {
+    --x: 50;
+    background: color-mix(in srgb, var(--accent) 70%, transparent);
+  }
+
+  .tcgc__row--ref .tcgc__ref {
+    top: 0.35rem;
+  }
+
+  .tcgc__reflabel {
+    position: absolute;
+    left: calc(50% + 0.45rem);
+    right: 0;
+    top: 0;
+    color: var(--fg);
+    font-size: var(--step--2);
+    font-style: italic;
+    line-height: 1.3;
+  }
+
+  .tcgc__bar {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    height: var(--bar-h);
+    margin-top: calc(var(--bar-h) / -2);
+    width: calc(var(--v) * 1%);
+    background: var(--data-model);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .tcgc__row--baseline .tcgc__bar {
+    background: var(--fg-muted);
+  }
+
+  /* 95% interval: a thin line with end caps, centred on the bar end. */
+  .tcgc__whisker {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--lo) * 1%);
+    width: calc((var(--hi) - var(--lo)) * 1%);
+    height: 10px;
+    margin-top: -5px;
+    border-inline: 1.5px solid var(--fg-strong);
+  }
+
+  .tcgc__whisker::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1.5px;
+    margin-top: -0.75px;
+    background: var(--fg-strong);
+  }
+
+  .tcgc__value {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--hi) * 1% + 0.45rem);
+    transform: translateY(-50%);
+    white-space: nowrap;
+    color: var(--fg-strong);
+    font-size: var(--step--1);
+    font-weight: 560;
+    line-height: 1;
+  }
+
+  .tcgc__tick {
+    position: absolute;
+    top: 0.3rem;
+    left: calc(var(--x) * 1%);
+    transform: translateX(-50%);
+    color: var(--fg-muted);
+    font-size: var(--step--2);
+    font-variant-numeric: tabular-nums lining-nums;
+    line-height: 1.2;
+  }
+
+  .tcgc__tick:first-child {
+    transform: none;
+  }
+
+  .tcgc__tick:last-child {
+    transform: translateX(-100%);
+  }
+
+  @container (min-width: 30rem) {
+    .tcgc__plot {
+      --label-w: 11.5rem;
+    }
+
+    .tcgc__row {
+      grid-template-columns: var(--label-w) minmax(0, 1fr);
+      column-gap: 1rem;
+    }
+
+    .tcgc__row--ref .tcgc__label,
+    .tcgc__row--axis .tcgc__label {
+      display: block;
+      padding: 0;
+    }
+
+    .tcgc__label {
+      justify-content: center;
+      padding: 0.6rem 0;
+    }
+
+    .tcgc__track {
+      min-height: 3.6rem;
+    }
+
+    .tcgc__row--axis .tcgc__track,
+    .tcgc__row--ref .tcgc__track {
+      min-height: 1.6rem;
+    }
+  }
+
+  .tcgc--compact .tcgc__plot {
+    --label-w: 9.5rem;
+  }
+
+  @container (min-width: 40rem) {
+    .tcgc--compact .tcgc__plot {
+      --label-w: 13.5rem;
+    }
+  }
+
+  @container (min-width: 46rem) {
+    .tcgc__plot {
+      --label-w: 15rem;
+    }
+  }
+
+  .tcgc__notes {
+    margin: 1.2rem 0 0;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-style: italic;
+    line-height: 1.5;
+    max-width: 72ch;
+  }
+
+  .tcgc--compact .tcgc__notes {
+    margin-top: 0.9rem;
+  }
+
+  /* ---------- Specialist ---------- */
+  .tcgc__parts {
+    display: grid;
+    gap: 2rem 3rem;
+  }
+
+  @container (min-width: 48rem) {
+    .tcgc__parts {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+
+  .tcgc__part {
+    min-width: 0;
+  }
+
+  .tcgc__parthead {
+    margin: 0 0 0.8rem;
+    color: var(--fg);
+    font-size: 1rem;
+    line-height: 1.35;
+  }
+
+  .tcgc__plot--single .tcgc__row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tcgc__plot--single .tcgc__row--meter .tcgc__track {
+    min-height: 3rem;
+  }
+
+  /* Unfilled track behind the meter: a dark step of the same blue. */
+  .tcgc__meter {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 26px;
+    margin-top: -13px;
+    background: color-mix(in srgb, var(--data-model) 12%, var(--bg-plate));
+    border-radius: 0 4px 4px 0;
+  }
+
+  .tcgc__bar--thick {
+    --bar-h: 26px;
+  }
+
+  /* The value sits inside the bar, ending just before the interval starts. */
+  .tcgc__inside {
+    position: absolute;
+    top: 50%;
+    right: calc((var(--v) - var(--lo)) / var(--v) * 100% + 0.5rem);
+    transform: translateY(-50%);
+    color: var(--accent-fg);
+    font-size: var(--step--1);
+    font-weight: 620;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .tcgc__count {
+    margin: 0.4rem 0 0;
+    color: var(--fg);
+    font-size: var(--step--1);
+    line-height: 1.5;
+  }
+
+  .tcgc__count strong,
+  .tcgc__legend strong {
+    color: var(--fg-strong);
+    font-weight: 620;
+  }
+
+  /* One square per audited game, wins first. */
+  .tcgc__units {
+    display: grid;
+    grid-template-columns: repeat(20, minmax(0, 1fr));
+    gap: 2px;
+    max-width: 30rem;
+  }
+
+  .tcgc__unit {
+    aspect-ratio: 1;
+    border-radius: 1px;
+  }
+
+  .tcgc__unit--won,
+  .tcgc__swatch--won {
+    background: var(--data-model);
+  }
+
+  .tcgc__unit--lost,
+  .tcgc__swatch--lost {
+    border: 1px solid var(--fg-muted);
+  }
+
+  .tcgc__legend {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.4rem;
+    font-size: var(--step--1);
+    line-height: 1.4;
+  }
+
+  .tcgc__legend li {
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+  }
+
+  .tcgc__swatch {
+    flex: none;
+    width: 0.8rem;
+    height: 0.8rem;
+    border-radius: 1px;
+    transform: translateY(0.1rem);
+  }
+
+  .tcgc__swatch--none {
+    border: 1px dashed color-mix(in srgb, var(--fg-muted) 60%, transparent);
+  }
+
+  @media (forced-colors: active) {
+    .tcgc__bar,
+    .tcgc__unit--won,
+    .tcgc__swatch--won {
+      background: CanvasText;
+    }
+
+    .tcgc__ref {
+      background: Highlight;
+    }
+  }
+</style>

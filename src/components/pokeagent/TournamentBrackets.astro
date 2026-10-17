@@ -1,0 +1,206 @@
+---
+// Both official Track 1 tournament brackets, transcribed faithfully (see
+// brackets.ts), with MetaHorns' match outlined. Three columns with connector
+// lines when there is room; on narrow screens the rounds stack.
+import Match from './Match.astro';
+import { brackets, BRACKETS_URL } from './brackets';
+
+interface Props {
+  wide?: boolean;
+  class?: string;
+}
+
+const { wide = false, class: className } = Astro.props;
+---
+
+<figure class:list={['plate', 'tb', { wide }, className]}>
+  <div class="plate__frame tb__frame">
+    <div class="tb__brackets">
+      {brackets.map((bracket) => (
+        <section class="tb__bracket" aria-label={`${bracket.format} tournament bracket`}>
+          <p class="tb__format">
+            <span class="tb__format-name">{bracket.format}</span>
+            <span class="tb__format-note">best of 99, games won</span>
+          </p>
+          <div class="tb__rounds">
+            {bracket.rounds.map((round) => (
+              <div class="tb__round">
+                <p class="tb__round-name">{round.name}</p>
+                <ol class="tb__matches">
+                  {round.matches.map((match) => (
+                    <li class="tb__cell">
+                      <Match match={match} />
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  </div>
+  <figcaption>
+    The eight-entrant tournament brackets for both Track 1 formats, transcribed
+    from the <a href={BRACKETS_URL} rel="noopener">official PokéAgent
+    Challenge leaderboard</a>. Each match was best of 99; the scores are games
+    won. MetaHorns’ matches are outlined: it lost its quarterfinal 28–50 to
+    ED-Testing in Gen 1 OU and 16–50 to Q in Gen 9 OU.
+  </figcaption>
+</figure>
+
+<style>
+  .tb__frame {
+    padding: clamp(1rem, 2.5vw, 1.75rem);
+    container-type: inline-size;
+    container-name: tb;
+  }
+
+  .tb__frame p {
+    hyphens: manual;
+  }
+
+  .tb__brackets {
+    display: grid;
+    gap: 2.25rem 3rem;
+  }
+
+  @container tb (min-width: 62rem) {
+    .tb__brackets {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .tb__bracket {
+    container-type: inline-size;
+    container-name: bracket;
+    min-width: 0;
+  }
+
+  .tb__format {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 0.75rem;
+    margin: 0 0 1rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tb__format-name {
+    font-size: var(--step-1);
+    font-weight: 560;
+    color: var(--fg-strong);
+    line-height: 1.2;
+  }
+
+  .tb__format-note {
+    color: var(--fg-muted);
+    font-style: italic;
+    font-size: var(--step--1);
+  }
+
+  .tb__round-name {
+    margin: 0 0 0.5rem;
+    color: var(--fg-muted);
+    font-style: italic;
+    font-size: var(--step--1);
+    line-height: 1.3;
+  }
+
+  .tb__matches {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Narrow: rounds stack; quarterfinals sit two by two when they fit. */
+  .tb__rounds {
+    display: grid;
+    gap: 1.2rem;
+  }
+
+  .tb__matches {
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  @container bracket (min-width: 20rem) {
+    .tb__matches {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tb__round:last-child .tb__matches {
+      grid-template-columns: minmax(0, 1fr);
+      max-width: calc(50% - 0.3rem);
+    }
+  }
+
+  /* Wide: a real bracket. Each cell fills an equal share of its column, so a
+     later-round match sits level with the midpoint of the pair feeding it. */
+  @container bracket (min-width: 30rem) {
+    .tb__rounds {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: 1.6rem;
+    }
+
+    .tb__round {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tb__matches,
+    .tb__round:last-child .tb__matches {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      max-width: none;
+    }
+
+    .tb__cell {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-block: 0.35rem;
+    }
+
+    .tb__cell > :global(.match) {
+      position: relative;
+      z-index: 1;
+    }
+
+    .tb__round:not(:last-child) .tb__cell::after {
+      content: '';
+      position: absolute;
+      right: -0.8rem;
+      width: 0.8rem;
+      border-right: 1px solid var(--fg-muted);
+      opacity: 0.55;
+    }
+
+    .tb__round:not(:last-child) .tb__cell:nth-child(odd)::after {
+      top: 50%;
+      height: 50%;
+      border-top: 1px solid var(--fg-muted);
+    }
+
+    .tb__round:not(:last-child) .tb__cell:nth-child(even)::after {
+      bottom: 50%;
+      height: 50%;
+      border-bottom: 1px solid var(--fg-muted);
+    }
+
+    .tb__round:not(:first-child) .tb__cell::before {
+      content: '';
+      position: absolute;
+      left: -0.8rem;
+      width: 0.8rem;
+      top: 50%;
+      border-top: 1px solid var(--fg-muted);
+      opacity: 0.55;
+    }
+  }
+</style>

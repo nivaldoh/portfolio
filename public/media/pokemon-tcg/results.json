@@ -1,0 +1,40 @@
+{
+  "multi_deck": {
+    "source": "docs/reports/bc_warmstart_report.md (nivaldoh/poketcg @ 1c96a86af6c8289cb781bf9e9283225d75ca2dd8); baseline row from docs/reports/sb3_selfplay_report.md (same commit)",
+    "date": "2026-07-09",
+    "metric": "Reported pooled mirror win rate (%), sampled policy, seat-swapped, Wilson 95% CI",
+    "opponents": ["Lucario (rule-based)", "Abomasnow (rule-based)", "Dragapult ex (rule-based)", "Iono (rule-based)"],
+    "opponent_note": "Four fixed scripted teachers; 'mirror' = the model plays the same deck as the scripted opponent; the 4 mirror cells are pooled.",
+    "games_per_entry": 800,
+    "games_note": "4 mirror cells x 200 games each",
+    "reference_line": { "value": 50, "label": "Parity with the teachers" },
+    "entries": [
+      { "label": "Earlier stock-policy RL baseline", "win_rate": 13.0, "ci95": [11.1, 15.8], "approx": true, "date": "2026-07-08", "note": "Approximate; from the 8 July report" },
+      { "label": "Custom policy, PPO only", "win_rate": 13.9, "ci95": [11.6, 16.4], "approx": false, "date": "2026-07-09" },
+      { "label": "Behaviour cloning", "win_rate": 20.0, "ci95": [17.4, 22.9], "approx": false, "date": "2026-07-09" },
+      { "label": "Behaviour cloning, then tuned PPO", "win_rate": 24.0, "ci95": [21.1, 27.1], "approx": false, "date": "2026-07-09" }
+    ],
+    "caveat": "Local reported evaluation against four fixed scripted opponents. Every model remained below parity with the scripted teachers."
+  },
+  "specialist": {
+    "source": "docs/reports/lucario_mirror_report.md (nivaldoh/poketcg @ 1c96a86af6c8289cb781bf9e9283225d75ca2dd8)",
+    "date": "2026-07-10",
+    "metric": "Reported win rate (%), sampled policy, seat-swapped, Wilson 95% CI",
+    "learner_deck": "Lucario",
+    "opponent": "One fixed rule-based Lucario teacher (mirror)",
+    "games": 800,
+    "wins": 661,
+    "losses": 139,
+    "draws": 0,
+    "win_rate": 82.6,
+    "ci95": [79.8, 85.1],
+    "reference_line": { "value": 50, "label": "Parity with the teacher" },
+    "audit": {
+      "games": 100,
+      "model_wins": 82,
+      "model_wins_by_opponent_deck_exhaustion": 82,
+      "note": "Separate 100-game recorded audit: every model win ended with the opponent unable to draw (deck-out), a legal win condition."
+    },
+    "caveat": "Single fixed opponent. The report flags this as exploitation of that opponent, not general playing strength; transfer to other opponents was untested in this report."
+  }
+}

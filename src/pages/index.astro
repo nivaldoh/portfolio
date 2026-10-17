@@ -1,39 +1,446 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import PostList from '../components/PostList.astro';
 import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProjectPanel from '../components/ProjectPanel.astro';
+import BattleReplay from '../components/wh3/BattleReplay.astro';
+import GoalChange from '../components/robocasa/GoalChange.astro';
+import ResultsChart from '../components/tcg/ResultsChart.astro';
+import SelfPlayDiagram from '../components/pokeagent/SelfPlayDiagram.astro';
+import BeamSection from '../components/BeamSection.astro';
+import { EMAIL, RESUME_URL, SOCIAL_LINKS } from '../consts';
+import advisorShot from '../assets/work/game-agents/wh3-ingame-advisor.jpg';
+import advisorDetail from '../assets/work/game-agents/wh3-ingame-advisor-detail.png';
 
-const posts = (
-  await getCollection('posts', ({ data }) => import.meta.env.DEV || !data.draft)
-)
-  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-  .slice(0, 5);
+const projects = await getCollection(
+  'projects',
+  ({ data }) => import.meta.env.DEV || !data.draft
+);
+const byId = Object.fromEntries(projects.map((p) => [p.id, p]));
+const game = byId['game-agents'];
+const robocasa = byId['robocasa'];
+const tcg = byId['pokemon-tcg'];
+const pokeagent = byId['pokeagent-metamon'];
+
+const experience = [
+  {
+    years: '2024–2026',
+    org: 'Globant',
+    text: 'AI and Google Cloud client work. Multimodal video search and processing pipelines for Paramount/CBS; an LLM translation pipeline for Warner Bros., comparing RAG with fine-tuning; data engineering embedded with Google teams through the Google Extended Workforce.',
+  },
+  {
+    years: '2022–2024',
+    org: 'Globo',
+    text: 'Senior data engineer on production data systems.',
+  },
+  {
+    years: '2017–2021',
+    org: 'DP6',
+    text: 'Data engineer; collaborated with a Google team on the open-source Megalista project.',
+  },
+];
+
+const education = [
+  {
+    years: '2024–2027',
+    org: 'The University of Texas at Austin',
+    text: 'MS in Computer Science (online), in progress; expected December 2027.',
+  },
+  {
+    years: '2017–2022',
+    org: 'Universidade Presbiteriana Mackenzie',
+    text: 'BS in Computer Science.',
+  },
+];
 ---
 
 <BaseLayout>
-  <section>
-    <h1 style="font-size: 1.6rem; margin: 0 0 0.4rem;">
-      {/* TODO: replace with real intro line. Keep it short — one or two sentences. */}
-      TODO: One-line introduction.
-    </h1>
-    <p style="color: var(--fg-muted); margin: 0 0 0.4rem; max-width: 60ch;">
-      {/* TODO: a slightly longer second sentence describing what this site is for and who it's by. */}
-      TODO: A second sentence explaining what you write about and why someone might subscribe.
-    </p>
+  <section class="hero container" aria-labelledby="hero-title">
+    <div class="hero__text">
+      <p class="hero__name">Nivaldo Tokuda</p>
+      <h1 class="hero__title" id="hero-title">I build and evaluate AI agents.</h1>
+      <p class="hero__lede">
+        My recent work spans game environments, robot evaluation, and training
+        experiments, backed by eight years of engineering cloud and data systems.
+      </p>
+      <p class="hero__context">
+        Based in São Paulo, Brazil. MS in Computer Science at UT Austin,
+        expected 2027.
+      </p>
+      <div class="actions">
+        <a class="action action--primary" href="#work">See the work</a>
+        <a class="action" href={RESUME_URL}>Résumé (PDF)</a>
+        <a class="action" href="#contact">Contact</a>
+      </div>
+    </div>
+
+    <figure class="plate hero__plate">
+      <div class="hero__stage">
+        <div class="plate__frame">
+          <Image
+            src={advisorShot}
+            alt="A Total War: WARHAMMER III battle on a volcanic plain. Units with banners fight in the centre; a panel at the top left shows a short text message from the evaluated model."
+            widths={[640, 960, 1280, 1600]}
+            sizes="(min-width: 64rem) 44rem, 100vw"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </div>
+        <div class="plate__frame hero__loupe">
+          <Image
+            src={advisorDetail}
+            alt="Close-up of the in-game advisor panel: “122 s: gpt-6-luna saw us 11/13u 362m seen 13/13u 591m. Send the idle harpies into active fights and put the lord back on the weakened Forsaken, using his ready volley there. f1 attack e7 melee run, f1 ability …”"
+            widths={[470]}
+            sizes="470px"
+            loading="eager"
+          />
+        </div>
+      </div>
+      <figcaption>
+        Total War: WARHAMMER III, 13 October 2026. My mod displays the model’s
+        reply in the advisor panel. The battle kept moving while it answered:
+        its view was already about 14 seconds old here. The model’s army lost.
+      </figcaption>
+    </figure>
   </section>
 
-  <h2 class="section-title">Recent writing</h2>
-  {posts.length === 0 ? (
-    <p style="color: var(--fg-muted);">
-      Nothing here yet. Add a post under <code>src/content/posts/</code>.
-    </p>
-  ) : (
-    <PostList posts={posts} />
-  )}
+  <section id="work" class="feature" aria-labelledby="feature-title">
+    <div class="container">
+      <div class="feature__head">
+        <div>
+          <h2 class="section-heading" id="feature-title">
+            <a href={`/projects/${game.id}/`}>{game.data.title}</a>
+          </h2>
+          <p class="status">{game.data.status}</p>
+        </div>
+        <div>
+          <p class="feature__summary">{game.data.summary}</p>
+          <ul class="link-row">
+            <li><a href={`/projects/${game.id}/`}>Explore the project</a></li>
+            <li><a href={`/projects/${game.id}/#slay-the-spire`}>The Slay the Spire example</a></li>
+          </ul>
+        </div>
+      </div>
+      <BattleReplay variant="feature" />
+    </div>
+  </section>
 
-  <h2 class="section-title">Currently</h2>
-  <p style="color: var(--fg-muted); max-width: 60ch;">
-    {/* TODO: a "now" block — what you're working on this season. Short. Update it occasionally or delete this section. */}
-    TODO: Short note on what you're focused on right now.
-  </p>
+  <section class="more container" aria-label="More selected work">
+    <ProjectPanel project={robocasa} layout="wide">
+      <GoalChange slot="media" variant="compact" />
+    </ProjectPanel>
+
+    <div class="more__pair">
+      <ProjectPanel project={tcg}>
+        <ResultsChart slot="media" variant="multi-deck" compact />
+      </ProjectPanel>
+      <ProjectPanel project={pokeagent}>
+        <SelfPlayDiagram slot="media" compact />
+      </ProjectPanel>
+    </div>
+  </section>
+
+  <BeamSection />
+
+  <section id="about" class="about container" aria-labelledby="about-title">
+    <h2 class="section-heading" id="about-title">Background</h2>
+    <div class="about__grid">
+      <div class="about__bio">
+        <p>
+          I’m a software and AI engineer based in São Paulo, currently pursuing
+          an MS in Computer Science at the University of Texas at Austin. My
+          recent work focuses on agents in games and robotics: building their
+          interfaces, training and evaluating policies, and making the resulting
+          behaviour easier to examine.
+        </p>
+        <p>
+          Before this, I spent more than eight years building cloud and data
+          systems, including production work at Globo and client projects
+          through Globant. I also contribute to open-source projects, including
+          Apache Beam and Metamon.
+        </p>
+      </div>
+
+      <div class="about__record">
+        <h3 class="about__label">Experience</h3>
+        <ol class="timeline">
+          {experience.map((e) => (
+            <li>
+              <span class="timeline__years">{e.years}</span>
+              <div>
+                <p class="timeline__org">{e.org}</p>
+                <p class="timeline__text">{e.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+
+        <h3 class="about__label">Education</h3>
+        <ol class="timeline">
+          {education.map((e) => (
+            <li>
+              <span class="timeline__years">{e.years}</span>
+              <div>
+                <p class="timeline__org">{e.org}</p>
+                <p class="timeline__text">{e.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="contact container" aria-labelledby="contact-title">
+    <h2 class="section-heading" id="contact-title">Contact</h2>
+    <p class="contact__line">
+      Open to AI and research engineering opportunities. Email is the best way
+      to reach me.
+    </p>
+    <p class="contact__email">
+      <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+    </p>
+    <ul class="link-row contact__links">
+      {SOCIAL_LINKS.map((l) => (
+        <li><a href={l.url} rel="me noopener">{l.label}</a></li>
+      ))}
+      <li><a href={RESUME_URL}>Résumé (PDF)</a></li>
+    </ul>
+  </section>
 </BaseLayout>
+
+<style>
+  /* ---------- Hero ---------- */
+  .hero {
+    display: grid;
+    gap: 2.5rem;
+    padding-top: clamp(1.5rem, 5vw, 4.5rem);
+    padding-bottom: clamp(3.5rem, 7vw, 7rem);
+  }
+
+  .hero__name {
+    margin: 0;
+    font-size: var(--step-1);
+    font-style: italic;
+    color: var(--fg-muted);
+  }
+
+  .hero__title {
+    font-size: var(--step-4);
+    font-weight: 380;
+    line-height: 1.02;
+    margin: 0.5rem 0 0;
+    max-width: 12ch;
+  }
+
+  .hero__lede {
+    font-size: var(--step-1);
+    line-height: 1.5;
+    margin: 1.6rem 0 0;
+    max-width: 38ch;
+  }
+
+  .hero__context {
+    color: var(--fg-muted);
+    margin: 0.9rem 0 1.8rem;
+    max-width: 44ch;
+  }
+
+  .hero__plate figcaption {
+    max-width: 60ch;
+  }
+
+  /* The model's reply, enlarged from the same screenshot so it can be read. */
+  .hero__stage {
+    position: relative;
+  }
+
+  .hero__loupe {
+    margin-top: 0.75rem;
+    max-width: 470px;
+    border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  }
+
+  .hero__loupe img {
+    width: 100%;
+  }
+
+  @media (min-width: 40rem) {
+    .hero__stage {
+      padding-bottom: 3.25rem;
+    }
+
+    .hero__loupe {
+      position: absolute;
+      left: 1rem;
+      bottom: 0;
+      width: min(470px, 60%);
+      margin: 0;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .hero__loupe {
+      left: -1.5rem;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .hero {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      align-items: center;
+      gap: 3.5rem;
+    }
+  }
+
+  /* ---------- Featured project ---------- */
+  .feature {
+    background: var(--bg-elev);
+    border-block: 1px solid var(--rule);
+    padding-block: clamp(3rem, 6vw, 5.5rem);
+  }
+
+  .feature__head {
+    display: grid;
+    gap: 1rem 3.5rem;
+    margin-bottom: 2.2rem;
+  }
+
+  .feature__head .section-heading a {
+    color: var(--fg-strong);
+    text-decoration: none;
+  }
+
+  .feature__head .section-heading a:hover {
+    color: var(--accent);
+  }
+
+  .feature__summary {
+    margin: 0 0 0.9rem;
+    max-width: 62ch;
+  }
+
+  @media (min-width: 60rem) {
+    .feature__head {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      align-items: start;
+    }
+  }
+
+  /* ---------- More selected work ---------- */
+  .more {
+    display: grid;
+    gap: clamp(4rem, 8vw, 6.5rem);
+    padding-top: var(--space-section);
+  }
+
+  .more__pair {
+    display: grid;
+    gap: clamp(4rem, 8vw, 6.5rem) 3.5rem;
+  }
+
+  @media (min-width: 60rem) {
+    .more__pair {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  /* ---------- Background ---------- */
+  .about {
+    padding-top: var(--space-section);
+  }
+
+  .about__grid {
+    display: grid;
+    gap: 2.5rem 4rem;
+    margin-top: 1.4rem;
+  }
+
+  .about__bio p {
+    margin: 0 0 1.1rem;
+    max-width: 58ch;
+  }
+
+  .about__label {
+    font-size: 1.05rem;
+    font-weight: 560;
+    color: var(--fg-muted);
+    font-style: italic;
+    margin: 0 0 0.8rem;
+  }
+
+  .about__label + .timeline {
+    margin-bottom: 2.2rem;
+  }
+
+  .timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .timeline li {
+    display: grid;
+    grid-template-columns: 7.5rem minmax(0, 1fr);
+    gap: 1.2rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .timeline__years {
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums lining-nums;
+    font-size: var(--step--1);
+    padding-top: 0.15rem;
+  }
+
+  .timeline__org {
+    margin: 0;
+    color: var(--fg-strong);
+    font-weight: 560;
+  }
+
+  .timeline__text {
+    margin: 0.2rem 0 0;
+    font-size: var(--step--1);
+    line-height: 1.55;
+    color: var(--fg);
+  }
+
+  @media (min-width: 60rem) {
+    .about__grid {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .timeline li {
+      grid-template-columns: 1fr;
+      gap: 0.2rem;
+    }
+  }
+
+  /* ---------- Contact ---------- */
+  .contact {
+    padding-top: var(--space-section);
+  }
+
+  .contact__line {
+    font-size: var(--step-1);
+    max-width: 40ch;
+    margin: 0.6rem 0 1.2rem;
+    line-height: 1.45;
+  }
+
+  .contact__email {
+    margin: 0 0 1.4rem;
+    font-size: var(--step-3);
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+  }
+
+  .contact__email a {
+    text-decoration-thickness: 1px;
+  }
+</style>

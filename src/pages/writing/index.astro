@@ -6,9 +6,13 @@ import { getCollection } from 'astro:content';
 const posts = (
   await getCollection('posts', ({ data }) => import.meta.env.DEV || !data.draft)
 ).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+// Keep the authoring route useful without shipping an empty writing section.
+if (posts.length === 0) return Astro.redirect('/#work');
 ---
 
 <BaseLayout
+  narrow
   title="Writing"
   description="Essays and technical writeups."
 >

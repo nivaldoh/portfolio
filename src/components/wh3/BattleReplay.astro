@@ -1,0 +1,1350 @@
+---
+// Recorded Total War: WARHAMMER III battle, replayed from the exported JSON.
+// The server renders a complete, captioned still at the key moment (no script
+// needed); the browser fetches the recording when the widget nears the viewport
+// and enhances the same markup with playback. Positions are never interpolated.
+import fs from 'node:fs';
+import path from 'node:path';
+import { appliedOrder, clock, momentAt, type Replay } from './replay-core';
+import {
+  decisionHTML,
+  end,
+  frameOf,
+  furnitureSVG,
+  groundSVG,
+  mapLabel,
+  noteHTML,
+  pctOf,
+  start,
+  stripHTML,
+  timeText,
+  timeValueText,
+  unitListHTML,
+  unitsSVG,
+  viewBox,
+  viewText,
+  waitingText,
+} from './replay-render';
+
+interface Props {
+  /** `feature`: homepage (map key folded). `full`: case study (map key open, event list). */
+  variant?: 'feature' | 'full';
+  class?: string;
+}
+
+const { variant = 'feature', class: className } = Astro.props;
+
+const SRC = '/media/game-agents/wh3-cavalry-flank.json';
+const r: Replay = JSON.parse(
+  fs.readFileSync(path.join(process.cwd(), 'public/media/game-agents/wh3-cavalry-flank.json'), 'utf8')
+);
+const applied = appliedOrder(r.decisions);
+const km = r.key_moment;
+const T0 = km?.at ?? r.decisions[applied[0]]?.t ?? start(r);
+const m = momentAt(r, applied, T0);
+const fr = frameOf(r);
+const t0 = start(r);
+const t1 = end(r);
+const outcome = r.meta.outcome === 'won' ? `Won in ${clock(r.meta.battle_s)}` : `${r.meta.outcome} at ${clock(r.meta.battle_s)}`;
+const model = r.meta.model;
+const setting = `${r.meta.effort} reasoning, ${r.meta.prompt}`;
+const modelUnits = r.units.filter((u) => u.side === 'model');
+const aiUnits = r.units.filter((u) => u.side === 'ai');
+const sideOf = new Map(r.units.map((u) => [u.id, u.side]));
+const heading = r.meta.heading.charAt(0).toLowerCase() + r.meta.heading.slice(1);
+const uid = `br-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<div
+  class:list={['br', `br--${variant}`, className]}
+  data-battle-replay
+  data-src={SRC}
+  data-t={T0}
+>
+  <figure class="br__fig" aria-labelledby={`${uid}-cap`}>
+    <div class="br__frame">
+      <div class="br__stage">
+        <div
+          class="br__map"
+          tabindex="0"
+          role="group"
+          aria-label="Battle map. Left and right arrow keys step one recorded sample; Space or K plays and pauses."
+        >
+          <svg class="br__svg" viewBox={viewBox(fr)} role="img" aria-label={mapLabel(r, m)} data-map>
+            <g set:html={groundSVG(r)} />
+            <g class="m-dyn" data-dyn set:html={unitsSVG(r, m, { view: true, mk: 1 })} />
+            <Fragment set:html={furnitureSVG(r)} />
+          </svg>
+          <ul class="visually-hidden" data-unit-list set:html={unitListHTML(r, m)} />
+        </div>
+
+        <div class="br__controls">
+          <div class="br__viewrow">
+            <button type="button" class="br__btn br__toggle" data-act="view" aria-pressed="true" disabled data-js>Model’s view</button>
+            <p class="br__viewline" data-viewline>{viewText(m)}</p>
+          </div>
+          <div class="br__transport" data-js>
+            <button type="button" class="br__btn br__play" data-act="play" aria-pressed="false" disabled>Play</button>
+            <span class="br__clock" data-clock aria-hidden="true">{timeText(r, T0)}</span>
+            <input
+              type="range"
+              class="br__scrub"
+              data-scrub
+              aria-label="Battle time"
+              min={t0}
+              max={t1}
+              step="0.1"
+              value={T0}
+              aria-valuetext={timeValueText(r, T0)}
+              disabled
+            />
+            <div class="br__strip" data-strip aria-hidden="true" style={`--head:${pctOf(r, T0)}%`} set:html={stripHTML(r)} />
+          </div>
+          <div class="br__buttons" data-js>
+            <button type="button" class="br__btn" data-act="prev" disabled>Previous decision</button>
+            <button type="button" class="br__btn" data-act="next" disabled>Next decision</button>
+            <button type="button" class="br__btn" data-act="key" disabled>Watch the key moment</button>
+            <label class="br__speed">
+              <span>Replay speed</span>
+              <select data-speed disabled>
+                <option value="1">1×</option>
+                <option value="4" selected>4×</option>
+                <option value="16">16×</option>
+              </select>
+              <span class="br__speed-note">the real battle ran at 1×</span>
+            </label>
+          </div>
+          <p class="br__status" data-status role="status"></p>
+          <button type="button" class="br__btn" data-retry hidden>Retry loading the recording</button>
+        </div>
+      </div>
+
+      <div class="br__panel">
+        <div class="br__panel-inner">
+          <div class="br__ph">
+            <p class="br__model"><strong>{model}</strong> <span>{setting}</span></p>
+            <p class="br__result"><span>{outcome}</span><span class="br__pclock" data-pclock>{timeText(r, T0)}</span></p>
+            <p class="br__waiting" data-waiting>{waitingText(r, m)}</p>
+          </div>
+          <div
+            class="br__decision"
+            data-decision
+            tabindex="0"
+            role="region"
+            aria-label="The decision in force"
+            set:html={decisionHTML(r, m)}
+          />
+          <div class="br__note" data-note hidden={m.note < 0} set:html={noteHTML(r, m)} />
+        </div>
+      </div>
+    </div>
+
+    <figcaption class="caption br__caption" id={`${uid}-cap`}>
+      A recorded battle, {heading}, that {model} ({setting}) won in {clock(r.meta.battle_s)}; I chose it
+      for its flank, not as a typical result, since across this scenario’s development battles {model}
+      with {r.meta.effort} reasoning won 2 of 9. Positions were recorded about once a second and are
+      shown without interpolation, outlines mark the model’s view, and replay speed is separate from
+      the game, which ran at 1×.
+    </figcaption>
+  </figure>
+
+  <p class="visually-hidden" aria-live="polite" data-live></p>
+
+  <div class="br__below">
+    <details class="br__key">
+      <summary>Map key</summary>
+      <div class="br__key-body">
+        <ul class="br__legend">
+          <li>
+            <svg class="br__sw" viewBox="-14 -12 28 24" aria-hidden="true"><g class="u u--model"><g class="mk"><circle r="7.5" /></g></g></svg>
+            <span><span class="br__nowrap">{model}’s</span> units</span>
+          </li>
+          <li>
+            <svg class="br__sw" viewBox="-14 -12 28 24" aria-hidden="true"><g class="u u--ai"><g class="mk"><path d="M0 -9.5L9.5 0 0 9.5-9.5 0Z" /></g></g></svg>
+            <span>Game AI units</span>
+          </li>
+          <li>
+            <svg class="br__sw" viewBox="-14 -14 28 28" aria-hidden="true"><g class="u u--model is-melee"><g class="mk"><circle class="u-ring" r="12.5" /><circle r="7.5" /></g></g></svg>
+            <span>Ring: in melee</span>
+          </li>
+          <li>
+            <svg class="br__sw" viewBox="-14 -12 28 24" aria-hidden="true"><g class="u u--ai is-fleeing"><g class="mk"><path d="M0 -9.5L9.5 0 0 9.5-9.5 0Z" /></g></g></svg>
+            <span>Faded and dashed, labelled “fleeing”: fleeing</span>
+          </li>
+          <li>
+            <svg class="br__sw" viewBox="-14 -12 28 24" aria-hidden="true"><g class="u u--ai is-unseen"><g class="mk"><path d="M0 -9.5L9.5 0 0 9.5-9.5 0Z" /></g></g></svg>
+            <span>Enemy out of sight: where <span class="br__nowrap">{model}’s</span> army last saw it</span>
+          </li>
+          <li>
+            <svg class="br__sw" viewBox="0 -12 28 24" aria-hidden="true"><polyline class="tr tr--model" points="2,6 12,2 26,-4" /><polyline class="tr-now tr--model" points="12,2 26,-4" /></svg>
+            <span>Recorded movement over the last 20 s; fainter, <span class="br__nowrap">{model}’s</span> route since the start</span>
+          </li>
+          <li>
+            <svg class="br__sw" viewBox="-14 -12 28 24" aria-hidden="true"><line class="v-line" x1="-6" y1="3" x2="9" y2="-3" /><g class="v" transform="translate(-6 3)"><g class="mk"><circle r="7.5" /></g></g></svg>
+            <span>Model’s view: where a unit stood in the observation behind the latest applied reply, joined to where it is now</span>
+          </li>
+          <li>
+            <svg class="br__sw" viewBox="0 -12 28 24" aria-hidden="true"><polyline class="rt-move" points="2,4 24,-2" /><circle class="rt-wp" cx="24" cy="-2" r="2.6" /></svg>
+            <span>Move ordered in that reply, from where the model saw the unit</span>
+          </li>
+          <li>
+            <svg class="br__sw" viewBox="-14 -14 28 28" aria-hidden="true"><polyline class="rt-atk" points="-13,10 -2,2" /><circle class="rt-tgt" r="9" cx="4" cy="-3" /></svg>
+            <span>Attack ordered in that reply, and its target</span>
+          </li>
+          <li>
+            <svg class="br__sw" viewBox="-14 -12 28 24" aria-hidden="true"><path class="rt-x" d="M-5 -5l10 10m0-10l-10 10" /></svg>
+            <span>A move the game rejected</span>
+          </li>
+          <li>
+            <svg class="br__sw" viewBox="0 0 28 24" aria-hidden="true"><rect class="m-terrain" x="6" y="4" width="16" height="16" /></svg>
+            <span>Ground the game reported as restricted at deployment (coarse 32 m cells)</span>
+          </li>
+          <li>
+            <svg class="br__sw" viewBox="0 0 28 24" aria-hidden="true"><rect class="sw-tick" x="5" y="7" width="2" height="12" /><rect class="sw-tick sw-tick--bad" x="11" y="2" width="2" height="17" /><rect class="sw-note" x="16" y="2" width="11" height="4" /></svg>
+            <span>Timeline: a tick for each reply the game applied (taller where an order was rejected); gold bands mark the analyst notes</span>
+          </li>
+        </ul>
+        <div class="br__names">
+          <p class="br__names-h">Labels</p>
+          <ul>
+            {modelUnits.map((u) => <li><span class="br__abbr br__abbr--model">{u.short}</span> {u.name}</li>)}
+          </ul>
+          <ul>
+            {aiUnits.map((u) => <li><span class="br__abbr br__abbr--ai">{u.short}</span> {u.name}</li>)}
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    {variant === 'full' && (
+      <details class="br__events br__key">
+        <summary id={`${uid}-ev`}>Recorded events</summary>
+        <ul aria-labelledby={`${uid}-ev`}>
+          {r.events.map((e) => (
+            <li>
+              <button type="button" class="br__ev" data-seek={e.t} disabled>
+                <span class={`br__ev-mark br__ev-mark--${e.unit ? sideOf.get(e.unit) : 'end'}`} aria-hidden="true" />
+                <span class="br__ev-t">{clock(e.t)}</span>
+                <span class="br__ev-text">{e.text}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </details>
+    )}
+  </div>
+
+  <noscript><style is:inline>[data-battle-replay] [data-js]{display:none!important}[data-battle-replay] .br__ev{pointer-events:none}</style></noscript>
+</div>
+
+<script>
+  import { enhance } from './replay-client';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-battle-replay]')) enhance(root);
+</script>
+
+<style>
+  .br {
+    --br-gap: clamp(0.75rem, 2vw, 1.1rem);
+    container-type: inline-size;
+    hyphens: manual;
+  }
+
+  .br__fig {
+    margin: 0;
+  }
+
+  .br ul,
+  .br li {
+    margin: 0;
+  }
+
+  /* Inside a case study, prose rules would hyphenate the panel's short lines. */
+  .br :global(p) {
+    hyphens: manual;
+  }
+
+  /* ---------- The instrument: map and controls | decision panel ---------- */
+  .br__frame {
+    display: grid;
+    background: var(--bg-plate);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-plate);
+    overflow: hidden;
+  }
+
+  .br__stage {
+    min-width: 0;
+  }
+
+  .br__map {
+    container-type: inline-size;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .br__map:focus-visible {
+    outline-offset: -3px;
+  }
+
+  .br__svg {
+    width: 100%;
+    height: auto;
+    font-family: var(--font-serif);
+    --mk: 1;
+  }
+
+  /* Markers and labels keep a readable size on narrow maps. */
+  @container (max-width: 44rem) {
+    .br__svg {
+      --mk: 1.2;
+    }
+  }
+
+  @container (max-width: 30rem) {
+    .br__svg {
+      --mk: 1.6;
+    }
+  }
+
+  /* Stacked: the panel sits below the map, so it may grow; a minimum height keeps
+     short replies from pulling the caption up and down. */
+  .br__panel {
+    min-width: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .br__panel-inner {
+    min-height: 30rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  @container (min-width: 58rem) {
+    .br__frame {
+      grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
+    }
+
+    /* The left column sets the height; the panel scrolls inside it. */
+    .br__panel {
+      position: relative;
+      height: auto;
+      border-top: 0;
+      border-left: 1px solid var(--border);
+    }
+
+    .br__panel-inner {
+      position: absolute;
+      inset: 0;
+      min-height: 0;
+    }
+
+    .br__decision {
+      overflow-y: auto;
+    }
+  }
+
+  /* ---------- Controls ---------- */
+  .br__controls {
+    display: grid;
+    gap: 0.6rem;
+    padding: 0.75rem var(--br-gap) 0.95rem;
+  }
+
+  .br__viewrow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.9rem;
+  }
+
+  .br__viewline {
+    flex: 1 1 18rem;
+    margin: 0;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-style: italic;
+    line-height: 1.4;
+  }
+
+  .br__transport {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      'play clock scrub'
+      '.    .     strip';
+    align-items: center;
+    column-gap: 0.9rem;
+  }
+
+  .br__play {
+    grid-area: play;
+  }
+
+  .br__clock {
+    grid-area: clock;
+  }
+
+  .br__scrub {
+    grid-area: scrub;
+  }
+
+  .br__strip {
+    grid-area: strip;
+  }
+
+  @container (max-width: 34rem) {
+    .br__transport {
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-areas:
+        'play clock'
+        'scrub scrub'
+        'strip strip';
+      row-gap: 0.2rem;
+    }
+  }
+
+  .br__btn {
+    appearance: none;
+    min-height: 2.6rem;
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--bg-control);
+    color: var(--fg);
+    font-size: 0.98rem;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: border-color 120ms ease, color 120ms ease;
+  }
+
+  .br__btn:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+    color: var(--fg-strong);
+  }
+
+  .br__btn:disabled {
+    cursor: default;
+    color: var(--fg-muted);
+    opacity: 0.6;
+  }
+
+  .br__play {
+    min-width: 5.8rem;
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    color: var(--fg-strong);
+    font-weight: 560;
+  }
+
+  .br__play[aria-pressed='true'] {
+    background: color-mix(in srgb, var(--accent) 12%, var(--bg-control));
+  }
+
+  .br__clock {
+    font-variant-numeric: tabular-nums lining-nums;
+    color: var(--fg-strong);
+    white-space: nowrap;
+  }
+
+  /* A small square carries the toggle's state visually; aria-pressed carries it for
+     assistive technology. */
+  .br__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55em;
+  }
+
+  .br__toggle::before {
+    content: '';
+    flex: none;
+    width: 0.7em;
+    height: 0.7em;
+    border: 1px solid var(--fg-muted);
+    border-radius: 1px;
+  }
+
+  .br__toggle[aria-pressed='true']::before {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  /* Range with a 16 px thumb; the strip is inset by half of it, so both share one axis. */
+  .br__scrub {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    height: 2.6rem;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .br__scrub:disabled {
+    cursor: default;
+  }
+
+  .br__scrub::-webkit-slider-runnable-track {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border);
+  }
+
+  .br__scrub::-moz-range-track {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border);
+  }
+
+  .br__scrub::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    margin-top: -6.5px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-plate);
+    background: var(--fg-strong);
+  }
+
+  .br__scrub::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-plate);
+    background: var(--fg-strong);
+  }
+
+  .br__scrub:focus-visible {
+    outline-offset: 0;
+  }
+
+  .br__strip {
+    position: relative;
+    margin: -0.4rem 8px 0;
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .br__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .br__speed {
+    flex: 1 1 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.2rem 0.6rem;
+    margin-top: 0.1rem;
+    font-size: var(--step--1);
+    color: var(--fg);
+  }
+
+  .br__speed select {
+    min-height: 2.6rem;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--bg-control);
+    color: var(--fg-strong);
+    font: inherit;
+    font-size: 0.98rem;
+    cursor: pointer;
+  }
+
+  .br__speed select:disabled {
+    color: var(--fg-muted);
+    cursor: default;
+  }
+
+  .br__speed-note {
+    color: var(--fg-muted);
+    font-style: italic;
+  }
+
+  .br__status {
+    margin: 0;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-style: italic;
+  }
+
+  .br__status:empty {
+    display: none;
+  }
+
+  @container (max-width: 30rem) {
+    .br__buttons .br__btn {
+      flex: 1 1 auto;
+    }
+  }
+
+  /* ---------- Decision panel ---------- */
+  .br__ph {
+    padding: 0.85rem var(--br-gap) 0.65rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .br__ph p {
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .br__model strong {
+    color: var(--fg-strong);
+    font-size: 1.08rem;
+    font-weight: 600;
+  }
+
+  .br__model span {
+    margin-left: 0.25em;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-style: italic;
+  }
+
+  .br__result {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.15rem !important;
+    font-size: var(--step--1);
+  }
+
+  .br__pclock {
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  .br__waiting {
+    min-height: 1.4em;
+    margin-top: 0.15rem !important;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-style: italic;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  .br__decision {
+    flex: 1 1 auto;
+    min-height: 0;
+    overscroll-behavior: contain;
+    padding: 0.85rem var(--br-gap) 0.8rem;
+    font-size: var(--step--1);
+    line-height: 1.5;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .br__decision:focus-visible {
+    outline-offset: -3px;
+  }
+
+  .br__note {
+    padding: 0.75rem var(--br-gap) 0.9rem;
+    border-top: 1px solid var(--border);
+    background: color-mix(in srgb, var(--accent) 5%, var(--bg-plate));
+    font-size: var(--step--1);
+    line-height: 1.5;
+  }
+
+  .br__note[hidden] {
+    display: none;
+  }
+
+  /* Panel content (markup from replay-render.ts). */
+  .br :global(.p-applied) {
+    margin: 0 0 0.65rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    column-gap: 1rem;
+  }
+
+  .br :global(.p-applied strong) {
+    color: var(--fg-strong);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  .br :global(.p-count) {
+    color: var(--fg-muted);
+    font-style: italic;
+  }
+
+  .br :global(.p-reply) {
+    margin: 0;
+  }
+
+  .br :global(.p-reply figcaption) {
+    margin: 0;
+    color: var(--fg-muted);
+    font-size: 0.86rem;
+    font-style: italic;
+  }
+
+  .br :global(.p-reply blockquote) {
+    margin: 0.3rem 0 0;
+    padding: 0.05rem 0 0.05rem 0.85rem;
+    border-left: 2px solid var(--accent);
+    color: var(--fg-strong);
+    font-size: 1.04rem;
+    font-style: italic;
+    line-height: 1.45;
+  }
+
+  .br :global(.p-reply blockquote p) {
+    margin: 0;
+  }
+
+  .br :global(.p-ids) {
+    margin: 0.45rem 0 0;
+    color: var(--fg-muted);
+    font-size: 0.86rem;
+  }
+
+  .br :global(.p-h) {
+    margin: 0.95rem 0 0.25rem;
+    color: var(--fg-muted);
+    font-size: 0.86rem;
+    font-style: italic;
+  }
+
+  .br :global(.p-orders) {
+    list-style: none;
+    padding: 0;
+  }
+
+  .br :global(.p-orders li) {
+    padding: 0.28rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .br :global(.p-orders li:last-child) {
+    border-bottom: 0;
+  }
+
+  .br :global(.p-unit) {
+    color: var(--fg-strong);
+  }
+
+  .br :global(.p-status) {
+    color: var(--fg-muted);
+    font-style: italic;
+  }
+
+  .br :global(.p-status--bad) {
+    color: var(--data-miss);
+    font-style: normal;
+  }
+
+  .br :global(.is-rejected .p-act) {
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, var(--data-miss) 70%, transparent);
+  }
+
+  .br :global(.p-none),
+  .br :global(.p-empty) {
+    margin: 0.3rem 0 0;
+    color: var(--fg-muted);
+    font-style: italic;
+  }
+
+  .br :global(.p-age) {
+    margin: 0.9rem 0 0;
+  }
+
+  .br :global(.p-age strong) {
+    color: var(--fg-strong);
+    font-weight: 600;
+  }
+
+  .br :global(.p-age span) {
+    color: var(--fg-muted);
+  }
+
+  .br :global(.p-memo) {
+    margin-top: 0.75rem;
+  }
+
+  .br :global(.p-memo summary) {
+    padding-block: 0.35rem;
+    color: var(--fg-muted);
+    font-style: italic;
+    cursor: pointer;
+  }
+
+  .br :global(.p-memo summary:hover) {
+    color: var(--fg);
+  }
+
+  .br :global(.p-memo p) {
+    margin: 0.2rem 0 0;
+    padding-left: 0.85rem;
+    border-left: 1px solid var(--border);
+  }
+
+  .br :global(.p-note-label) {
+    margin: 0;
+    color: var(--accent);
+    font-size: 0.86rem;
+    font-style: italic;
+  }
+
+  .br :global(.p-note-title) {
+    margin: 0.15rem 0 0.2rem;
+    color: var(--fg-strong);
+    font-weight: 560;
+  }
+
+  .br :global(.p-note-text) {
+    margin: 0;
+  }
+
+  /* ---------- Map marks (markup from replay-render.ts) ----------
+     Opacity goes on strokes and fills, not on elements, so overlapping marks
+     don't composite into darker blocks. */
+  .br :global(.mk) {
+    transform: scale(var(--mk, 1));
+  }
+
+  .br :global(.m-field) {
+    fill: var(--bg-plate);
+  }
+
+  .br :global(.m-grid) {
+    fill: none;
+    stroke: var(--data-grid);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .br :global(.m-terrain) {
+    fill: var(--data-terrain);
+  }
+
+  .br :global(.m-bar) {
+    fill: none;
+    stroke: var(--fg-muted);
+    stroke-width: 1.25;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .br :global(.m-north) {
+    fill: var(--fg-muted);
+  }
+
+  .br :global(.m-furn-t) {
+    fill: var(--fg-muted);
+    font-size: 12px;
+  }
+
+  .br :global(.tr),
+  .br :global(.tr-now) {
+    fill: none;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .br :global(.tr) {
+    stroke-width: 1;
+    stroke-opacity: 0.3;
+  }
+
+  .br :global(.tr-now) {
+    stroke-width: 1.75;
+    stroke-opacity: 0.75;
+  }
+
+  .br :global(.tr--model) {
+    stroke: var(--data-model);
+  }
+
+  .br :global(.tr--ai) {
+    stroke: var(--data-ai);
+  }
+
+  .br :global(.v-line) {
+    stroke: var(--fg);
+    stroke-width: 1;
+    stroke-opacity: 0.5;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .br :global(.v circle),
+  .br :global(.v path) {
+    fill: none;
+    stroke: var(--fg);
+    stroke-width: 1.1;
+    stroke-opacity: 0.7;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .br :global(.rt-move),
+  .br :global(.rt-bad),
+  .br :global(.rt-atk) {
+    fill: none;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .br :global(.rt-move) {
+    stroke: var(--data-model);
+    stroke-width: 1.6;
+    stroke-dasharray: 6 4;
+  }
+
+  .br :global(.rt-bad) {
+    stroke: var(--data-miss);
+    stroke-width: 1.6;
+    stroke-dasharray: 6 4;
+  }
+
+  .br :global(.rt-wp) {
+    fill: var(--bg-plate);
+    stroke: var(--data-model);
+    stroke-width: 1.4;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .br :global(.rt-atk) {
+    stroke: var(--data-model);
+    stroke-width: 1.5;
+    stroke-dasharray: 0.5 4;
+  }
+
+  .br :global(.rt-tgt) {
+    fill: none;
+    stroke: var(--data-model);
+    stroke-width: 1.3;
+    stroke-dasharray: 2 3;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .br :global(.rt-x) {
+    fill: none;
+    stroke: var(--data-miss);
+    stroke-width: 2;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .br :global(.u circle),
+  .br :global(.u path) {
+    stroke: var(--bg-plate);
+    stroke-width: 1.2;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .br :global(.u--model circle) {
+    fill: var(--data-model);
+  }
+
+  .br :global(.u--ai path) {
+    fill: var(--data-ai);
+  }
+
+  .br :global(.u .u-ring) {
+    fill: none;
+    stroke-width: 1.5;
+    stroke-opacity: 0.85;
+  }
+
+  .br :global(.u--model .u-ring) {
+    stroke: var(--data-model);
+  }
+
+  .br :global(.u--ai .u-ring) {
+    stroke: var(--data-ai);
+  }
+
+  .br :global(.u--model.is-fleeing circle:not(.u-ring)),
+  .br :global(.u--ai.is-fleeing path) {
+    fill-opacity: 0.28;
+    stroke-width: 1.4;
+    stroke-dasharray: 3 2;
+  }
+
+  .br :global(.u--model.is-fleeing circle:not(.u-ring)) {
+    stroke: var(--data-model);
+  }
+
+  .br :global(.u--ai.is-fleeing path) {
+    stroke: var(--data-ai);
+  }
+
+  .br :global(.u.is-unseen path) {
+    fill: none;
+    stroke: var(--data-ai);
+    stroke-width: 1.3;
+    stroke-opacity: 0.65;
+    stroke-dasharray: 3 2.5;
+  }
+
+  .br :global(.lbl-t) {
+    font-size: 12.5px;
+    paint-order: stroke;
+    stroke: var(--bg-plate);
+    stroke-width: 3.5px;
+    stroke-linejoin: round;
+  }
+
+  .br :global(.lbl-t--model) {
+    fill: var(--data-model);
+  }
+
+  .br :global(.lbl-t--ai) {
+    fill: var(--data-ai);
+  }
+
+  .br :global(.lbl-t.is-unseen) {
+    fill-opacity: 0.75;
+  }
+
+  .br :global(.lbl-n) {
+    fill: var(--fg-muted);
+    font-style: italic;
+  }
+
+  .br :global(.lbl-lead) {
+    stroke: var(--fg-muted);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .br :global(.lbl.is-off) {
+    display: none;
+  }
+
+  .br :global(.lbl.is-off.is-hover) {
+    display: inline;
+  }
+
+  /* ---------- Timeline strip ---------- */
+  .br :global(.st-rows) {
+    position: relative;
+    height: 2.6rem;
+  }
+
+  .br :global(.st-row) {
+    position: absolute;
+    left: 0;
+    right: 0;
+  }
+
+  .br :global(.st-row > span) {
+    position: absolute;
+  }
+
+  .br :global(.st-row--notes) {
+    top: 2px;
+    height: 4px;
+  }
+
+  .br :global(.st-n) {
+    top: 0;
+    height: 4px;
+    border-radius: 1px;
+    background: color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+
+  .br :global(.st-row--ticks) {
+    top: 10px;
+    height: 18px;
+  }
+
+  .br :global(.st-t) {
+    bottom: 2px;
+    width: 1.5px;
+    height: 12px;
+    margin-left: -0.75px;
+    background: color-mix(in srgb, var(--data-model) 70%, transparent);
+  }
+
+  .br :global(.st-t--none) {
+    height: 5px;
+    background: var(--fg-muted);
+  }
+
+  .br :global(.st-t--bad) {
+    height: 17px;
+    background: var(--data-miss);
+  }
+
+  .br :global(.st-t.is-current) {
+    width: 2.5px;
+    margin-left: -1.25px;
+    background: var(--fg-strong);
+  }
+
+  .br :global(.st-row--events) {
+    top: 30px;
+    height: 10px;
+  }
+
+  .br :global(.st-e) {
+    top: 1px;
+    width: 8px;
+    height: 8px;
+    margin-left: -4px;
+  }
+
+  .br :global(.st-e--model) {
+    border-radius: 50%;
+    background: var(--data-model);
+  }
+
+  .br :global(.st-e--ai) {
+    background: var(--data-ai);
+    transform: rotate(45deg) scale(0.85);
+  }
+
+  .br :global(.st-e--end) {
+    top: 0;
+    width: 2px;
+    height: 10px;
+    margin-left: -1px;
+    background: var(--fg-strong);
+  }
+
+  .br :global(.st-head) {
+    position: absolute;
+    top: -2px;
+    bottom: 0;
+    left: var(--head, 0%);
+    width: 1px;
+    margin-left: -0.5px;
+    background: var(--fg-strong);
+    pointer-events: none;
+  }
+
+  .br :global(.st-minutes) {
+    position: relative;
+    height: 1.1rem;
+    color: var(--fg-muted);
+    font-size: 0.74rem;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  .br :global(.st-minutes span) {
+    position: absolute;
+    transform: translateX(-50%);
+    line-height: 1;
+  }
+
+  @container (max-width: 30rem) {
+    .br :global(.st-minutes span:nth-child(even)) {
+      display: none;
+    }
+  }
+
+  /* ---------- Caption, map key, events ---------- */
+  .br__caption {
+    max-width: 80ch;
+    margin-top: 0.7rem;
+  }
+
+  .br__below {
+    display: grid;
+    gap: 0.5rem 2.5rem;
+    margin-top: 0.3rem;
+  }
+
+  .br--full .br__below {
+    margin-top: 1rem;
+  }
+
+  @container (min-width: 58rem) {
+    .br--full .br__below {
+      grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
+      align-items: start;
+    }
+  }
+
+  .br__key > summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    min-height: 2.5rem;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-style: italic;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .br__key > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .br__key > summary::before {
+    content: '+';
+    width: 1ch;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-style: normal;
+  }
+
+  .br__key[open] > summary::before {
+    content: '−';
+  }
+
+  .br__key > summary:hover {
+    color: var(--fg);
+  }
+
+  .br__key-body {
+    display: grid;
+    gap: 1rem 2rem;
+    padding: 0.3rem 0 0.6rem;
+  }
+
+  @container (min-width: 40rem) {
+    .br__key-body {
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    }
+  }
+
+  .br__legend {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0.4rem;
+    font-size: var(--step--1);
+    line-height: 1.4;
+  }
+
+  .br__legend li {
+    display: grid;
+    grid-template-columns: 2.1rem minmax(0, 1fr);
+    align-items: start;
+    gap: 0.5rem;
+  }
+
+  .br__sw {
+    width: 2.1rem;
+    height: 1.6rem;
+    margin-top: -0.12rem;
+    overflow: visible;
+    --mk: 0.85;
+  }
+
+  .br :global(.sw-tick) {
+    fill: color-mix(in srgb, var(--data-model) 70%, transparent);
+  }
+
+  .br :global(.sw-tick--bad) {
+    fill: var(--data-miss);
+  }
+
+  .br :global(.sw-note) {
+    fill: color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+
+  .br__nowrap {
+    white-space: nowrap;
+  }
+
+  .br__names {
+    font-size: var(--step--1);
+    line-height: 1.45;
+  }
+
+  .br__names-h,
+  .br__events-h {
+    margin: 0 0 0.35rem;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-style: italic;
+  }
+
+  .br__names ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 0.6rem;
+  }
+
+  .br__abbr {
+    display: inline-block;
+    min-width: 2.7em;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  .br__abbr--model {
+    color: var(--data-model);
+  }
+
+  .br__abbr--ai {
+    color: var(--data-ai);
+  }
+
+  .br--full .br__events {
+    padding-top: 0.55rem;
+  }
+
+  .br__events ul {
+    list-style: none;
+    padding: 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .br__ev {
+    appearance: none;
+    display: grid;
+    grid-template-columns: 0.8rem 2.6rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.15rem 0.3rem;
+    border: 0;
+    border-bottom: 1px solid var(--rule);
+    background: transparent;
+    color: var(--fg);
+    font-size: var(--step--1);
+    line-height: 1.35;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .br__ev:hover:not(:disabled) {
+    background: var(--bg-elev);
+    color: var(--fg-strong);
+  }
+
+  .br__ev:disabled {
+    cursor: default;
+  }
+
+  .br__ev-t {
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  .br__ev-mark {
+    justify-self: center;
+    width: 8px;
+    height: 8px;
+  }
+
+  .br__ev-mark--model {
+    border-radius: 50%;
+    background: var(--data-model);
+  }
+
+  .br__ev-mark--ai {
+    background: var(--data-ai);
+    transform: rotate(45deg) scale(0.85);
+  }
+
+  .br__ev-mark--end {
+    width: 2px;
+    height: 12px;
+    background: var(--fg-strong);
+  }
+</style>

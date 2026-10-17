@@ -1,0 +1,75 @@
+---
+// A Plate whose image is swapped for a rearranged version of the same
+// figure on narrower screens (e.g. a six-card strip shown as a grid), so the
+// figure stays legible on a phone instead of shrinking.
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Source {
+  /** Media query, e.g. "(max-width: 30rem)". First match wins. */
+  media: string;
+  src: ImageMetadata;
+}
+
+interface Props {
+  /** The full-width arrangement. */
+  src: ImageMetadata;
+  /** Narrower arrangements, most specific first. */
+  sources: Source[];
+  alt: string;
+  caption?: string;
+  class?: string;
+}
+
+const { src, sources, alt, caption, class: className } = Astro.props;
+
+const upTo = (img: ImageMetadata) =>
+  [...[480, 800, 1200].filter((w) => w < img.width), img.width];
+
+const main = await getImage({ src, widths: upTo(src), format: 'webp' });
+const alts = await Promise.all(
+  sources.map(async (s) => ({
+    media: s.media,
+    width: s.src.width,
+    height: s.src.height,
+    image: await getImage({ src: s.src, widths: upTo(s.src), format: 'webp' }),
+  }))
+);
+---
+
+<figure class:list={['plate', className]}>
+  <div class="plate__frame">
+    <picture>
+      {alts.map((a) => (
+        <source
+          media={a.media}
+          srcset={a.image.srcSet.attribute}
+          sizes="100vw"
+          width={a.width}
+          height={a.height}
+          type="image/webp"
+        />
+      ))}
+      <img
+        src={main.src}
+        srcset={main.srcSet.attribute}
+        sizes="(min-width: 76rem) 72rem, 100vw"
+        width={src.width}
+        height={src.height}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+      />
+    </picture>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  picture,
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+</style>

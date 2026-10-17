@@ -1,0 +1,159 @@
+---
+title: 'Pokémon TCG: training and evaluating agents'
+subtitle: Behaviour cloning, PPO fine-tuning, and a closer look at one strong result
+description: 'A training and evaluation workflow for a supplied Pokémon TCG simulator: legal-action masking, a custom policy, behaviour cloning from scripted players, PPO fine-tuning, and an investigation of what a high win rate against one opponent meant.'
+summary: 'I built a training and evaluation workflow around a supplied Pokémon TCG simulator, with legal-action masking, a custom policy, behaviour cloning and PPO fine-tuning. Inspecting recorded games showed how a strong result against one scripted opponent could fail to establish broader playing strength.'
+status: 'Experiments from June–July 2026; figures from my dated evaluation reports'
+period: 'June–July 2026'
+order: 3
+credits:
+  - 'The Pokémon TCG game simulator and Python SDK supplied for a Kaggle competition. Its licence restricts redistribution, so none of it appears here.'
+  - 'Stable-Baselines3 and sb3-contrib, including MaskablePPO'
+  - 'A legacy Transformer and MCTS reinforcement-learning starter'
+  - 'Four imported rule-based agents (Lucario, Abomasnow, Dragapult ex and Iono decks), used as teachers and as evaluation opponents'
+---
+
+import Details from '../../components/Details.astro';
+import ResultsChart from '../../components/tcg/ResultsChart.astro';
+import TrainingLoop from '../../components/tcg/TrainingLoop.astro';
+
+Pokémon TCG is a card game with hidden information and long chains of small
+decisions: which card to play, which attack to use, which cards to choose for an
+effect. In these experiments the learner makes about 70 recorded decisions per
+game. I built a workflow around a supplied game simulator to train policies by
+imitating scripted players and by reinforcement learning, then to evaluate them
+against fixed scripted opponents. The most useful result came from asking what
+a strong-looking number actually meant.
+
+<TrainingLoop />
+
+## What I built
+
+- A Gymnasium environment around the simulator. Each decision becomes a choice
+  among legal options with a mask, the opponent's turns run inside the
+  environment, and the reward arrives only when the game ends.
+- Multi-card selections split into a sequence of masked picks closed by a STOP
+  action, so training and evaluation handle them the same way.
+- A PyTorch policy that embeds card and attack identities and scores every
+  legal option against the board, the hand, the open menu and the cards already
+  picked.
+- Behaviour cloning from games between four imported scripted teachers, with
+  whole games held out for validation. The cloned weights then move into a
+  custom Stable-Baselines3 policy for PPO fine-tuning against mixtures of
+  opponents.
+- Seat-swapped evaluation of each deck against each scripted opponent, and a
+  recorder that saves every decision of a game for inspection.
+
+<Details summary="Environment and action handling">
+
+- The environment wraps the battle loop in `reset()` and `step()`. It plays the
+  opponent's turns itself and resolves decisions the learner does not make.
+- Options are padded to 128 slots. The legal-action mask is exposed both in the
+  observation and through `action_masks()`, the interface MaskablePPO expects.
+- A multi-select decision becomes a series of masked single picks. A reserved
+  STOP slot commits the chosen set, and the selection commits automatically
+  once it reaches the maximum count.
+- The reward is +1 for a win, −1 for a loss and 0 for a draw, given only at the
+  end of the game.
+
+</Details>
+
+<Details summary="Policy network">
+
+- The core network is plain PyTorch, independent of Stable-Baselines3. It keeps
+  one learned embedding per card identity (32 dimensions) and per attack
+  identity (16).
+- Each option becomes a latent vector. The context combines the game state,
+  embeddings for the 12 board slots, pooled hand and discard embeddings, and
+  averages over the menu options and the options already picked, so each pick
+  of a multi-select is conditioned on the earlier ones.
+- One shared scorer turns every option into a logit; a separate head estimates
+  the value of the position.
+
+</Details>
+
+## Learning from four scripted teachers
+
+The first question was how much of the scripted players' behaviour the policy
+could learn. Each model played mirror matches, where both sides use the same
+deck, against each of the four teachers.
+
+<ResultsChart variant="multi-deck" />
+
+PPO alone reached 13.9%, close to the earlier baseline of about 13%. Behaviour
+cloning reached 20.0%; tuning PPO after cloning reached 24.0%. The useful change
+was in the training recipe, while the custom architecture alone showed little
+improvement in this comparison.
+
+Every model remained below parity with the teachers. The clone matched the
+teacher's move on 79.6% of held-out decisions, leaving room for errors to
+accumulate over a game. These are findings about this setup, not a general
+verdict on the architecture or PPO.
+
+<Details summary="Cloning data, transfer and PPO settings">
+
+- The cloning data came from 2,000 games between the teachers, covering all 16
+  ordered deck pairings with seats swapped: 286,035 recorded decisions. Games
+  were split into training and holdout sets by game, so no game appears in
+  both.
+- Holdout accuracy was 0.796 (0.803 for single picks, 0.765 for multi-select),
+  against 0.217 for choosing a random legal option.
+- After the weights move into the Stable-Baselines3 policy, a check confirms the
+  transferred policy produces the same logits before training continues.
+- In the first fine-tuning recipe (learning rate 5e-5, target KL 0.02), the
+  entropy bonus pushed the sharply peaked clone toward uniform choices.
+  The recipe that worked used no entropy bonus, a learning rate of 3e-5 and a
+  target KL of 0.01. It climbed from 17% to 24% over 153,600 steps and then
+  plateaued. The Dragapult ex mirror rose from 7.0% after cloning to 22.5%
+  (95% interval 17.3–28.8), the first per-deck gain from PPO in these
+  experiments that was separated from the clone by its interval.
+- The 9 July entries were evaluated over 200 seat-swapped games per deck and
+  opponent, with the policy sampling its actions; the pooled figure combines
+  the four mirror pairings.
+
+</Details>
+
+## One opponent, one strong number
+
+Next I narrowed the task to Lucario against the scripted Lucario teacher.
+A specialist clone followed by PPO reached a reported 82.6% over 800 games.
+The teacher's games against itself were balanced, making 50% a useful reference
+for this matchup.
+
+<ResultsChart variant="specialist" />
+
+## What did the improvement mean?
+
+I recorded a separate 100-game audit to examine how the games ended. All 82
+model wins came from the opponent running out of cards to draw. Deck-out is a
+legal win condition; the finding points to exploiting this fixed opponent's
+behaviour, rather than a scoring bug.
+
+The campaign did not test transfer to other opponents. The high win rate alone
+did not establish broader playing strength; inspecting the outcomes exposed
+what the aggregate number left out.
+
+<Details summary="The specialist's training stages">
+
+| Stage (Lucario mirror only)                          | Win rate              | Games |
+| ---------------------------------------------------- | --------------------- | ----- |
+| Clone trained on all four decks                      | 22.8%                 | 400   |
+| Lucario-only clone (4,000 games, 537,922 decisions)  | 38.8%                 | 400   |
+| Plus PPO, cautious recipe                            | plateau at 45.9–46.8% | 400   |
+| Plus PPO, learning rate 1e-4 and target KL 0.02      | 84.0%                 | 200   |
+| Final checkpoint                                     | 82.6% (79.8–85.1)     | 800   |
+
+The Lucario-only clone matched the teacher's choice 0.934 of the time on
+held-out games. Choosing the most likely action instead of sampling gave 85.0%
+(95% interval 79.4–89.3) over 200 games. No evaluation game in this campaign
+ended in a draw.
+
+</Details>
+
+## What this page shows
+
+The simulator is licensed for competition use only, so this page uses an
+original diagram and the figures from my dated evaluation reports (9 and 10
+July 2026) rather than code, replays or game data. The checkpoints, evaluation
+logs and audit recordings behind those figures are kept locally, and the
+results have not been independently reproduced.

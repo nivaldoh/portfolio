@@ -11,9 +11,12 @@ interface Props {
   type?: 'website' | 'article';
   pubDate?: Date;
   updatedDate?: Date;
+  /** Wrap the page in the narrow reading column (posts, plain pages).
+      Otherwise the page lays out its own `.container` sections. */
+  narrow?: boolean;
 }
 
-const props = Astro.props;
+const { narrow = false, ...props } = Astro.props;
 ---
 
 <!doctype html>
@@ -22,12 +25,17 @@ const props = Astro.props;
     <BaseHead {...props} />
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
     <div class="site">
       <Header />
-      <main>
-        <div class="container">
+      <main id="main">
+        {narrow ? (
+          <div class="container container--narrow">
+            <slot />
+          </div>
+        ) : (
           <slot />
-        </div>
+        )}
       </main>
       <Footer />
     </div>

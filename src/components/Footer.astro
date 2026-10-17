@@ -1,18 +1,18 @@
 ---
-import { SOCIAL_LINKS } from '../consts';
+import { SOCIAL_LINKS, EMAIL, SITE_TITLE } from '../consts';
 ---
 
 <footer class="site-footer">
   <div class="container">
-    <span class="colophon">Charted from a darker corner of the web</span>
+    <span class="colophon">{SITE_TITLE}</span>
     <span>
-      <a href="/rss.xml">RSS</a>
       {SOCIAL_LINKS.map((l) => (
         <>
-          <span aria-hidden="true"> · </span>
           <a href={l.url} rel="me noopener">{l.label}</a>
+          <span aria-hidden="true"> · </span>
         </>
       ))}
+      <a href={`mailto:${EMAIL}`}>Email</a>
     </span>
   </div>
 </footer>

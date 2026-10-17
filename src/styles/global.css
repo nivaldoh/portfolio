@@ -1,6 +1,7 @@
 /* =========================================================================
-   Newsreader (variable, latin, weight axis 200–800)
-   Roman + italic shipped from public/fonts/.
+   Newsreader (variable, latin, axes: wght 200–800, opsz 6–72)
+   Roman + italic shipped from public/fonts/. The optical-size axis gives
+   the large display headings their finer cut automatically.
    ========================================================================= */
 
 @font-face {
@@ -22,29 +23,63 @@
 }
 
 /* =========================================================================
-   Design tokens — dark by default, overridden for light.
+   Design tokens — single dark theme.
    ========================================================================= */
 
 :root {
   color-scheme: dark;
 
-  --bg:        #0a0c10;
-  --bg-elev:   #12141a;
-  --fg:        #d6cfb8;
-  --fg-muted:  #7e7866;
-  --border:    #1d2028;
-  --rule:      #16181f;
-  --accent:    #c8b270;
-  --accent-2:  #4a6a8e;
+  /* Surfaces */
+  --bg:        #0a0c10;   /* indigo-black page */
+  --bg-elev:   #12141a;   /* raised panels, code */
+  --bg-plate:  #0e1015;   /* media frames, diagrams */
+  --bg-control:#181b22;   /* buttons, toggles */
+
+  /* Ink */
+  --fg:        #d6cfb8;   /* candlewax ivory */
+  --fg-strong: #ece5cf;
+  --fg-muted:  #8c8572;   /* AA on --bg and --bg-elev */
+  --border:    #23262f;
+  --rule:      #191b22;
+
+  /* Accents */
+  --accent:    #c8b270;   /* pale gold: links, focus, key marks */
+  --accent-2:  #4a6a8e;   /* cobalt: ::selection only */
   --accent-fg: #0a0c10;
   --selection: rgba(74, 106, 142, 0.35);
+
+  /* Data colours (figures and replays only, never UI chrome).
+     Blue/amber stays separable under common colour-vision deficiencies;
+     every use also differs by shape or label. */
+  --data-model: #7da3d4;  /* the evaluated agent / model */
+  --data-ai:    #d98a3a;  /* the game AI / opponent / baseline */
+  --data-ok:    #9cb77a;  /* requirement met */
+  --data-miss:  #c96f5f;  /* requirement not met */
+  --data-grid:  #1c2029;
+  --data-terrain: #2b313c;
 }
 
-/* Layout tokens */
+/* Layout + type tokens */
 :root {
+  --page-max: 76rem;
+  --gutter: clamp(1rem, 3vw, 2rem);
   --measure: 66ch;
+
   --font-serif: 'Newsreader', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --font-mono:  ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+  /* Type scale (body 1.125rem, ratio ~1.25 up to display) */
+  --step--2: 0.8rem;
+  --step--1: 0.92rem;
+  --step-0:  1.125rem;
+  --step-1:  1.35rem;
+  --step-2:  clamp(1.55rem, 1.2rem + 1.2vw, 1.95rem);
+  --step-3:  clamp(1.95rem, 1.4rem + 2.2vw, 2.85rem);
+  --step-4:  clamp(2.55rem, 1.5rem + 4.6vw, 5.1rem);
+
+  --space-section: clamp(4.5rem, 3rem + 6vw, 8.5rem);
+  --radius-plate: 4px;
+  --radius-control: 2px;
 }
 
 /* =========================================================================
@@ -60,6 +95,13 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
+  scroll-padding-top: 1.5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
@@ -67,11 +109,13 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-serif);
-  font-size: 1.125rem;
+  font-size: var(--step-0);
   line-height: 1.65;
   font-optical-sizing: auto;
+  font-variant-numeric: lining-nums;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
 }
 
 ::selection {
@@ -80,7 +124,8 @@ body {
 
 img,
 svg,
-video {
+video,
+canvas {
   max-width: 100%;
   height: auto;
   display: block;
@@ -97,12 +142,24 @@ a {
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.18em;
-  text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent);
-  transition: text-decoration-color 120ms ease;
+  text-decoration-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  transition: text-decoration-color 120ms ease, color 120ms ease;
 }
 
 a:hover {
   text-decoration-color: var(--accent);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-mono);
 }
 
 /* =========================================================================
@@ -130,6 +187,34 @@ a:hover {
   }
 }
 
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--gutter);
+  top: -3rem;
+  z-index: 10;
+  background: var(--accent);
+  color: var(--accent-fg);
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-control);
+  text-decoration: none;
+}
+
+.skip-link:focus-visible {
+  top: 0.75rem;
+}
+
 /* =========================================================================
    Page chrome
    ========================================================================= */
@@ -142,42 +227,48 @@ a:hover {
 
 .container {
   width: 100%;
-  max-width: 44rem;
+  max-width: var(--page-max);
   margin: 0 auto;
-  padding: 0 1.25rem;
+  padding: 0 var(--gutter);
 }
 
-.site-header {
-  border-bottom: 1px solid var(--rule);
+/* Narrow column for long-form posts and plain pages. */
+.container--narrow {
+  max-width: calc(44rem + 2 * var(--gutter));
 }
 
 .site-header .container {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 1rem;
-  padding-top: 1.4rem;
-  padding-bottom: 1.4rem;
+  column-gap: 2rem;
+  row-gap: 0.35rem;
+  padding-top: 1.35rem;
+  padding-bottom: 1.35rem;
 }
 
 .site-title {
-  font-weight: 600;
-  font-size: 1.05rem;
-  letter-spacing: -0.005em;
-  color: var(--fg);
+  font-weight: 560;
+  font-size: 1.08rem;
+  letter-spacing: 0.01em;
+  color: var(--fg-strong);
   text-decoration: none;
 }
 
 .site-nav {
   display: flex;
-  gap: 1.25rem;
+  flex-wrap: wrap;
+  column-gap: 1.5rem;
+  row-gap: 0.2rem;
   align-items: baseline;
 }
 
 .site-nav a {
   color: var(--fg-muted);
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  padding-block: 0.3rem;
 }
 
 .site-nav a:hover,
@@ -189,8 +280,8 @@ a:hover {
   margin-top: auto;
   border-top: 1px solid var(--rule);
   color: var(--fg-muted);
-  font-size: 0.9rem;
-  padding: 1.5rem 0 2rem;
+  font-size: var(--step--1);
+  padding: 1.6rem 0 2.2rem;
 }
 
 .site-footer .container {
@@ -209,29 +300,7 @@ a:hover {
 }
 
 main {
-  padding: 2.5rem 0 3.5rem;
-}
-
-/* =========================================================================
-   Theme toggle
-   ========================================================================= */
-
-.theme-toggle {
-  appearance: none;
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--fg-muted);
-  font: inherit;
-  font-size: 0.85rem;
-  padding: 0.25rem 0.55rem;
-  border-radius: 3px;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.theme-toggle:hover {
-  color: var(--fg);
-  border-color: var(--fg-muted);
+  padding: 2rem 0 var(--space-section);
 }
 
 /* =========================================================================
@@ -240,10 +309,11 @@ main {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-serif);
-  color: var(--fg);
-  font-weight: 600;
+  color: var(--fg-strong);
+  font-weight: 560;
   letter-spacing: -0.01em;
-  line-height: 1.2;
+  line-height: 1.15;
+  text-wrap: balance;
 }
 
 /* Page titles (h1) read as inscribed rather than typed.
@@ -252,14 +322,219 @@ h1 {
   letter-spacing: 0.02em;
 }
 
+p {
+  text-wrap: pretty;
+}
+
 /* =========================================================================
-   Prose — long-form reading layout for posts.
-   Applied as <article class="prose">.
+   Shared presentation units
+   ========================================================================= */
+
+/* A framed piece of real media: screenshot, frame, video, figure. */
+.plate {
+  margin: 0;
+}
+
+.plate__frame {
+  position: relative;
+  background: var(--bg-plate);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-plate);
+  overflow: hidden;
+}
+
+.plate__frame > img,
+.plate__frame > video,
+.plate__frame > svg {
+  width: 100%;
+  height: auto;
+}
+
+/* Captions explain what the visitor is looking at; they are left-aligned
+   so they read as part of the evidence, not a decorative tagline. */
+.caption,
+.plate figcaption {
+  color: var(--fg-muted);
+  font-size: var(--step--1);
+  line-height: 1.5;
+  font-style: italic;
+  margin-top: 0.7rem;
+  max-width: 72ch;
+}
+
+.caption a,
+.plate figcaption a {
+  font-style: normal;
+}
+
+/* Link styled as a button: used for primary actions and evidence links. */
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  min-height: 2.6rem;
+  padding: 0.4rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: var(--radius-control);
+  color: var(--fg-strong);
+  background: transparent;
+  text-decoration: none;
+  font-size: 1rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.action:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.action--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 560;
+}
+
+.action--primary:hover {
+  background: #d6c283;
+  border-color: #d6c283;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+/* A run of plain evidence links (Code, Paper, Report ...). */
+.link-row {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1.4rem;
+  row-gap: 0.35rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.link-row a {
+  display: inline-block;
+  padding-block: 0.2rem;
+}
+
+/* Status of a piece of work: always shown next to claims about it. */
+.status {
+  color: var(--fg-muted);
+  font-style: italic;
+  font-size: var(--step--1);
+  margin: 0;
+}
+
+/* Section heading on the homepage and in case studies. */
+.section-heading {
+  font-size: var(--step-3);
+  font-weight: 460;
+  margin: 0 0 0.6rem;
+}
+
+.lede {
+  font-size: var(--step-1);
+  line-height: 1.5;
+  color: var(--fg);
+  max-width: 40ch;
+}
+
+/* Expandable technical detail. */
+.details {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+.details + .details {
+  margin-top: -2rem;
+  border-top: 0;
+}
+
+.details > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.9rem 0;
+  font-weight: 560;
+  color: var(--fg-strong);
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.details > summary::before {
+  content: '+';
+  font-family: var(--font-mono);
+  color: var(--accent);
+  width: 1ch;
+  flex: none;
+}
+
+.details[open] > summary::before {
+  content: '−';
+}
+
+.details__body {
+  padding: 0 0 1.2rem calc(1ch + 0.75rem);
+}
+
+.details__body > :first-child {
+  margin-top: 0;
+}
+
+/* Segmented toggle used by small interactions. */
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-elev);
+  padding: 2px;
+  gap: 2px;
+}
+
+.segmented button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--fg-muted);
+  padding: 0.45rem 0.85rem;
+  min-height: 2.4rem;
+  border-radius: 1px;
+  cursor: pointer;
+  font-size: var(--step--1);
+  line-height: 1.2;
+}
+
+.segmented button:hover {
+  color: var(--fg);
+}
+
+.segmented button[aria-pressed='true'],
+.segmented button[aria-selected='true'] {
+  background: var(--bg-control);
+  color: var(--fg-strong);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* =========================================================================
+   Prose — long-form reading layout.
+   Applied as <article class="prose"> (posts) or .prose blocks in pages.
    ========================================================================= */
 
 .prose {
   max-width: var(--measure);
-  margin: 0 auto;
 }
 
 .prose > * {
@@ -273,13 +548,14 @@ h1 {
 }
 
 .prose h2 {
-  font-size: 1.45rem;
+  font-size: var(--step-2);
+  font-weight: 500;
   margin-top: 2.4em;
   margin-bottom: 0.5em;
 }
 
 .prose h3 {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   margin-top: 2em;
   margin-bottom: 0.4em;
 }
@@ -295,8 +571,8 @@ h1 {
 }
 
 .prose strong {
-  font-weight: 650;
-  color: var(--fg);
+  font-weight: 640;
+  color: var(--fg-strong);
 }
 
 .prose em {
@@ -329,8 +605,7 @@ h1 {
 }
 
 .prose code {
-  font-family: var(--font-mono);
-  font-size: 0.9em;
+  font-size: 0.86em;
   background: var(--bg-elev);
   padding: 0.12em 0.35em;
   border-radius: 3px;
@@ -338,11 +613,10 @@ h1 {
 }
 
 .prose pre {
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   line-height: 1.55;
   padding: 0.95rem 1.1rem;
-  border-radius: 4px;
+  border-radius: var(--radius-plate);
   border: 1px solid var(--border);
   overflow-x: auto;
   background: var(--bg-elev);
@@ -360,6 +634,7 @@ h1 {
   border-collapse: collapse;
   font-size: 0.95rem;
   margin: 1.6em 0;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .prose th,
@@ -367,10 +642,11 @@ h1 {
   padding: 0.5em 0.75em;
   border-bottom: 1px solid var(--rule);
   text-align: left;
+  vertical-align: top;
 }
 
 .prose th {
-  font-weight: 650;
+  font-weight: 620;
   border-bottom-color: var(--border);
 }
 
@@ -385,9 +661,8 @@ h1 {
 
 .prose figcaption {
   color: var(--fg-muted);
-  font-size: 0.9rem;
+  font-size: var(--step--1);
   margin-top: 0.55em;
-  text-align: center;
   font-style: italic;
 }
 
@@ -418,7 +693,7 @@ h1 {
 }
 
 /* =========================================================================
-   Post / project listings
+   Writing (blog) listings — kept for src/content/posts.
    ========================================================================= */
 
 .post-list {
@@ -464,10 +739,9 @@ h1 {
 
 .tag {
   display: inline-block;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   color: var(--fg-muted);
-  font-variant: small-caps;
-  letter-spacing: 0.04em;
+  font-style: italic;
   margin-right: 0.45em;
 }
 
@@ -483,85 +757,11 @@ h1 {
 
 .draft-banner {
   display: inline-block;
-  font-size: 0.78rem;
-  font-variant: small-caps;
-  letter-spacing: 0.06em;
+  font-size: 0.82rem;
+  font-style: italic;
   color: var(--accent);
   border: 1px solid var(--accent);
   padding: 0.1em 0.5em;
   border-radius: 2px;
   margin-bottom: 0.6rem;
-}
-
-.section-title {
-  font-size: 0.85rem;
-  font-variant: small-caps;
-  letter-spacing: 0.08em;
-  color: var(--fg-muted);
-  margin: 2.2rem 0 0.9rem;
-  font-weight: 600;
-}
-
-/* Project cards */
-.project-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1.6rem;
-}
-
-.project-card__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.project-card__title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-
-.project-card__year {
-  color: var(--fg-muted);
-  font-size: 0.92rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.project-card__desc {
-  color: var(--fg-muted);
-  margin: 0.25rem 0 0.4rem;
-}
-
-.project-card__links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.9rem;
-  font-size: 0.92rem;
-}
-
-.project-card[data-status='archived'] .project-card__title::after {
-  content: ' (archived)';
-  color: var(--fg-muted);
-  font-weight: 400;
-  font-size: 0.85em;
-}
-
-/* =========================================================================
-   Interactive demo placeholder (used in MDX template)
-   ========================================================================= */
-
-.demo-placeholder {
-  border: 1px dashed var(--border);
-  background: var(--bg-elev);
-  padding: 1.4rem;
-  border-radius: 4px;
-  color: var(--fg-muted);
-  text-align: center;
-  font-style: italic;
-  margin: 1.8em 0;
 }

@@ -1,0 +1,1218 @@
+---
+// Before-change / endpoint comparison for the two illustrated goal-change
+// episodes (paper Figure 1). Every state is server-rendered; without
+// JavaScript the default state (GR00T at its endpoint) shows on its own.
+// `compact` is the homepage panel media; `full` is the case-study figure and
+// adds the per-step requirement timelines.
+import { Image } from 'astro:assets';
+import {
+  CONTROLLERS,
+  HORIZON,
+  INSTRUCTIONS,
+  STATES,
+  fmt,
+  type Controller,
+  type GoalState,
+  type Interval,
+} from './goal-change-data';
+
+interface Props {
+  variant?: 'compact' | 'full';
+  /** Adds the `wide` class so the figure spans the case-study container. */
+  wide?: boolean;
+  class?: string;
+}
+
+const { variant = 'full', wide = false, class: className } = Astro.props;
+const full = variant === 'full';
+const initial = { controller: 'groot', moment: 'endpoint' } as const;
+
+const CHECK = 'M3 8.6l3.2 3.1L13 4.6';
+const CROSS = 'M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6';
+
+const pct = (step: number) => `${((step / HORIZON) * 100).toFixed(3)}%`;
+const metText = (met: boolean) => (met ? 'Met' : 'Not met');
+
+// Frame annotations, in the coordinates of the displayed crop.
+function overlay(s: GoalState) {
+  const [x0, y0, size] = s.crop;
+  const X = (x: number) => x - x0 + 0.5;
+  const Y = (y: number) => y - y0 + 0.5;
+  const marks = s.marks.map((m) => {
+    const dx = m.lx - m.x;
+    const dy = m.ly - m.y;
+    const len = Math.hypot(dx, dy) || 1;
+    return {
+      text: m.text,
+      cx: X(m.x),
+      cy: Y(m.y),
+      r: m.r,
+      sx: X(m.x + (m.r * dx) / len),
+      sy: Y(m.y + (m.r * dy) / len),
+      lx: X(m.lx),
+      ly: Y(m.ly),
+      left: `${((X(m.lx) / size) * 100).toFixed(2)}%`,
+      top: `${((Y(m.ly) / size) * 100).toFixed(2)}%`,
+    };
+  });
+  let arrow: { d: string; head: string } | undefined;
+  if (s.arrow) {
+    // Same curve as the paper figure: a quadratic arc bowing below the line.
+    const [[tx, ty], [hx, hy]] = s.arrow;
+    const mx = (tx + hx) / 2;
+    const my = (ty + hy) / 2;
+    const k = 0.45;
+    const cx = mx + k * (hy - ty);
+    const cy = my - k * (hx - tx);
+    // Direction at the head, from the control point.
+    const ux = hx - cx;
+    const uy = hy - cy;
+    const ul = Math.hypot(ux, uy);
+    const [dx, dy] = [ux / ul, uy / ul];
+    const L = 6;
+    const W = 3.4;
+    const bx = hx - dx * L;
+    const by = hy - dy * L;
+    arrow = {
+      d: `M${X(tx)} ${Y(ty)} Q${X(cx)} ${Y(cy)} ${X(bx + dx * 2)} ${Y(by + dy * 2)}`,
+      head: [
+        [hx, hy],
+        [bx - dy * W, by + dx * W],
+        [bx + dy * W, by - dx * W],
+      ]
+        .map(([x, y]) => `${X(x).toFixed(2)},${Y(y).toFixed(2)}`)
+        .join(' '),
+    };
+  }
+  return { size, marks, arrow };
+}
+
+function holdsText(intervals: Interval[]) {
+  if (intervals.length === 0) return 'never holds';
+  const first = intervals[0];
+  const last = intervals[intervals.length - 1];
+  return intervals.length === 1
+    ? `holds from step ${fmt(first.start)} to ${fmt(first.end - 1)}`
+    : `holds from step ${fmt(first.start)} to ${fmt(intervals[0].end - 1)}, then on and off from ${fmt(intervals[1].start)} to ${fmt(last.end - 1)}`;
+}
+
+function timelineLabel(c: Controller, s: GoalState) {
+  const t = c.timeline;
+  return (
+    `Timeline of assignment ${c.assignment}, step 0 to ${fmt(HORIZON)}. ` +
+    `Croissant requirement (on the board until the change, then back on its plate) ${holdsText(t.croissant)}. Jam requirement ${holdsText(t.jam)}. ` +
+    `Original task ${holdsText(t.original)}. Current goal ${holdsText(t.current)}. ` +
+    `Goal changed at step ${fmt(c.changeStep)}; ${c.inputKind} at step ${fmt(c.inputStep)}. ` +
+    `The episode ended at step ${fmt(c.endStep)}. The frame shown is step ${fmt(s.step)}.`
+  );
+}
+
+function summary(c: Controller, s: GoalState) {
+  return (
+    `${c.label}, ${s.momentLabel.toLowerCase()}, step ${fmt(s.step)}. ` +
+    `Croissant, ${s.croissant.target.toLowerCase()}: ${metText(s.croissant.met).toLowerCase()}. ` +
+    `Jam, ${s.jam.target.toLowerCase()}: ${metText(s.jam.met).toLowerCase()}. ` +
+    `Original task: ${metText(s.originalTask).toLowerCase()}. Current goal: ${metText(s.currentGoal).toLowerCase()}.`
+  );
+}
+
+const views = STATES.map((s) => {
+  const c = CONTROLLERS[s.controller];
+  const rows = [
+    { label: 'Croissant', sub: 'board, then plate', spans: c.timeline.croissant },
+    { label: 'Jam', sub: 'board', spans: c.timeline.jam },
+    { label: 'Original task', sub: '', spans: c.timeline.original },
+    { label: 'Current goal', sub: '', spans: c.timeline.current },
+  ];
+  const reqs = [
+    { name: 'Croissant', ...s.croissant, note: full ? s.croissant.note : '' },
+    { name: 'Jam', ...s.jam, note: full ? s.jam.note : '' },
+  ];
+  const scores = [
+    { name: 'Original task', met: s.originalTask },
+    { name: 'Current goal', met: s.currentGoal },
+  ];
+  return {
+    s,
+    c,
+    o: overlay(s),
+    rows,
+    reqs,
+    scores,
+    active: s.controller === initial.controller && s.moment === initial.moment,
+    lead:
+      s.moment === 'endpoint'
+        ? c.headline
+        : `The goal changes at step ${fmt(c.changeStep)}, ${s.step === c.changeStep ? 'at' : `${c.changeStep - s.step} actions after`} this frame.`,
+    summary: summary(c, s),
+    timelineLabel: timelineLabel(c, s),
+    cursorEnd: s.step / HORIZON > 0.8,
+  };
+});
+
+const controllerOptions = [CONTROLLERS.groot, CONTROLLERS.astra];
+const momentOptions = [
+  { id: 'before', label: 'Before change' },
+  { id: 'endpoint', label: 'Endpoint' },
+];
+---
+
+<figure
+  class:list={['gc', `gc--${variant}`, { wide }, className]}
+  data-goal-change
+  data-controller={initial.controller}
+  data-moment={initial.moment}
+>
+  <div class="gc__panel">
+    <div class="gc__controls" data-gc-controls hidden>
+      <div class="gc__control">
+        <span class="gc__control-label" aria-hidden="true">Controller</span>
+        <div class="segmented" role="group" aria-label="Controller">
+          {controllerOptions.map((c) => (
+            <button
+              type="button"
+              data-gc-set={`controller:${c.id}`}
+              aria-pressed={c.id === initial.controller ? 'true' : 'false'}
+            >
+              {c.buttonLabel}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div class="gc__control">
+        <span class="gc__control-label" aria-hidden="true">Moment</span>
+        <div class="segmented" role="group" aria-label="Moment">
+          {momentOptions.map((m) => (
+            <button
+              type="button"
+              data-gc-set={`moment:${m.id}`}
+              aria-pressed={m.id === initial.moment ? 'true' : 'false'}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div class="gc__states">
+      {views.map(({ s, c, o, rows, reqs, scores, active, lead, summary, timelineLabel, cursorEnd }) => (
+        <div
+          class="gc__state"
+          data-gc-state
+          data-controller={s.controller}
+          data-moment={s.moment}
+          data-summary={summary}
+          hidden={!active}
+        >
+          <div class="gc__media">
+            <div class="gc__frame plate__frame">
+              <Image src={s.image} alt={s.alt} width={351} height={351} decoding="async" />
+              <svg
+                class="gc__marks"
+                viewBox={`0 0 ${o.size} ${o.size}`}
+                aria-hidden="true"
+                focusable="false"
+              >
+                {o.arrow && (
+                  <g class="gc__arrow">
+                    <path class="gc__halo" d={o.arrow.d} />
+                    <path d={o.arrow.d} />
+                    <polygon points={o.arrow.head} />
+                  </g>
+                )}
+                {o.marks.map((m) => (
+                  <g>
+                    <line class="gc__halo" x1={m.sx} y1={m.sy} x2={m.lx} y2={m.ly} />
+                    <line x1={m.sx} y1={m.sy} x2={m.lx} y2={m.ly} />
+                    {m.r > 0 ? (
+                      <>
+                        <circle class="gc__halo" cx={m.cx} cy={m.cy} r={m.r} />
+                        <circle cx={m.cx} cy={m.cy} r={m.r} />
+                      </>
+                    ) : (
+                      <circle class="gc__dot" cx={m.cx} cy={m.cy} r="2.2" />
+                    )}
+                  </g>
+                ))}
+              </svg>
+              {o.marks.map((m) => (
+                <span class="gc__tag" style={`left:${m.left};top:${m.top}`} aria-hidden="true">
+                  {m.text}
+                </span>
+              ))}
+            </div>
+            <p class="gc__frame-note">
+              <span class="gc__moment">{s.momentLabel}, step {fmt(s.step)}.</span>
+              {full && ` ${s.frameNote}`}
+              {full && s.arrow && ' The arrow marks where the revised goal will send the croissant.'}
+            </p>
+          </div>
+
+          <div class="gc__goals">
+            {full ? (
+              <ol class="gc__goal-list" aria-label="Instructions">
+                <li class:list={['gc__goal', { 'is-in-force': s.goal === 'original' }]}>
+                  <p class="gc__goal-head">
+                    <span class="gc__goal-name">Original instruction</span>
+                    {s.goal === 'original' ? (
+                      <span class="gc__in-force">in force</span>
+                    ) : (
+                      <span>replaced at step {fmt(c.changeStep)}</span>
+                    )}
+                  </p>
+                  <p class="gc__goal-text">{INSTRUCTIONS.original}</p>
+                </li>
+                <li class:list={['gc__goal', { 'is-in-force': s.goal === 'revised' }]}>
+                  <p class="gc__goal-head">
+                    <span class="gc__goal-name">Revised instruction</span>
+                    {s.goal === 'revised' ? (
+                      <span class="gc__in-force">in force from step {fmt(c.changeStep)}</span>
+                    ) : (
+                      <span>not given until step {fmt(c.changeStep)}</span>
+                    )}
+                  </p>
+                  <p class="gc__goal-text">{INSTRUCTIONS.revised}</p>
+                </li>
+              </ol>
+            ) : (
+              <div class="gc__goal is-in-force">
+                <p class="gc__goal-head">
+                  <span class="gc__goal-name">
+                    {s.goal === 'original' ? 'Original instruction' : 'Revised instruction'}
+                  </span>
+                  <span class="gc__in-force">
+                    {s.goal === 'original' ? 'in force' : `in force from step ${fmt(c.changeStep)}`}
+                  </span>
+                </p>
+                <p class="gc__goal-text">{INSTRUCTIONS[s.goal]}</p>
+              </div>
+            )}
+          </div>
+
+          <div class="gc__status">
+            <p class="gc__lead">{lead}</p>
+            <dl class="gc__reqs">
+              {reqs.map((r) => (
+                <div class="gc__req">
+                  <dt>
+                    <span class="gc__req-name">{r.name}</span>
+                    <span class="gc__req-target">{r.target}</span>
+                  </dt>
+                  <dd class="gc__req-verdict">
+                    <span class:list={['gc__verdict', r.met ? 'is-met' : 'is-miss']}>
+                      <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                        <path d={r.met ? CHECK : CROSS} />
+                      </svg>
+                      {metText(r.met)}
+                    </span>
+                  </dd>
+                  {r.note && <dd class="gc__req-note">{r.note}</dd>}
+                </div>
+              ))}
+            </dl>
+            <dl class="gc__scores">
+              {scores.map((r) => (
+                <div class="gc__score">
+                  <dt>{r.name}</dt>
+                  <dd>
+                    <span class:list={['gc__verdict', r.met ? 'is-met' : 'is-miss']}>
+                      <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                        <path d={r.met ? CHECK : CROSS} />
+                      </svg>
+                      {metText(r.met)}
+                    </span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            {full && (
+              <p class="gc__step">
+                Step {fmt(s.step)} of {fmt(HORIZON)}.
+                {s.moment === 'endpoint' && ` ${c.stop}`}
+              </p>
+            )}
+          </div>
+
+          {full && (
+            <div class="gc__timeline">
+              <p class="tl__title">
+                Assignment {c.assignment}: when each requirement held, action by action
+              </p>
+              <div class="tl__plot" role="img" aria-label={timelineLabel}>
+                {rows.map((row, i) => (
+                  <>
+                    <span class="tl__label" style={`grid-row:${i + 2}`}>
+                      {row.label}
+                      {row.sub && <span class="tl__sub"> ({row.sub})</span>}
+                    </span>
+                    <span class="tl__track" style={`grid-row:${i + 2}`}>
+                      <span class="tl__base" style={`width:${pct(c.endStep)}`} />
+                      {row.spans.map((sp) => (
+                        <span
+                          class="tl__hold"
+                          style={`left:${pct(sp.start)};width:${pct(sp.end - sp.start)}`}
+                        />
+                      ))}
+                    </span>
+                  </>
+                ))}
+                <span class="tl__overlay">
+                  <span
+                    class="tl__band"
+                    style={`left:${pct(c.changeStep)};width:${pct(c.inputStep - c.changeStep)}`}
+                  />
+                  <span class="tl__line tl__line--change" style={`left:${pct(c.changeStep)}`} />
+                  <span class="tl__line tl__line--input" style={`left:${pct(c.inputStep)}`} />
+                  <span class="tl__line tl__line--now" style={`left:${pct(s.step)}`} />
+                </span>
+                <span class="tl__top">
+                  <span
+                    class:list={['tl__now-label', { 'is-end': cursorEnd }]}
+                    style={`left:${pct(s.step)}`}
+                  >
+                    this frame, step {fmt(s.step)}
+                  </span>
+                </span>
+                <span class="tl__axis">
+                  <span style="left:0">step 0</span>
+                  <span style={`left:${pct(1000)}`}>1,000</span>
+                  <span class="is-end" style="left:100%">1,950</span>
+                </span>
+              </div>
+              <ul class="tl__legend">
+                <li><span class="tl__key tl__key--hold" />holds</li>
+                <li><span class="tl__key tl__key--off" />does not hold</li>
+                <li><span class="tl__key tl__key--change" />goal changed, step {fmt(c.changeStep)}</li>
+                <li>
+                  <span class="tl__key tl__key--input" />
+                  {c.inputKind}, step {fmt(c.inputStep)}
+                </li>
+                <li><span class="tl__key tl__key--band" />delay of {fmt(c.inputDelay)} actions</li>
+              </ul>
+              <p class="tl__note">
+                {c.id === 'groot'
+                  ? `GR00T received the revised instruction ${c.delayNote}. `
+                  : `Astra’s model saw the revised goal ${c.delayNote}. The records do not show that this delay changed the outcome. `}
+                The episode ended at step {fmt(c.endStep)}.
+              </p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <p class="visually-hidden" aria-live="polite" data-gc-live></p>
+
+  <figcaption>
+    {full ? (
+      <>
+        Assignments 13 (GR00T N1.5) and 14 (Astra) from the paper’s 54-episode
+        evaluation, chosen there to illustrate two failure patterns and a long
+        delay, not as typical results. Frames are the left camera, cropped and
+        enlarged from 256-pixel images, with labels added. Timelines are drawn
+        from the per-step requirement records.
+      </>
+    ) : (
+      <>
+        Two episodes from the paper’s evaluation, chosen to illustrate failure
+        patterns. Left camera, cropped; labels added.
+      </>
+    )}
+  </figcaption>
+</figure>
+
+<script>
+  type Key = 'controller' | 'moment';
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-goal-change]')) {
+    const states = [...root.querySelectorAll<HTMLElement>('[data-gc-state]')];
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-gc-set]')];
+    const controls = root.querySelector<HTMLElement>('[data-gc-controls]');
+    const live = root.querySelector<HTMLElement>('[data-gc-live]');
+    const sel: Record<Key, string> = {
+      controller: root.dataset.controller ?? 'groot',
+      moment: root.dataset.moment ?? 'endpoint',
+    };
+    let active = states.find((s) => !s.hidden);
+    if (!active) continue;
+
+    const parse = (button: HTMLButtonElement) =>
+      (button.dataset.gcSet ?? '').split(':') as [Key, string];
+
+    const syncButtons = () => {
+      for (const button of buttons) {
+        const [key, value] = parse(button);
+        button.setAttribute('aria-pressed', String(sel[key] === value));
+      }
+    };
+
+    const show = () => {
+      const next = states.find(
+        (s) => s.dataset.controller === sel.controller && s.dataset.moment === sel.moment
+      );
+      if (!next || next === active) return;
+
+      // Settle any fade still running from a previous switch.
+      for (const s of states) {
+        if (s.classList.contains('is-leaving')) {
+          s.classList.remove('is-leaving');
+          s.hidden = true;
+        }
+        s.classList.remove('is-entering');
+      }
+
+      const prev = active!;
+      active = next;
+      next.hidden = false;
+      if (live) live.textContent = next.dataset.summary ?? '';
+
+      if (reduceMotion.matches) {
+        prev.hidden = true;
+        return;
+      }
+      // Crossfade: the outgoing state is lifted out of the flow and fades out
+      // on top while the incoming one fades in and sets the height.
+      prev.classList.add('is-leaving');
+      next.classList.add('is-entering');
+      prev.addEventListener(
+        'animationend',
+        () => {
+          prev.classList.remove('is-leaving');
+          if (prev !== active) prev.hidden = true;
+        },
+        { once: true }
+      );
+      next.addEventListener('animationend', () => next.classList.remove('is-entering'), {
+        once: true,
+      });
+    };
+
+    for (const button of buttons) {
+      button.addEventListener('click', () => {
+        const [key, value] = parse(button);
+        if (sel[key] === value) return;
+        sel[key] = value;
+        syncButtons();
+        show();
+      });
+    }
+
+    // Fetch the other frames once the figure is near the viewport, so a
+    // switch never shows an empty frame.
+    const images = root.querySelectorAll<HTMLImageElement>('[data-gc-state] img');
+    const preload = () => images.forEach((img) => (img.loading = 'eager'));
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            preload();
+            io.disconnect();
+          }
+        },
+        { rootMargin: '400px 0px' }
+      );
+      io.observe(root);
+    } else {
+      preload();
+    }
+
+    if (controls) controls.hidden = false;
+    syncButtons();
+  }
+</script>
+
+<style>
+  .gc {
+    margin: 0;
+    container-type: inline-size;
+  }
+
+  .gc p {
+    hyphens: manual;
+  }
+
+  .gc__panel {
+    background: var(--bg-plate);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-plate);
+    padding: 1rem;
+  }
+
+  /* ---------- Controls ---------- */
+  .gc__controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem 1.6rem;
+    margin-bottom: 1.3rem;
+  }
+
+  .gc__controls[hidden] {
+    display: none;
+  }
+
+  .gc__control {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .gc__control-label {
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-style: italic;
+  }
+
+  .gc .segmented button {
+    min-height: 2.6rem;
+    text-align: left;
+  }
+
+  /* ---------- States ---------- */
+  .gc__states {
+    position: relative;
+  }
+
+  .gc__state {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'media' 'goals' 'status' 'timeline';
+    gap: 1.4rem 2rem;
+    align-items: start;
+    min-width: 0;
+  }
+
+  .gc__state[hidden] {
+    display: none;
+  }
+
+  .gc__state.is-leaving {
+    position: absolute;
+    inset: 0 0 auto 0;
+    pointer-events: none;
+    animation: gc-out 180ms ease both;
+  }
+
+  .gc__state.is-entering {
+    animation: gc-in 180ms ease both;
+  }
+
+  @keyframes gc-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes gc-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gc__state.is-leaving,
+    .gc__state.is-entering {
+      animation: none;
+    }
+  }
+
+  .gc__media {
+    grid-area: media;
+    min-width: 0;
+  }
+
+  .gc__goals {
+    grid-area: goals;
+    min-width: 0;
+  }
+
+  .gc__status {
+    grid-area: status;
+    min-width: 0;
+  }
+
+  .gc__timeline {
+    grid-area: timeline;
+    min-width: 0;
+  }
+
+  /* ---------- Frame ---------- */
+  .gc__frame {
+    position: relative;
+    max-width: 351px;
+    aspect-ratio: 1;
+  }
+
+  .gc__frame img {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .gc__marks {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.6px;
+    stroke-linecap: round;
+  }
+
+  .gc__marks * {
+    vector-effect: non-scaling-stroke;
+  }
+
+  .gc__marks .gc__halo {
+    stroke: var(--bg);
+    stroke-width: 3.6px;
+    stroke-opacity: 0.85;
+  }
+
+  .gc__marks .gc__dot {
+    fill: var(--accent);
+    stroke: var(--bg);
+    stroke-width: 1px;
+  }
+
+  .gc__arrow polygon {
+    fill: var(--accent);
+    stroke: var(--bg);
+    stroke-width: 1px;
+  }
+
+  .gc__tag {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    padding: 0.05rem 0.35rem 0.1rem;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    border-radius: var(--radius-control);
+    color: var(--fg-strong);
+    font-size: 0.8rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .gc__frame-note {
+    margin: 0.6rem 0 0;
+    max-width: 351px;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-style: italic;
+    line-height: 1.45;
+  }
+
+  .gc__moment {
+    color: var(--fg);
+    font-style: normal;
+  }
+
+  /* ---------- Instructions ---------- */
+  .gc__goal-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1.1rem 1.6rem;
+  }
+
+  .gc__goal {
+    margin: 0;
+    padding-left: 0.9rem;
+    border-left: 2px solid var(--border);
+  }
+
+  .gc__goal.is-in-force {
+    border-left-color: var(--accent);
+  }
+
+  .gc__goal-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.6rem;
+    margin: 0 0 0.3rem;
+    font-size: var(--step--1);
+    line-height: 1.35;
+    color: var(--fg-muted);
+    font-style: italic;
+  }
+
+  .gc__goal-name {
+    font-style: normal;
+  }
+
+  .gc__goal.is-in-force .gc__goal-name {
+    color: var(--fg-strong);
+  }
+
+  .gc__in-force {
+    color: var(--accent);
+  }
+
+  .gc__goal-text {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--fg-muted);
+  }
+
+  .gc__goal.is-in-force .gc__goal-text {
+    color: var(--fg-strong);
+  }
+
+  /* ---------- Requirement status ---------- */
+  .gc__lead {
+    margin: 0 0 0.9rem;
+    color: var(--fg-strong);
+    line-height: 1.4;
+  }
+
+  .gc__reqs,
+  .gc__scores {
+    margin: 0;
+    display: grid;
+  }
+
+  .gc__req,
+  .gc__score {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.1rem 1rem;
+    padding: 0.55rem 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .gc__scores {
+    margin-top: 0.6rem;
+  }
+
+  .gc__score {
+    padding: 0.35rem 0;
+  }
+
+  .gc__score:first-child {
+    border-top-color: var(--border);
+  }
+
+  .gc__req dt,
+  .gc__score dt {
+    min-width: 0;
+  }
+
+  .gc__req-name {
+    display: block;
+    color: var(--fg-strong);
+    line-height: 1.3;
+  }
+
+  .gc__req-target {
+    display: block;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    line-height: 1.35;
+  }
+
+  .gc__score dt {
+    color: var(--fg);
+    font-size: var(--step--1);
+  }
+
+  .gc__req dd,
+  .gc__score dd {
+    margin: 0;
+  }
+
+  .gc__req-verdict,
+  .gc__score dd {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: right;
+    padding-top: 0.1rem;
+  }
+
+  .gc__verdict {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    font-size: var(--step--1);
+  }
+
+  .gc__verdict svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .gc__verdict.is-met {
+    color: var(--data-ok);
+  }
+
+  .gc__verdict.is-miss {
+    color: var(--data-miss);
+  }
+
+  .gc__req-note {
+    grid-column: 1 / -1;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-style: italic;
+    line-height: 1.4;
+  }
+
+  .gc__step {
+    margin: 0.7rem 0 0;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--rule);
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    line-height: 1.45;
+  }
+
+  /* ---------- Timeline (full only) ---------- */
+  .gc__timeline {
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .tl__title {
+    margin: 0 0 0.9rem;
+    color: var(--fg);
+    font-size: var(--step--1);
+  }
+
+  .tl__plot {
+    position: relative;
+    display: grid;
+    grid-template-columns: 6.2rem minmax(0, 1fr);
+    grid-template-rows: 1.3rem repeat(4, minmax(1.1rem, auto)) 1.4rem;
+    row-gap: 0.6rem;
+    column-gap: 0.75rem;
+    align-items: center;
+  }
+
+  .tl__label {
+    grid-column: 1;
+    font-size: 0.85rem;
+    line-height: 1.2;
+    color: var(--fg);
+    text-align: right;
+  }
+
+  .tl__sub {
+    display: block;
+    color: var(--fg-muted);
+    font-style: italic;
+  }
+
+  .tl__track {
+    grid-column: 2;
+    position: relative;
+    height: 0.85rem;
+  }
+
+  .tl__base {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    background: var(--data-terrain);
+  }
+
+  .tl__hold {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: var(--data-ok);
+    min-width: 1px;
+  }
+
+  .tl__overlay {
+    grid-column: 2;
+    grid-row: 2 / 6;
+    position: relative;
+    align-self: stretch;
+    margin-block: -0.3rem;
+    pointer-events: none;
+  }
+
+  .tl__band {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  .tl__line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    transform: translateX(-1px);
+  }
+
+  .tl__line--change {
+    border-left: 2px dashed var(--accent);
+  }
+
+  .tl__line--input {
+    border-left: 2px dotted var(--data-model);
+  }
+
+  .tl__line--now {
+    border-left: 1.5px solid var(--fg-strong);
+    top: -0.9rem;
+  }
+
+  .tl__top {
+    grid-column: 2;
+    grid-row: 1;
+    position: relative;
+    align-self: stretch;
+  }
+
+  .tl__now-label {
+    position: absolute;
+    bottom: 0.2rem;
+    transform: translateX(-0.15rem);
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--fg-strong);
+    white-space: nowrap;
+    line-height: 1;
+  }
+
+  .tl__now-label.is-end {
+    transform: translateX(-100%);
+    padding-right: 0.35rem;
+  }
+
+  .tl__axis {
+    grid-column: 2;
+    grid-row: 6;
+    position: relative;
+    align-self: start;
+    height: 1.2rem;
+    font-size: 0.82rem;
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  .tl__axis > span {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+
+  .tl__axis > span:first-child {
+    transform: none;
+  }
+
+  .tl__axis > span.is-end {
+    transform: translateX(-100%);
+  }
+
+  .tl__legend {
+    list-style: none;
+    margin: 0.9rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.3rem;
+    font-size: 0.85rem;
+    color: var(--fg-muted);
+  }
+
+  .tl__legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+  }
+
+  .tl__key {
+    display: inline-block;
+    flex: none;
+    width: 1.1rem;
+    height: 0.75rem;
+  }
+
+  .tl__key--hold {
+    background: var(--data-ok);
+  }
+
+  .tl__key--off {
+    background: var(--data-terrain);
+  }
+
+  .tl__key--change,
+  .tl__key--input {
+    width: 0;
+    height: 0.95rem;
+    margin-inline: 0.5rem;
+  }
+
+  .tl__key--change {
+    border-left: 2px dashed var(--accent);
+  }
+
+  .tl__key--input {
+    border-left: 2px dotted var(--data-model);
+  }
+
+  .tl__key--band {
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  .tl__note {
+    margin: 0.8rem 0 0;
+    max-width: 70ch;
+    font-size: var(--step--1);
+    line-height: 1.5;
+    color: var(--fg);
+  }
+
+  /* ---------- Caption ---------- */
+  .gc > figcaption {
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    line-height: 1.5;
+    font-style: italic;
+    margin-top: 0.7rem;
+    max-width: 72ch;
+  }
+
+  /* ---------- Layouts by available width ---------- */
+
+  /* Narrow: each selector fills the row, options share it equally. */
+  @container (max-width: 33.99rem) {
+    .gc__control {
+      flex: 1 1 100%;
+    }
+
+    .gc .segmented {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
+    }
+  }
+
+  @container (min-width: 34rem) {
+    .gc__panel {
+      padding: 1.4rem 1.5rem 1.5rem;
+    }
+  }
+
+  /* Full, medium: frame beside the status; both instructions side by side. */
+  @container (min-width: 40rem) {
+    .gc--full .gc__state {
+      grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
+      grid-template-areas: 'media status' 'goals goals' 'timeline timeline';
+    }
+
+    .gc--full .gc__goal-list {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .tl__plot {
+      grid-template-columns: fit-content(13rem) minmax(0, 1fr);
+      column-gap: 1rem;
+    }
+
+    .tl__label {
+      font-size: 0.9rem;
+    }
+
+    .tl__sub {
+      display: inline;
+    }
+  }
+
+  /* Full, wide: frame, instructions and status in three columns. */
+  @container (min-width: 64rem) {
+    .gc__panel {
+      padding: 1.6rem 1.75rem 1.75rem;
+    }
+
+    .gc--full .gc__state {
+      grid-template-columns: 351px minmax(0, 1.1fr) minmax(0, 1fr);
+      grid-template-areas: 'media goals status' 'timeline timeline timeline';
+      gap: 1.6rem 2.4rem;
+    }
+
+    .gc--full .gc__goal-list {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* Compact (homepage). */
+  .gc--compact .gc__goal-text {
+    font-size: var(--step--1);
+  }
+
+  .gc--compact .gc__lead {
+    font-size: 1rem;
+  }
+
+  @container (max-width: 33.99rem) {
+    /* Phone: the two requirements and the two scores sit side by side. */
+    .gc--compact .gc__reqs,
+    .gc--compact .gc__scores {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      column-gap: 1rem;
+    }
+
+    .gc--compact .gc__req,
+    .gc--compact .gc__score {
+      display: block;
+    }
+
+    .gc--compact .gc__score:first-child {
+      border-top-color: var(--rule);
+    }
+
+    .gc--compact .gc__req-verdict,
+    .gc--compact .gc__score dd {
+      text-align: left;
+      padding-top: 0.25rem;
+    }
+  }
+
+  @container (min-width: 34rem) {
+    .gc--compact .gc__panel {
+      padding: 1.2rem 1.25rem 1.3rem;
+    }
+
+    .gc--compact .gc__controls {
+      column-gap: 1rem;
+    }
+
+    .gc--compact .gc__state {
+      grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
+      grid-template-areas: 'media goals' 'media status';
+      grid-template-rows: auto 1fr;
+      gap: 1.1rem 1.6rem;
+    }
+  }
+</style>

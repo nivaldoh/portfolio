@@ -4,7 +4,9 @@ Orientation for Claude Code sessions on this repo. Keep this file tight — it l
 
 ## What this is
 
-Personal portfolio + technical blog. Astro 5, fully static, deployed to Cloudflare Pages. Content is markdown / MDX in `src/content/`; everything else is Astro components.
+Nivaldo Tokuda's portfolio: AI-agent, evaluation and systems work for AI/ML engineering roles. Astro 5, fully static, deployed to Cloudflare Pages. A homepage plus four MDX case studies in `src/content/projects/`, with real recorded media and a few interactions built from real records. There are no posts yet; `/writing/` redirects to `/#work` until a post is published.
+
+If present, `dev/PORTFOLIO_CODEX_GUIDE.md` is the private editorial brief. Read the relevant section before changing public copy. The entire `dev/` folder is ignored by Git; it is optional and not required to build or contribute. Shared setup and content conventions live in `README.md` and the case studies.
 
 ## Stack
 
@@ -12,60 +14,64 @@ Personal portfolio + technical blog. Astro 5, fully static, deployed to Cloudfla
 - **Static build, no `@astrojs/cloudflare` adapter.** Pages serves `dist/` directly.
 - Integrations: `@astrojs/mdx`, `@astrojs/sitemap`, `@astrojs/rss`, `@astrojs/check`.
 - Astro 5 Content Layer API. Schemas live at `src/content.config.ts` (top level under `src/`, NOT `src/content/config.ts`).
-- Self-hosted Newsreader variable font (latin, weight axis 200–800), roman + italic in `public/fonts/`. Preloaded in `BaseHead.astro`.
-- Shiki single theme `github-dark` (no dual-theme swap; colors bake into inline styles).
+- Self-hosted Newsreader variable font (latin; axes wght 200–800 and opsz 6–72), roman + italic in `public/fonts/`. Preloaded in `BaseHead.astro`.
+- Shiki `github-dark` for markdown code; `BeamSection` uses `vitesse-dark` via `<Code>`.
+- Interactions are vanilla TypeScript in Astro `<script>`s — no UI framework. Each server-renders a complete static state first.
 
 ## Design language
 
-A restrained dark-fantasy / cosmic-horror motif. Technical-first; Personality lives in details.
+A restrained dark-fantasy / cosmic-horror motif. Technical-first; personality lives in details, and project media (the Warhammer battles) supplies most of the character.
 
-- **Single dark theme.** Light theme was deliberately removed. **Do not reintroduce a theme toggle** without asking — `BaseHead.astro` no longer has a FOUC bootstrap script and `BaseLayout.astro` no longer sets `data-theme`.
+- **Single dark theme.** Light theme was deliberately removed. **Do not reintroduce a theme toggle** without asking — `BaseHead.astro` has no FOUC bootstrap script and `BaseLayout.astro` sets no `data-theme`.
 - **Palette tokens** (`src/styles/global.css`):
-  - `--bg #0a0c10` indigo-black · `--fg #d6cfb8` candlewax ivory
-  - `--accent #c8b270` pale gold (links, focus, blockquote rule)
+  - `--bg #0a0c10` indigo-black · `--fg #d6cfb8` candlewax ivory · `--fg-muted #8c8572`
+  - `--accent #c8b270` pale gold (links, focus, primary button, blockquote rule)
   - `--accent-2 #4a6a8e` cobalt (used **only** in `::selection`)
-- **No decorative glyph.** An earlier "Mark" (ringed-dot SVG) was tried as a post-end mark and as a preamble before page `<h1>`s; both were removed. Personality lives in the palette, the typography, and the small text touches (footer colophon, 404 copy) — not in a recurring symbol. Don't reintroduce a brand mark without asking.
-- **Tone constraints.** No glitch effects, no parallax, no animated backgrounds, no gothic display fonts, no "edgelord" copy. Heading letter-spacing on `h1` is `+0.02em` (inscribed feel); other headings keep the default `-0.01em` tightening.
+  - Data colours, figures only: `--data-model` (the evaluated agent), `--data-ai` (game AI / opponent), `--data-ok`, `--data-miss`, `--data-terrain`, `--data-grid`. Always paired with shape or text.
+- **Layout:** page container 76rem (`.container`); case-study text in a 42rem left column, `.wide` children span the container (`CaseStudyLayout.astro`).
+- **No decorative glyph.** An earlier "Mark" (ringed-dot SVG) was removed. Don't reintroduce a brand mark without asking.
+- **Tone constraints.** No glitch effects, no parallax, no animated backgrounds, no gothic display fonts, no "edgelord" copy, no ALL-CAPS eyebrow labels, monospace only for literal code/orders/traces. Motion only in response to the user. Heading letter-spacing on `h1` is `+0.02em` (inscribed feel); other headings keep `-0.01em`.
 
 ## Conventions
 
-- **Posts**: `.md` for prose-only; `.mdx` only when the post genuinely needs a component. The MDX template shows the import pattern.
-- **Images in markdown**: `![alt](url "caption")` — the title doubles as the caption. A small inline rehype plugin in `astro.config.mjs` wraps standalone-image paragraphs in `<figure>` and turns the title into `<figcaption>`. **Heads up:** Astro's `<Content components={{ img: Figure }} />` mapping fires for MDX only, not plain markdown — that's why the rehype plugin exists. Don't remove it without restoring an equivalent.
-- **Images in MDX**: import the asset, render `<Figure src={pic} alt="..." caption="..." />`. `Figure.astro` switches between `astro:assets <Image>` (for ImageMetadata) and a plain `<img>` (for string URLs); `alt` is required at the type level.
-- **Drafts**: `draft: true` in frontmatter hides the post in `npm run build` but keeps it visible in `npm run dev`.
-- **Dates**: `FormattedDate.astro` formats with `timeZone: 'UTC'` so frontmatter dates don't drift on different build hosts.
-- **Heading hierarchy**: one `<h1>` per page (page title or post title); body content starts at `<h2>`.
+- **Case studies**: `src/content/projects/<slug>.mdx` → `/projects/<slug>/`. Frontmatter feeds the page header *and* the homepage panel (`summary`, `status`), so copy lives in one place. Headings start at `h2`; implementation detail goes in `<Details>`.
+- **Shared units**: `Plate` (framed media + caption), `Details` (expandable), `ProjectPanel` (homepage entry), `RecordedVideo` (no autoplay, pauses off-screen, one at a time), CSS `.action`, `.link-row`, `.status`, `.segmented`, `.caption`.
+- **Media**: images in `src/assets/work/<project>/` (optimised by `astro:assets`); videos, posters and JSON in `public/media/<project>/`.
+- **Replay data**: `public/media/game-agents/wh3-cavalry-flank.json` is generated by `scripts/export_wh3_replay.py` from a recorded job in the game repo. Never hand-edit it; never interpolate positions.
+- **Posts**: `.md` for prose-only; `.mdx` only when the post genuinely needs a component.
+- **Images in markdown**: `![alt](url "caption")` — a small rehype plugin in `astro.config.mjs` wraps standalone-image paragraphs in `<figure>` with the title as `<figcaption>`. Astro's `<Content components={{ img: Figure }} />` mapping fires for MDX only. Don't remove the plugin without restoring an equivalent.
+- **Drafts**: `draft: true` hides a post or case study in `npm run build` but keeps it in `npm run dev`. Committed drafts remain visible in repository source; keep private drafts in the ignored `dev/` folder.
+- **Dates**: `FormattedDate.astro` formats with `timeZone: 'UTC'`.
+- **Heading hierarchy**: one `<h1>` per page; body content starts at `<h2>`.
 
 ## Code
 - Focus on simplicity.
 
 ## Content schemas (`src/content.config.ts`)
 
+- **Projects** (`src/content/projects/`, `.md`/`.mdx`): `title`, `subtitle?`, `description`, `summary`, `status` (free text), `period`, `order`, `cover?{src,alt}`, `links[{label,url}]`, `credits[]`, `draft`.
 - **Posts** (`src/content/posts/`, `.md` + `.mdx`): `title`, `description`, `pubDate`, `updatedDate?`, `tags[]`, `draft`, `interactive`.
-- **Projects** (`src/content/projects/`, `.md`): `title`, `description`, `year`, `links[{label,url}]`, `status: 'active' | 'archived'`, `featured`.
-- File slug = filename. To customize, add a `slug` field to the schema and use `entry.data.slug` in `getStaticPaths`.
-- Render via `const { Content } = await render(entry)` from `astro:content` (Astro 5 form, NOT the legacy `entry.render()`).
+- File slug = filename. Render via `const { Content } = await render(entry)` from `astro:content` (Astro 5 form, NOT the legacy `entry.render()`).
 
 ## Deploy (Cloudflare Pages)
 
 - **Project type is Pages, not Workers.** Earlier in the project's history a Workers + auto-injected `@astrojs/cloudflare` + `wrangler` setup broke the build; switching to Pages was the fix. **Do not switch back to Workers** or add the Cloudflare adapter.
 - Production domain: `https://portfolio-818.pages.dev`, wired into `astro.config.mjs#site` and `src/consts.ts#SITE_URL`.
-- Build: `npm run build` → `dist/`. Pages reads `.nvmrc` (`20`).
+- Build: `npm run build` → `dist/`. Pages reads `.nvmrc` (`20`). Pages caps files at 25 MiB.
 - `public/_headers` is honored automatically (immutable cache for fonts + `_astro/*`, baseline security headers).
 
 ## Hard rules
 
 - **Never use the `**/` glob pattern in shell commands** (`find`, `grep`, `ls`, etc.). This is a global user constraint. It does **not** apply to source-code globs — e.g. Astro's loader pattern in `content.config.ts` is fine, since it's an internal API, not a shell invocation.
-- **Don't invent personal content.** Every `TODO:` placeholder stays as a placeholder until the user fills it in. No fake bio, no invented dates, no testimonials, no marketing taglines.
+- **Don't invent personal content or evidence.** Every public claim must trace to a record, report, paper or the résumé. Attach scope and limitations to numbers. No fake bio, testimonials or marketing taglines.
+- **PokéTCG**: no source, replay or simulator links/assets (the bundled engine is redistribution-restricted).
 
-## TODOs the user still needs to fill in
+## Publication conventions
 
-- `src/consts.ts` — `SITE_TITLE`, `SITE_DESCRIPTION`, `AUTHOR`, `SOCIAL_LINKS`.
-- `src/pages/index.astro` — landing intro, "Currently" copy.
-- `src/pages/about.astro` — Bio, Background, Contact.
-- `public/og-default.png` — replace placeholder (1200×630 expected).
-- `public/favicon.svg` — placeholder (plain indigo-black square). User to design.
-- Delete the two template posts (`template-markdown-post.md`, `template-mdx-post.mdx`) and `template-project.md` once real content exists.
+- Keep private editorial notes and unfinished personal drafts in the ignored `dev/` folder.
+- Preserve the Newsreader copyright notice and license in `public/fonts/OFL.txt`.
+- Keep workshop submission status accurate; only add a Paper link when a public URL is available.
+- Link Writing in `Header.astro` once a finished post is published.
 
 ## Out of scope (don't propose unprompted)
 
@@ -75,10 +81,13 @@ Analytics, newsletter signup, comments. All deliberately deferred. Theme toggle 
 
 | Concern                          | Path                                                          |
 | -------------------------------- | ------------------------------------------------------------- |
-| Routes                           | `src/pages/` (file-based)                                     |
-| Long-form post layout            | `src/layouts/PostLayout.astro`                                |
+| Routes                           | `src/pages/` (file-based); redirects in `astro.config.mjs`    |
+| Homepage (hero, panels, about)   | `src/pages/index.astro`, `src/components/BeamSection.astro`   |
+| Case-study layout                | `src/layouts/CaseStudyLayout.astro`                           |
+| Case-study copy                  | `src/content/projects/*.mdx`                                  |
+| Interactive pieces               | `src/components/{wh3,slay,robocasa,tcg,pokeagent,game-agents}/` |
 | Page chrome (head/header/footer) | `src/components/{BaseHead,Header,Footer}.astro`               |
-| Design tokens, prose, focus, motion | `src/styles/global.css`                                    |
+| Design tokens, shared units      | `src/styles/global.css`                                       |
 | Site constants                   | `src/consts.ts`                                               |
 | Collection schemas               | `src/content.config.ts`                                       |
 | Astro / Shiki / rehype config    | `astro.config.mjs`                                            |
@@ -87,4 +96,4 @@ Analytics, newsletter signup, comments. All deliberately deferred. Theme toggle 
 
 ## Commands
 
-`npm run dev` · `npm run check` · `npm run build` · `npm run preview`. Local Node 18.17.1+ works for dev; CI uses Node 20.
+`npm run dev` · `npm run check` · `npm run test:replay` · `npm run build` · `npm run preview`. Local Node 18.17.1+ works for dev; CI uses Node 20. See README for validation guidance.

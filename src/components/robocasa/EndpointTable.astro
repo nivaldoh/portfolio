@@ -1,0 +1,117 @@
+---
+// Endpoints of the nine finished goal-change episodes (paper Table 1,
+// bottom half). Counts are successes / finished episodes per controller.
+const rows = [
+  { measure: 'Original-task score', groot: '4/4', astra: '0/5' },
+  { measure: 'Croissant back on its plate', groot: '0/4', astra: '5/5' },
+  { measure: 'Jam on the board', groot: '4/4', astra: '2/5' },
+  { measure: 'Both requirements at the last sample', groot: '0/4', astra: '2/5' },
+  { measure: 'Current goal (ten-sample rule)', groot: '0/4', astra: '1/5' },
+  { measure: 'Actions from the change to the next policy input or model call', groot: '3–15', astra: '2–340' },
+];
+---
+
+<div class="endpoints">
+  <table>
+    <caption>
+      Endpoints of the nine goal-change episodes that finished after a valid
+      change. Requirement rows are read at the last sample; the current goal
+      also needs both requirements to hold for ten consecutive actions.
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col">Measure</th>
+        <th scope="col" class="num">GR00T N1.5 <span>n = 4</span></th>
+        <th scope="col" class="num">Astra <span>n = 5</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((r) => (
+        <tr>
+          <th scope="row">{r.measure}</th>
+          <td class="num">{r.groot}</td>
+          <td class="num">{r.astra}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .endpoints {
+    margin-block: 1.8rem 2rem;
+    overflow-x: auto;
+  }
+
+  .endpoints table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  .endpoints caption {
+    caption-side: bottom;
+    text-align: left;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-style: italic;
+    line-height: 1.5;
+    padding-top: 0.7rem;
+  }
+
+  .endpoints th,
+  .endpoints td {
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid var(--rule);
+    text-align: left;
+    vertical-align: baseline;
+  }
+
+  .endpoints th:first-child {
+    padding-left: 0;
+  }
+
+  .endpoints thead th {
+    font-weight: 560;
+    color: var(--fg-strong);
+    border-bottom-color: var(--border);
+    vertical-align: bottom;
+  }
+
+  .endpoints thead th span {
+    display: block;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+  }
+
+  .endpoints tbody th {
+    font-weight: 400;
+    color: var(--fg);
+  }
+
+  .endpoints .num {
+    text-align: right;
+    white-space: nowrap;
+    padding-right: 0;
+    width: 7.5rem;
+  }
+
+  .endpoints td.num {
+    color: var(--fg-strong);
+  }
+
+  @media (max-width: 30rem) {
+    .endpoints .num {
+      width: auto;
+    }
+
+    .endpoints th,
+    .endpoints td {
+      padding-inline: 0.5rem;
+    }
+  }
+</style>

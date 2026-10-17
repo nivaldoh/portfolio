@@ -1,0 +1,107 @@
+---
+// A recorded clip with a poster and a caption. Nothing plays until the
+// visitor presses play; a playing clip pauses when it leaves the viewport,
+// and starting one pauses any other RecordedVideo on the page.
+// `src` and `poster` are paths under public/. If either file is missing the
+// component renders nothing rather than an empty frame.
+import fs from 'node:fs';
+import path from 'node:path';
+
+interface Props {
+  src: string;
+  poster: string;
+  /** Plain-text caption; or pass rich content in the default slot. */
+  caption?: string;
+  /** Intrinsic size of the video, used for layout and as the maximum width. */
+  width: number;
+  height: number;
+  /** Accessible name describing what the recording shows. */
+  label: string;
+  wide?: boolean;
+  class?: string;
+}
+
+const { src, poster, caption, width, height, label, wide = false, class: className } = Astro.props;
+
+const inPublic = (p: string | undefined) => {
+  if (!p) return false;
+  if (!p.startsWith('/')) return true; // external URL: trust the caller
+  return fs.existsSync(path.join(process.cwd(), 'public', decodeURIComponent(p)));
+};
+
+const available = inPublic(src) && inPublic(poster);
+const hasCaption = Boolean(caption) || Astro.slots.has('default');
+---
+
+{available && (
+  <figure
+    class:list={['plate', 'recorded', { wide }, className]}
+    style={`--recorded-max: ${width}px`}
+    data-recorded-video
+  >
+    <div class="plate__frame">
+      <video
+        src={src}
+        poster={poster}
+        width={width}
+        height={height}
+        preload="none"
+        playsinline
+        muted
+        controls
+        aria-label={label}
+      >
+        <a href={src}>Download the recording</a>
+      </video>
+    </div>
+    {hasCaption && (
+      <figcaption>
+        {caption}
+        <slot />
+      </figcaption>
+    )}
+  </figure>
+)}
+
+<script>
+  const videos = [
+    ...document.querySelectorAll<HTMLVideoElement>('[data-recorded-video] video'),
+  ];
+
+  if (videos.length > 0) {
+    // Only one recording plays at a time.
+    for (const video of videos) {
+      video.addEventListener('play', () => {
+        for (const other of videos) if (other !== video && !other.paused) other.pause();
+      });
+    }
+
+    // Pause a recording once it has scrolled out of view.
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          const video = entry.target as HTMLVideoElement;
+          if (!entry.isIntersecting && !video.paused) video.pause();
+        }
+      });
+      for (const video of videos) observer.observe(video);
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) for (const video of videos) if (!video.paused) video.pause();
+    });
+  }
+</script>
+
+<style>
+  .recorded {
+    max-width: var(--recorded-max);
+  }
+
+  .recorded video {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--bg-plate);
+  }
+</style>

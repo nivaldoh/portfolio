@@ -1,14 +1,14 @@
 ---
-import { SITE_TITLE } from '../consts';
+import { SITE_TITLE, RESUME_URL } from '../consts';
 
 const path = Astro.url.pathname;
-const isCurrent = (href: string) =>
-  href === '/' ? path === '/' : path === href || path.startsWith(href + '/');
+const inProjects = path.startsWith('/projects/');
 
 const links = [
-  { href: '/writing/', label: 'Writing' },
-  { href: '/projects/', label: 'Projects' },
-  { href: '/about/', label: 'About' },
+  { href: '/#work', label: 'Work', current: inProjects },
+  { href: '/#about', label: 'About', current: false },
+  { href: RESUME_URL, label: 'Résumé', current: false },
+  { href: '/#contact', label: 'Contact', current: false },
 ];
 ---
 
@@ -17,7 +17,7 @@ const links = [
     <a class="site-title" href="/">{SITE_TITLE}</a>
     <nav class="site-nav" aria-label="Primary">
       {links.map((l) => (
-        <a href={l.href} aria-current={isCurrent(l.href) ? 'page' : undefined}>
+        <a href={l.href} aria-current={l.current ? 'page' : undefined}>
           {l.label}
         </a>
       ))}

@@ -1,0 +1,235 @@
+---
+// How both controllers act through one simulator step and when a change
+// reaches each of them. Redrawn from Figure 2 of the paper; every label is
+// from the paper's method section and Table 1.
+interface Props {
+  wide?: boolean;
+}
+
+const { wide = false } = Astro.props;
+---
+
+<figure class:list={['ss', { wide }]}>
+  <div class="ss__diagram">
+    <div class="ss__lanes">
+      <div class="ss__lane">
+        <div class="ss__box">
+          <p class="ss__name">GR00T N1.5</p>
+          <p class="ss__kind">Vision-language-action policy</p>
+          <p class="ss__inputs">
+            Sees camera images, proprioception and the current instruction.
+          </p>
+        </div>
+        <div class="ss__links">
+          <p class="ss__link ss__link--down">Acts in 16-action chunks, each run in full</p>
+          <p class="ss__link ss__link--up">
+            Sees a change at its next chunk query, at most 16 actions later
+            (observed 3–15)
+          </p>
+        </div>
+      </div>
+
+      <div class="ss__lane">
+        <div class="ss__box">
+          <p class="ss__name">Astra’s model</p>
+          <p class="ss__kind">Hosted language model, called between program segments</p>
+          <p class="ss__inputs">
+            Sees camera images plus privileged state: robot state, ground-truth
+            object poses, grasp flags, requirement values, the success flag and
+            the remaining action budget.
+          </p>
+        </div>
+        <p class="ss__link ss__link--down ss__link--inner">Writes a Python program segment at each call</p>
+        <div class="ss__box ss__box--program">
+          <p class="ss__name">Python program</p>
+          <p class="ss__inputs">Calls motion primitives adapted from RPent.</p>
+        </div>
+        <div class="ss__links">
+          <p class="ss__link ss__link--down">Sends actions every step</p>
+          <p class="ss__link ss__link--up">
+            The program can read the task after every step; the model sees a
+            change only at its next call (observed 2–340 actions later)
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="ss__box ss__box--shared">
+      <p class="ss__name">Shared simulator step</p>
+      <p class="ss__inputs">
+        Action, then physics, then the scenario: check the trigger, apply a due
+        change, update the current goal and requirements. Then a refreshed
+        observation.
+      </p>
+    </div>
+    <p class="ss__link ss__link--down ss__link--records">Every step is recorded</p>
+    <div class="ss__box ss__box--records">
+      <p class="ss__inputs">
+        Change applied · controller input received · each requirement · scores ·
+        stop reason
+      </p>
+    </div>
+  </div>
+  <figcaption>
+    Both controllers act through one shared simulator step, and the scenario
+    layer owns changes and scoring. Redrawn from Figure 2 of the paper.
+  </figcaption>
+</figure>
+
+<style>
+  .ss {
+    margin: 0;
+    container-type: inline-size;
+  }
+
+  .ss__diagram {
+    display: grid;
+    gap: 0;
+  }
+
+  .ss__lanes {
+    display: grid;
+    gap: 1.6rem;
+  }
+
+  .ss__lane {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .ss__box {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-plate);
+    padding: 0.8rem 1rem 0.9rem;
+  }
+
+  .ss__box p {
+    margin: 0;
+  }
+
+  .ss__name {
+    color: var(--fg-strong);
+    font-weight: 560;
+    line-height: 1.3;
+  }
+
+  .ss__kind {
+    color: var(--fg-muted);
+    font-style: italic;
+    font-size: var(--step--1);
+    line-height: 1.35;
+  }
+
+  .ss__inputs {
+    margin-top: 0.35rem !important;
+    font-size: var(--step--1);
+    line-height: 1.5;
+    color: var(--fg);
+  }
+
+  .ss__name + .ss__inputs {
+    margin-top: 0.15rem !important;
+  }
+
+  .ss__box--shared {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  }
+
+  .ss__box--records {
+    background: transparent;
+  }
+
+  .ss__box--records .ss__inputs {
+    margin-top: 0 !important;
+    color: var(--fg-muted);
+  }
+
+  /* Connectors: a vertical rule with a head, and its label. */
+  .ss__links {
+    display: grid;
+    gap: 0;
+  }
+
+  .ss__link {
+    position: relative;
+    margin: 0;
+    padding: 0.45rem 0 0.45rem 1.9rem;
+    font-size: var(--step--1);
+    line-height: 1.4;
+    font-style: italic;
+    color: var(--fg-muted);
+  }
+
+  .ss__link::before,
+  .ss__link::after {
+    content: '';
+    position: absolute;
+    left: 0.7rem;
+  }
+
+  .ss__link::before {
+    top: 0;
+    bottom: 0;
+    border-left: 1.5px solid currentColor;
+  }
+
+  .ss__link::after {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    transform: translateX(-3.25px);
+  }
+
+  .ss__link--down::after {
+    bottom: 0;
+    border-top: 6px solid currentColor;
+  }
+
+  .ss__link--up {
+    color: var(--accent);
+  }
+
+  .ss__link--up::after {
+    top: 0;
+    border-bottom: 6px solid currentColor;
+  }
+
+  /* Stacked lanes: the lane-to-step links lose their heads, since the next
+     box down is the other controller, not the shared step. */
+  .ss__links .ss__link::after {
+    display: none;
+  }
+
+  @container (min-width: 44rem) {
+    .ss__lanes {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: 2rem;
+      align-items: stretch;
+    }
+
+    /* Both links of a lane run side by side down to the shared step. */
+    .ss__lane > .ss__links {
+      flex: 1;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+      column-gap: 1rem;
+      min-height: 5.5rem;
+    }
+
+    .ss__links .ss__link {
+      display: flex;
+      align-items: center;
+      padding-block: 0.8rem;
+    }
+
+    .ss__links .ss__link::after {
+      display: block;
+    }
+  }
+
+  .ss p {
+    hyphens: manual;
+  }
+</style>

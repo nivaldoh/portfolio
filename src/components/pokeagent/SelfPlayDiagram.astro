@@ -1,0 +1,431 @@
+---
+// The self-play setup as implemented in nivaldoh/metamon_pokeagent_comp at
+// 3c54f02: a JSONL task manifest and the Cloud Run task index pick one battle
+// configuration; inside each task's container a local Pokémon Showdown server
+// hosts two Metamon agents, which load pretrained or local checkpoints; each
+// agent writes its trajectories. Workers never save checkpoints. No fleet
+// size, throughput or cost: the repository has no run records.
+//
+// `compact` (homepage panel): a tighter, always-stacked diagram.
+// `wide`: spans the full case-study container (left-to-right when it fits).
+import { BRACKETS_URL } from './brackets';
+
+interface Props {
+  compact?: boolean;
+  wide?: boolean;
+  class?: string;
+}
+
+const { compact = false, wide = false, class: className } = Astro.props;
+const REPO =
+  'https://github.com/nivaldoh/metamon_pokeagent_comp/tree/3c54f02f9bfd718f4081c1b377346efedd236cd6';
+---
+
+<figure class:list={['plate', 'sp', { 'sp--compact': compact, wide }, className]}>
+  <div class="plate__frame sp__frame">
+    <div class="sp__part">
+      <div class="sp__flow">
+        <div class="sp__node sp__manifest">
+          <p class="sp__title">Task manifest</p>
+          <p class="sp__text">
+            {compact ? 'one JSON line per task' : 'One JSON line per task: both agents, format, team set, battle count'}
+          </p>
+          <p class="sp__code"><code>selfplay_rlv2<wbr />.jsonl</code></p>
+        </div>
+
+        <div class="sp__edge sp__edge--manifest" aria-hidden="true">
+          <span class="sp__edge-label">task <i>i</i> reads <span class="sp__nowrap">line <i>i</i>&#8201;+&#8201;1</span></span>
+        </div>
+
+        <div class="sp__node sp__weights">
+          <p class="sp__title">Model checkpoints</p>
+          <p class="sp__text">
+            {compact ? 'Hugging Face or local' : 'Metamon pretrained models from Hugging Face, or a local checkpoint'}
+          </p>
+          <p class="sp__code"><code>SyntheticRLV2</code></p>
+        </div>
+
+        <div class="sp__edge sp__edge--weights" aria-hidden="true">
+          <span class="sp__edge-label">loaded at start</span>
+        </div>
+
+        <div class="sp__worker" role="group" aria-label={`Inside one Cloud Run Job task`}>
+          <p class="sp__worker-label">
+            <span class="sp__worker-name">Cloud Run Job task <i>i</i></span>
+            <span class="sp__worker-note">
+              {compact ? 'one container' : 'one container, nothing shared with other tasks'}
+            </span>
+          </p>
+          <div class="sp__agents">
+            <div class="sp__node sp__agent">
+              <p class="sp__title">Metamon agent&nbsp;1</p>
+              {!compact && <p class="sp__text">its own username</p>}
+            </div>
+            <div class="sp__node sp__agent">
+              <p class="sp__title">Metamon agent&nbsp;2</p>
+              {!compact && <p class="sp__text">its own username</p>}
+            </div>
+          </div>
+          <div class="sp__links" aria-hidden="true">
+            <span class="sp__link"></span>
+            <span class="sp__links-label">battle through</span>
+            <span class="sp__link"></span>
+          </div>
+          <div class="sp__node sp__server">
+            <p class="sp__title">Pokémon Showdown server</p>
+            {!compact && <p class="sp__text">local to the container, started before the battles</p>}
+          </div>
+        </div>
+
+        <div class="sp__edge sp__edge--out" aria-hidden="true">
+          <span class="sp__edge-label">each agent writes</span>
+        </div>
+
+        <div class="sp__node sp__output">
+          <p class="sp__title">Trajectory files</p>
+          {!compact && <p class="sp__text">per run, configuration tag and task; no checkpoints are saved</p>}
+          <p class="sp__code">
+            <code>run=…/<wbr />cfg=…/<wbr /><span class="sp__nowrap">task-<i>i</i>/</span><wbr />agent1/</code>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <figcaption>
+    {compact ? (
+      <Fragment>
+        The self-play setup I built for competition experiments: each task
+        runs two Metamon agents on a private Showdown server, loads checkpoints
+        and writes only trajectories. Tournament results are in the
+        <a href={BRACKETS_URL} rel="noopener">official brackets</a>.
+      </Fragment>
+    ) : (
+      <Fragment>
+        The self-play setup as implemented in my
+        <a href={REPO} rel="noopener">competition repository</a>. A task reads
+        its line of the manifest, starts a private Showdown server, and runs two
+        Metamon agents against each other. Agents only load checkpoints; the task
+        only writes trajectories. Training on them is a separate step.
+      </Fragment>
+    )}
+  </figcaption>
+</figure>
+
+<style>
+  .sp__frame {
+    padding: clamp(0.85rem, 2.5vw, 1.6rem);
+    container-type: inline-size;
+    container-name: sp;
+  }
+
+  /* The prose column hyphenates paragraphs; diagram labels must not. */
+  .sp__frame p,
+  .sp__frame span {
+    hyphens: manual;
+  }
+
+  .sp--compact .sp__frame {
+    padding: clamp(0.8rem, 2vw, 1.15rem);
+  }
+
+  .sp__nowrap {
+    white-space: nowrap;
+  }
+
+  /* ---------- Diagram ---------- */
+  .sp__flow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      'manifest weights'
+      'e-manifest e-weights'
+      'worker worker'
+      'e-out e-out'
+      'output output';
+    column-gap: 0.75rem;
+  }
+
+  .sp__manifest { grid-area: manifest; }
+  .sp__weights { grid-area: weights; }
+  .sp__edge--manifest { grid-area: e-manifest; }
+  .sp__edge--weights { grid-area: e-weights; }
+  .sp__worker { grid-area: worker; }
+  .sp__edge--out { grid-area: e-out; }
+  .sp__output { grid-area: output; }
+
+  .sp__node {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.65rem 0.8rem 0.7rem;
+    min-width: 0;
+  }
+
+  .sp--compact .sp__node {
+    padding: 0.5rem 0.7rem 0.55rem;
+  }
+
+  .sp__node p {
+    margin: 0;
+  }
+
+  .sp__title {
+    color: var(--fg-strong);
+    font-weight: 560;
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .sp__node .sp__text {
+    margin-top: 0.2rem;
+    color: var(--fg);
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .sp__node .sp__code {
+    margin-top: 0.4rem;
+    line-height: 1.3;
+  }
+
+  .sp--compact .sp__node .sp__code {
+    margin-top: 0.25rem;
+  }
+
+  .sp__code code {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--fg-muted);
+    overflow-wrap: anywhere;
+  }
+
+  .sp__code i,
+  .sp__edge-label i,
+  .sp__worker-name i {
+    font-style: italic;
+  }
+
+  /* The output is what the pipeline produces: the one gold-ruled box. */
+  .sp__output {
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  }
+
+  /* Edges: a line with an arrowhead and a plain-language label. Vertical by
+     default (stacked layout); the line sits near the left edge of its column
+     so the label reads beside it. */
+  .sp__edge {
+    position: relative;
+    min-height: 2.9rem;
+    padding: 0.5rem 0 0.7rem 2rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .sp--compact .sp__edge {
+    min-height: 2.15rem;
+    padding-block: 0.35rem 0.5rem;
+  }
+
+  .sp__edge::before {
+    content: '';
+    position: absolute;
+    left: 1.1rem;
+    top: 0;
+    bottom: 6px;
+    border-left: 1px solid var(--fg-muted);
+  }
+
+  .sp__edge::after {
+    content: '';
+    position: absolute;
+    left: calc(1.1rem - 4px);
+    bottom: 0;
+    border: 4.5px solid transparent;
+    border-bottom: 0;
+    border-top: 7px solid var(--fg-muted);
+  }
+
+  .sp__edge-label {
+    color: var(--fg-muted);
+    font-style: italic;
+    font-size: 0.88rem;
+    line-height: 1.3;
+  }
+
+  /* ---------- Worker boundary ---------- */
+  .sp__worker {
+    border: 1px dashed color-mix(in srgb, var(--fg-muted) 70%, transparent);
+    border-radius: var(--radius-plate);
+    padding: 0.75rem;
+    min-width: 0;
+  }
+
+  .sp--compact .sp__worker {
+    padding: 0.55rem 0.6rem 0.6rem;
+  }
+
+  .sp__worker-label {
+    margin: 0 0 0.6rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 0.6rem;
+    line-height: 1.3;
+  }
+
+  .sp--compact .sp__worker-label {
+    margin-bottom: 0.45rem;
+  }
+
+  .sp__worker-name {
+    color: var(--fg-strong);
+    font-weight: 560;
+  }
+
+  .sp__worker-note {
+    color: var(--fg-muted);
+    font-style: italic;
+    font-size: 0.88rem;
+  }
+
+  .sp__agents {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  /* Two short lines from the agents down to the server, labelled between. */
+  .sp__links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 0.6rem;
+    position: relative;
+    min-height: 2.2rem;
+  }
+
+  .sp--compact .sp__links {
+    min-height: 1.7rem;
+  }
+
+  .sp__link {
+    position: relative;
+  }
+
+  .sp__link::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    border-left: 1px solid var(--fg-muted);
+  }
+
+  .sp__links-label {
+    position: absolute;
+    inset: 0 27%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--fg-muted);
+    font-style: italic;
+    font-size: 0.88rem;
+    line-height: 1.2;
+  }
+
+  .sp__server {
+    text-align: center;
+  }
+
+  /* Very narrow: tighten the boxes so the agent names keep to one line. */
+  @container sp (max-width: 21rem) {
+    .sp__node,
+    .sp--compact .sp__node {
+      padding-inline: 0.55rem;
+    }
+
+    .sp__worker,
+    .sp--compact .sp__worker {
+      padding-inline: 0.45rem;
+    }
+
+    .sp__agents,
+    .sp__links {
+      column-gap: 0.45rem;
+    }
+
+    .sp__agent .sp__title {
+      font-size: 0.92rem;
+    }
+  }
+
+  /* ---------- Wide layout: left to right, checkpoints from above ---------- */
+  @container sp (min-width: 50rem) {
+    .sp:not(.sp--compact) .sp__flow {
+      grid-template-columns:
+        minmax(0, 1fr) 6.5rem minmax(0, 2.1fr) 6.5rem minmax(0, 1fr);
+      grid-template-areas:
+        '. . weights . .'
+        '. . e-weights . .'
+        'manifest e-manifest worker e-out output';
+      column-gap: 0;
+      align-items: center;
+    }
+
+    .sp:not(.sp--compact) .sp__weights,
+    .sp:not(.sp--compact) .sp__edge--weights {
+      justify-self: center;
+      width: min(100%, 23rem);
+    }
+
+    .sp:not(.sp--compact) .sp__edge--weights {
+      padding-left: calc(50% + 0.9rem);
+    }
+
+    .sp:not(.sp--compact) .sp__edge--weights::before {
+      left: 50%;
+    }
+
+    .sp:not(.sp--compact) .sp__edge--weights::after {
+      left: calc(50% - 4px);
+    }
+
+    .sp:not(.sp--compact) .sp__edge--manifest,
+    .sp:not(.sp--compact) .sp__edge--out {
+      min-height: 0;
+      align-self: stretch;
+      padding: 0;
+    }
+
+    .sp:not(.sp--compact) .sp__edge--manifest .sp__edge-label,
+    .sp:not(.sp--compact) .sp__edge--out .sp__edge-label {
+      position: absolute;
+      left: 0.4rem;
+      right: 0.4rem;
+      bottom: calc(50% + 0.45rem);
+      text-align: center;
+    }
+
+    .sp:not(.sp--compact) .sp__edge--manifest::before,
+    .sp:not(.sp--compact) .sp__edge--out::before {
+      left: 0.4rem;
+      right: calc(0.4rem + 6px);
+      top: 50%;
+      bottom: auto;
+      border-left: 0;
+      border-top: 1px solid var(--fg-muted);
+    }
+
+    .sp:not(.sp--compact) .sp__edge--manifest::after,
+    .sp:not(.sp--compact) .sp__edge--out::after {
+      left: auto;
+      right: 0.4rem;
+      top: calc(50% - 4px);
+      bottom: auto;
+      border: 4.5px solid transparent;
+      border-right: 0;
+      border-left: 7px solid var(--fg-muted);
+    }
+  }
+</style>

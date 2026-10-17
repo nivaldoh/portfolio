@@ -1,0 +1,176 @@
+---
+// Apache Beam Rust SDK and other selected open-source contributions.
+// Homepage only, so the copy lives here rather than in a collection.
+import { Code } from 'astro:components';
+// Verbatim from nivaldoh/beam @ df950aa (branch rust_sdk),
+// sdks/rust/src/tests/primitives_test.rs lines 27–36, dedented.
+import example from '../data/beam-rust-example.rs?raw';
+
+const SDK_URL = 'https://github.com/nivaldoh/beam/tree/rust_sdk/sdks/rust';
+const EXAMPLE_URL =
+  'https://github.com/nivaldoh/beam/blob/df950aa26bb68c94b11a7b91b9c9c885f7a43a44/sdks/rust/src/tests/primitives_test.rs#L27-L36';
+const DISCUSSION_URL =
+  'https://github.com/apache/beam/issues/21089#issuecomment-1374079495';
+
+const contributions = [
+  {
+    title: 'LogElements as a Beam PTransform',
+    note: 'Python SDK transform with unit tests',
+    project: 'Apache Beam',
+    ref: 'PR #23879',
+    year: '2022',
+    url: 'https://github.com/apache/beam/pull/23879',
+  },
+  {
+    title: 'Firestore configuration source',
+    note: 'An alternative to Google Sheets for configuring pipelines',
+    project: 'Google Megalista',
+    ref: 'PR #12',
+    year: '2021',
+    url: 'https://github.com/google/megalista/pull/12',
+  },
+];
+---
+
+<section class="beam container" aria-labelledby="beam-title">
+  <div class="beam__text">
+    <h2 class="section-heading" id="beam-title">
+      Starting an experimental Rust SDK for Apache Beam
+    </h2>
+    <p class="status">2022–2023; experimental, never released as part of Beam</p>
+    <p>
+      In late 2022 I started an experimental Rust SDK for Apache Beam, built on
+      Beam’s portability protos with an async runtime and modelled on the
+      TypeScript SDK. I wrote the pipeline and PCollection structures, the
+      first coders, an Impulse transform, worker bundle processing and an async
+      DirectRunner. By December the smallest possible pipeline ran end to end.
+    </p>
+    <p>
+      When Google’s Dataflow team explored a Rust SDK during a hackathon in
+      January 2023, the <a href={DISCUSSION_URL} rel="noopener">upstream
+      discussion</a> recommended continuing from my repository, and
+      contributors opened pull requests against it. After my activity paused,
+      others carried the effort forward in a community fork built on my branch.
+    </p>
+    <ul class="link-row">
+      <li><a href={SDK_URL} rel="noopener">Code</a></li>
+      <li><a href={DISCUSSION_URL} rel="noopener">Upstream discussion</a></li>
+    </ul>
+  </div>
+
+  <figure class="plate beam__code">
+    <div class="plate__frame">
+      <Code code={example} lang="rust" theme="vitesse-dark" wrap />
+    </div>
+    <figcaption>
+      The first end-to-end run: a one-transform pipeline executed by the async
+      DirectRunner.
+      <a href={EXAMPLE_URL} rel="noopener">primitives_test.rs</a>
+    </figcaption>
+  </figure>
+
+  <div class="beam__more">
+    <h3 class="beam__label">Other merged contributions</h3>
+    <ul class="contribs">
+      {contributions.map((c) => (
+        <li>
+          <a href={c.url} rel="noopener">{c.title}</a>
+          <p class="contribs__note">{c.note}</p>
+          <p class="contribs__meta">{c.project}, {c.ref}, {c.year}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .beam {
+    display: grid;
+    gap: 2.5rem 4rem;
+    padding-top: var(--space-section);
+  }
+
+  .beam__text p:not(.status) {
+    max-width: 58ch;
+  }
+
+  .beam__text .link-row {
+    margin-top: 1.2rem;
+  }
+
+  .beam__code {
+    margin: 0;
+    min-width: 0;
+  }
+
+  .beam__code :global(pre.astro-code) {
+    margin: 0;
+    padding: 1.2rem 1.3rem;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    background-color: var(--bg-plate) !important;
+    overflow-x: auto;
+  }
+
+  .beam__code figcaption a {
+    margin-left: 0.3em;
+  }
+
+  .beam__label {
+    font-size: 1.05rem;
+    font-weight: 560;
+    color: var(--fg-muted);
+    font-style: italic;
+    margin: 0 0 0.8rem;
+  }
+
+  .contribs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .contribs li {
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .contribs__note {
+    margin: 0.15rem 0 0;
+    font-size: var(--step--1);
+    color: var(--fg);
+  }
+
+  .contribs__meta {
+    margin: 0.1rem 0 0;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  @media (min-width: 60rem) {
+    .beam {
+      grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+      align-items: start;
+    }
+
+    .beam__more {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+      gap: 0 4rem;
+    }
+
+    .beam__label {
+      grid-column: 1 / -1;
+    }
+
+    .contribs {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 4rem;
+    }
+  }
+</style>
