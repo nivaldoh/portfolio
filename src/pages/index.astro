@@ -1,16 +1,20 @@
 ---
 import { getCollection } from 'astro:content';
-import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProjectPanel from '../components/ProjectPanel.astro';
 import BattleReplay from '../components/wh3/BattleReplay.astro';
-import GoalChange from '../components/robocasa/GoalChange.astro';
+import FlankTrace from '../components/wh3/FlankTrace.astro';
+import RunProgress from '../components/slay/RunProgress.astro';
+import DevelopmentRecordings from '../components/robocasa/DevelopmentRecordings.astro';
 import ResultsChart from '../components/tcg/ResultsChart.astro';
+import TeacherData from '../components/tcg/TeacherData.astro';
+import HybridSearch from '../components/pokeagent/HybridSearch.astro';
 import SelfPlayDiagram from '../components/pokeagent/SelfPlayDiagram.astro';
+import MetamonPRs from '../components/pokeagent/MetamonPRs.astro';
+import { BRACKETS_URL } from '../components/pokeagent/brackets';
 import BeamSection from '../components/BeamSection.astro';
+import Career from '../components/Career.astro';
 import { EMAIL, RESUME_URL, SOCIAL_LINKS } from '../consts';
-import advisorShot from '../assets/work/game-agents/wh3-ingame-advisor.jpg';
-import advisorDetail from '../assets/work/game-agents/wh3-ingame-advisor-detail.png';
 
 const projects = await getCollection(
   'projects',
@@ -18,192 +22,271 @@ const projects = await getCollection(
 );
 const byId = Object.fromEntries(projects.map((p) => [p.id, p]));
 const game = byId['game-agents'];
-const robocasa = byId['robocasa'];
 const tcg = byId['pokemon-tcg'];
-const pokeagent = byId['pokeagent-metamon'];
 
-const experience = [
-  {
-    years: '2024–2026',
-    org: 'Globant',
-    text: 'AI and Google Cloud client work. Multimodal video search and processing pipelines for Paramount/CBS; an LLM translation pipeline for Warner Bros., comparing RAG with fine-tuning; data engineering embedded with Google teams through the Google Extended Workforce.',
-  },
-  {
-    years: '2022–2024',
-    org: 'Globo',
-    text: 'Senior data engineer on production data systems.',
-  },
-  {
-    years: '2017–2021',
-    org: 'DP6',
-    text: 'Data engineer; collaborated with a Google team on the open-source Megalista project.',
-  },
-];
-
-const education = [
-  {
-    years: '2024–2027',
-    org: 'The University of Texas at Austin',
-    text: 'MS in Computer Science (online), in progress; expected December 2027.',
-  },
-  {
-    years: '2017–2022',
-    org: 'Universidade Presbiteriana Mackenzie',
-    text: 'BS in Computer Science.',
-  },
+// The hero's index of the work below, in page order.
+const index = [
+  { n: '01', href: '#work', title: 'Agents in real games', note: 'Total War · Slay the Spire' },
+  { n: '02', href: '#pokeagent', title: 'PokéAgent Challenge', note: 'NeurIPS 2025 quarterfinalist' },
+  { n: '03', href: '#metamon', title: 'Metamon', note: 'UT Austin RPL' },
+  { n: '04', href: '#pokemon-tcg', title: 'Pokémon TCG agents', note: 'Kaggle' },
+  { n: '05', href: '#robocasa', title: 'Changing robot goals', note: 'RoboCasa365' },
+  { n: '06', href: '#beam', title: 'Apache Beam in Rust', note: 'Distributed systems' },
 ];
 ---
 
 <BaseLayout>
   <section class="hero container" aria-labelledby="hero-title">
     <div class="hero__text">
-      <p class="hero__name">Nivaldo Tokuda</p>
       <h1 class="hero__title" id="hero-title">I build and evaluate AI agents.</h1>
       <p class="hero__lede">
-        I have 8+ years of engineering cloud and data systems. My recent work spans game environments, robot evaluation, and training
-        experiments.
+        I build the interfaces that let agents act, then study what happens
+        when they do.
       </p>
       <p class="hero__context">
-        Based in São Paulo, Brazil. MS in Computer Science at UT Austin,
-        expected 2027.
+        8+ years in cloud and data engineering. MS in Computer Science at
+        UT Austin, expected 2027. São Paulo, Brazil.
       </p>
-      <div class="actions">
-        <a class="action action--primary" href="#work">See the work</a>
-        <a class="action" href={RESUME_URL}>Résumé (PDF)</a>
-        <a class="action" href="#contact">Contact</a>
-      </div>
+      <nav class="hero__index" aria-label="Selected work">
+        <ol>
+          {index.map((item) => (
+            <li>
+              <a href={item.href}>
+                <span class="hero__index-n">{item.n}</span>
+                <span class="hero__index-title">{item.title}</span>
+                <span class="hero__index-note">{item.note}</span>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
     </div>
-
-    <figure class="plate hero__plate">
-      <div class="hero__stage">
-        <div class="plate__frame">
-          <Image
-            src={advisorShot}
-            alt="A Total War: WARHAMMER III battle on a volcanic plain. Units with banners fight in the centre; a panel at the top left shows a short text message from the evaluated model."
-            widths={[640, 960, 1280, 1600]}
-            sizes="(min-width: 64rem) 44rem, 100vw"
-            loading="eager"
-            fetchpriority="high"
-          />
-        </div>
-        <div class="plate__frame hero__loupe">
-          <Image
-            src={advisorDetail}
-            alt="Close-up of the in-game advisor panel: “122 s: gpt-6-luna saw us 11/13u 362m seen 13/13u 591m. Send the idle harpies into active fights and put the lord back on the weakened Forsaken, using his ready volley there. f1 attack e7 melee run, f1 ability …”"
-            widths={[470]}
-            sizes="470px"
-            loading="eager"
-          />
-        </div>
-      </div>
-      <figcaption>
-        Evaluating AI as a real-time battle commander in Total War: WARHAMMER III.
-      </figcaption>
-    </figure>
+    <FlankTrace class="hero__visual" />
   </section>
 
   <section id="work" class="feature" aria-labelledby="feature-title">
     <div class="container">
       <div class="feature__head">
         <div>
+          <p class="eyebrow">01 / Agent training and benchmarking</p>
           <h2 class="section-heading" id="feature-title">
-            <a href={`/projects/${game.id}/`}>{game.data.title}</a>
+            <a href={`/projects/${game.id}/`}>Agents in real games</a>
           </h2>
-          <p class="status">{game.data.status}</p>
         </div>
         <div>
-          <p class="feature__summary">{game.data.summary}</p>
+          <p class="feature__summary">
+            One harness for training and benchmarking language-model agents in
+            two commercial games. Mods expose each game’s state and carry out
+            the agent’s actions; every decision is recorded for replay.
+          </p>
           <ul class="link-row">
-            <li><a href={`/projects/${game.id}/`}>Explore the project</a></li>
-            <li><a href={`/projects/${game.id}/#slay-the-spire`}>The Slay the Spire example</a></li>
+            <li><a href={`/projects/${game.id}/`}>How I built it</a></li>
+            <li><a href="https://github.com/nivaldoh/slay_the_spire_ai" rel="noopener">Code</a></li>
           </ul>
         </div>
       </div>
-      <BattleReplay variant="feature" />
+
+      <section class="game" id="total-war" aria-labelledby="total-war-title">
+        <div class="game__head game__head--cta">
+          <div>
+            <h3 class="game__title" id="total-war-title">Total War: WARHAMMER III</h3>
+            <p class="game__kind">Real-time battles</p>
+          </div>
+          <a class="action benchmark-cta" href="/benchmarks/total-war/index.html">
+            <span class="benchmark-cta__text">
+              <span class="benchmark-cta__title">Open the full benchmark</span>
+              <span class="benchmark-cta__note">Six scenarios · model comparisons · battle replays</span>
+            </span>
+            <svg class="benchmark-cta__arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9.5M8.5 4l4 4-4 4" /></svg>
+          </a>
+        </div>
+        <p class="feature__point">
+          The LLM takes its all-cavalry army (<span class="ink-model">in&nbsp;blue</span>)
+          and skilfully circles the opponent to catch them out of position,
+          despite needing about 5&nbsp;s to act.
+        </p>
+        <BattleReplay variant="feature" />
+      </section>
+
+      <section class="game" id="slay-the-spire" aria-labelledby="spire-title">
+        <div class="game__head">
+          <h3 class="game__title" id="spire-title">Slay the Spire</h3>
+          <p class="game__kind">Whole runs, one decision at a time</p>
+        </div>
+        <p class="feature__point">
+          A model plays complete Ironclad runs. When it slips, I trace the
+          mistake to the prompt, memory or interface, change one thing and run
+          again.
+        </p>
+        <RunProgress />
+        <ul class="link-row game__links">
+          <li><a href="https://github.com/nivaldoh/slay_the_spire_ai/blob/main/docs/spire/fullrun/README.md" rel="noopener">Run notes</a></li>
+        </ul>
+      </section>
     </div>
   </section>
 
-  <section class="more container" aria-label="More selected work">
-    <ProjectPanel project={robocasa} layout="wide">
-      <GoalChange slot="media" variant="compact" />
-    </ProjectPanel>
-
-    <div class="more__pair">
-      <ProjectPanel project={tcg}>
-        <ResultsChart slot="media" variant="multi-deck" compact />
-      </ProjectPanel>
-      <ProjectPanel project={pokeagent}>
-        <SelfPlayDiagram slot="media" compact />
-      </ProjectPanel>
+  <section id="thread" class="thread container" aria-labelledby="thread-title">
+    <div class="thread__head">
+      <h2 class="section-heading" id="thread-title">From PokéAgent to RoboCasa365</h2>
     </div>
+
+    <ol class="thread__list">
+      <li class="thread__step thread__step--note">
+        <p class="thread__when">2025</p>
+        <p class="thread__note">
+          I found the PokéAgent Challenge through a post on X by Prof. Yuke Zhu
+          of UT Austin.
+        </p>
+      </li>
+
+      <li class="thread__step">
+        <p class="thread__when">Late 2025</p>
+        <ProjectPanel
+          id="pokeagent"
+          level={3}
+          eyebrow="02 / NeurIPS 2025 competition"
+          title="PokéAgent Challenge"
+          facts={['Quarterfinalist · Gen 1 OU', 'Quarterfinalist · Gen 9 OU']}
+          summary="I competed as MetaHorns. My Gen 9 OU entry combined two existing agents: PokéChamp’s minimax search looks one turn ahead, and Metamon, trained with offline RL on human battles, proposes the moves and scores each position. I also packaged Metamon self-play to run on Google Cloud Run."
+          links={[
+            { label: 'Official brackets', url: BRACKETS_URL },
+            { label: 'Hybrid code', url: 'https://github.com/nivaldoh/pokechamp/tree/fb520c95a298518c929adb09cc4c105b68b29f3e' },
+            { label: 'Self-play code', url: 'https://github.com/nivaldoh/metamon_pokeagent_comp/tree/3c54f02f9bfd718f4081c1b377346efedd236cd6' },
+          ]}
+          textFirst
+        >
+          <div class="figure-pair" slot="media">
+            <div class="figure-pair__item">
+              <h4 class="figure-pair__title">Deciding a turn</h4>
+              <HybridSearch />
+            </div>
+            <div class="figure-pair__item">
+              <h4 class="figure-pair__title">Generating training data</h4>
+              <SelfPlayDiagram compact />
+            </div>
+          </div>
+        </ProjectPanel>
+      </li>
+
+      <li class="thread__step">
+        <p class="thread__when">Early 2026</p>
+        <ProjectPanel
+          id="metamon"
+          level={3}
+          eyebrow="03 / Open source · UT Austin RPL"
+          title="Metamon"
+          summary="After the tournament I joined UT Austin’s Robot Perception and Learning Lab on a formal appointment, working on Metamon with PhD student Jake Grigsby in weekly meetings. Two pull requests were merged; a third was an experiment with a faster encoder."
+          links={[{ label: 'Repository', url: 'https://github.com/UT-Austin-RPL/metamon' }]}
+          layout="wide"
+        >
+          <MetamonPRs slot="media" />
+        </ProjectPanel>
+      </li>
+
+      <li class="thread__step thread__step--note">
+        <p class="thread__when">Apr 2026</p>
+        <p class="thread__note">
+          I met Prof. Zhu at ICLR 2026 in Rio de Janeiro.
+        </p>
+      </li>
+
+      <li class="thread__step">
+        <p class="thread__when">Jun–Jul 2026</p>
+        <ProjectPanel
+          id={tcg.id}
+          level={3}
+          eyebrow="04 / Kaggle competition"
+          title="Pokémon TCG agents"
+          summary="A Kaggle competition I entered for more practice with RL and model training. The problem is close to Metamon’s, but there was no large dataset of human games, so I generated one from scripted players, cloned them, then fine-tuned with PPO."
+          layout="wide"
+          size="small"
+        >
+          <TeacherData />
+          <ResultsChart slot="media" variant="multi-deck" compact />
+        </ProjectPanel>
+      </li>
+
+      <li class="thread__step">
+        <p class="thread__when">Sep 2026</p>
+        <ProjectPanel
+          id="robocasa"
+          level={3}
+          eyebrow="05 / Robot evaluation"
+          title="Changing goals during robot execution"
+          summary="A different kind of project: I extended RoboCasa365, a kitchen simulation benchmark from Prof. Zhu’s lab, so the goal or the scene can change mid-episode. In the evaluation, GR00T N1.5 met the changed goal in 0 of 4 episodes; Astra, my code-writing LLM agent with ground-truth state, in 1 of 5. These clips are not from the evaluation."
+          links={[
+            { label: 'Paper (PDF)', url: '/media/robocasa/teleporting-bread-and-changing-goals.pdf' },
+            { label: 'Code', url: 'https://github.com/nivaldoh/robocasa/tree/main/robocasa/scenarios' },
+          ]}
+          layout="wide"
+        >
+          <DevelopmentRecordings slot="media" />
+        </ProjectPanel>
+      </li>
+    </ol>
   </section>
 
   <BeamSection />
 
   <section id="about" class="about container" aria-labelledby="about-title">
-    <h2 class="section-heading" id="about-title">Background</h2>
-    <div class="about__grid">
-      <div class="about__bio">
-        <p>
-          I’m a software and AI engineer based in São Paulo, currently pursuing
-          an MS in Computer Science at the University of Texas at Austin. My
-          recent work focuses on agents in games and robotics: building their
-          interfaces, training and evaluating policies, and making the resulting
-          behaviour easier to examine.
-        </p>
-        <p>
-          Before this, I spent more than eight years building cloud and data
-          systems, including production work at Globo and client projects
-          through Globant and DP6. I also contribute to open-source projects, including
-          Apache Beam and Metamon.
-        </p>
+    <div class="feature__head about__head">
+      <h2 class="section-heading" id="about-title">Background</h2>
+      <p class="about__bio">
+        I’m a software and AI engineer in São Paulo. After eight years
+        building cloud and data systems, I now work on agents in games and
+        robotics while studying for an MS in Computer Science at UT Austin.
+      </p>
+    </div>
+    <Career />
+  </section>
+
+  <section id="contact" class="contact container" aria-labelledby="contact-title">
+    <div class="contact__card">
+      <div>
+        <h2 class="contact__title" id="contact-title">Contact</h2>
+        <p class="contact__line">Open to AI and research engineering roles.</p>
       </div>
-
-      <div class="about__record">
-        <h3 class="about__label">Experience</h3>
-        <ol class="timeline">
-          {experience.map((e) => (
-            <li>
-              <span class="timeline__years">{e.years}</span>
-              <div>
-                <p class="timeline__org">{e.org}</p>
-                <p class="timeline__text">{e.text}</p>
-              </div>
-            </li>
+      <div class="contact__reach">
+        <p class="contact__email">
+          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+          <button class="contact__copy" type="button" data-copy={EMAIL} hidden>Copy</button>
+          <span class="visually-hidden" role="status" data-copy-status></span>
+        </p>
+        <ul class="contact__links">
+          {SOCIAL_LINKS.map((l) => (
+            <li><a href={l.url} rel="me noopener">{l.label}</a></li>
           ))}
-        </ol>
-
-        <h3 class="about__label">Education</h3>
-        <ol class="timeline">
-          {education.map((e) => (
-            <li>
-              <span class="timeline__years">{e.years}</span>
-              <div>
-                <p class="timeline__org">{e.org}</p>
-                <p class="timeline__text">{e.text}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
+          <li><a href={RESUME_URL}>Résumé (PDF)</a></li>
+        </ul>
       </div>
     </div>
   </section>
 
-  <section id="contact" class="contact container" aria-labelledby="contact-title">
-    <h2 class="section-heading" id="contact-title">Contact</h2>
-    <p class="contact__line">
-      Open to AI and research engineering opportunities.
-    </p>
-    <p class="contact__email">
-      <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
-    </p>
-    <ul class="link-row contact__links">
-      {SOCIAL_LINKS.map((l) => (
-        <li><a href={l.url} rel="me noopener">{l.label}</a></li>
-      ))}
-      <li><a href={RESUME_URL}>Résumé (PDF)</a></li>
-    </ul>
-  </section>
+  <script>
+    // Copy the address; the button stays hidden without the Clipboard API.
+    const copy = document.querySelector<HTMLButtonElement>('[data-copy]');
+    const status = document.querySelector<HTMLElement>('[data-copy-status]');
+    if (copy && navigator.clipboard) {
+      let reset: number | undefined;
+      copy.hidden = false;
+      copy.addEventListener('click', async () => {
+        let message = 'Copied';
+        try {
+          await navigator.clipboard.writeText(copy.dataset.copy ?? '');
+        } catch {
+          message = 'Copy failed';
+        }
+        copy.textContent = message;
+        if (status) status.textContent = message === 'Copied' ? 'Email address copied' : message;
+        window.clearTimeout(reset);
+        reset = window.setTimeout(() => {
+          copy.textContent = 'Copy';
+          if (status) status.textContent = '';
+        }, 2000);
+      });
+    }
+  </script>
 </BaseLayout>
 
 <style>
@@ -211,22 +294,16 @@ const education = [
   .hero {
     display: grid;
     gap: 2.5rem;
-    padding-top: clamp(1.5rem, 5vw, 4.5rem);
-    padding-bottom: clamp(3.5rem, 7vw, 7rem);
-  }
-
-  .hero__name {
-    margin: 0;
-    font-size: var(--step-1);
-    font-style: italic;
-    color: var(--fg-muted);
+    align-items: center;
+    padding-top: clamp(1.5rem, 4vw, 3.5rem);
+    padding-bottom: clamp(3rem, 6vw, 5rem);
   }
 
   .hero__title {
     font-size: var(--step-4);
     font-weight: 380;
     line-height: 1.02;
-    margin: 0.5rem 0 0;
+    margin: 0;
     max-width: 12ch;
   }
 
@@ -234,73 +311,106 @@ const education = [
     font-size: var(--step-1);
     line-height: 1.5;
     margin: 1.6rem 0 0;
-    max-width: 38ch;
+    max-width: 34ch;
   }
 
   .hero__context {
     color: var(--fg-muted);
-    margin: 0.9rem 0 1.8rem;
-    max-width: 44ch;
+    font-size: var(--step--1);
+    margin: 1rem 0 0;
+    max-width: 42ch;
   }
 
-  .hero__plate figcaption {
-    max-width: 60ch;
+  /* The index of the work below: number, title and a short note. */
+  .hero__index {
+    margin-top: 2.2rem;
+    max-width: 34rem;
   }
 
-  /* The model's reply, enlarged from the same screenshot so it can be read. */
-  .hero__stage {
-    position: relative;
+  .hero__index ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--border);
   }
 
-  .hero__loupe {
-    margin-top: 0.75rem;
-    max-width: 470px;
-    border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  .hero__index a {
+    display: grid;
+    grid-template-columns: 2.1rem minmax(0, 1fr) auto;
+    gap: 0 0.75rem;
+    align-items: baseline;
+    padding: 0.5rem 0.1rem;
+    border-bottom: 1px solid var(--rule);
+    color: var(--fg-strong);
+    text-decoration: none;
+    transition: background-color 120ms ease, color 120ms ease;
   }
 
-  .hero__loupe img {
+  .hero__index a:hover {
+    color: var(--accent);
+    background: linear-gradient(to right, color-mix(in srgb, var(--accent) 7%, transparent), transparent 70%);
+  }
+
+  .hero__index-n {
+    font: 0.75rem/1.4 var(--font-mono);
+    color: var(--accent);
+  }
+
+  .hero__index-title {
+    font-size: var(--step-0);
+    line-height: 1.35;
+  }
+
+  .hero__index-note {
+    font: var(--step--2)/1.4 var(--font-mono);
+    color: var(--fg-muted);
+    text-align: right;
+  }
+
+  @media (max-width: 30rem) {
+    .hero__index a {
+      grid-template-columns: 2.1rem minmax(0, 1fr);
+    }
+
+    .hero__index-note {
+      grid-column: 2;
+      text-align: left;
+    }
+  }
+
+  /* A square (FlankTrace's own root, hence :global): cap it until it shares
+     the row with the headline. */
+  .hero :global(.hero__visual) {
     width: 100%;
-  }
-
-  @media (min-width: 40rem) {
-    .hero__stage {
-      padding-bottom: 3.25rem;
-    }
-
-    .hero__loupe {
-      position: absolute;
-      left: 1rem;
-      bottom: 0;
-      width: min(470px, 60%);
-      margin: 0;
-    }
-  }
-
-  @media (min-width: 64rem) {
-    .hero__loupe {
-      left: -1.5rem;
-    }
+    max-width: 34rem;
   }
 
   @media (min-width: 64rem) {
     .hero {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-      align-items: center;
-      gap: 3.5rem;
+      grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+      gap: 4rem;
+    }
+
+    .hero :global(.hero__visual) {
+      max-width: none;
     }
   }
 
-  /* ---------- Featured project ---------- */
+  /* ---------- Featured projects ---------- */
   .feature {
     background: var(--bg-elev);
     border-block: 1px solid var(--rule);
-    padding-block: clamp(3rem, 6vw, 5.5rem);
+    padding-block: clamp(2.5rem, 5vw, 4rem);
   }
 
   .feature__head {
     display: grid;
     gap: 1rem 3.5rem;
-    margin-bottom: 2.2rem;
+    margin-bottom: 2rem;
+  }
+
+  .feature__head .section-heading {
+    margin: 0;
   }
 
   .feature__head .section-heading a {
@@ -314,31 +424,257 @@ const education = [
 
   .feature__summary {
     margin: 0 0 0.9rem;
-    max-width: 62ch;
+    max-width: 52ch;
+  }
+
+  /* The one thing to see in the replay, set just above it. */
+  .feature__point {
+    margin: 0 0 1.2rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--border);
+    font-size: var(--step-1);
+    line-height: 1.45;
+    color: var(--fg-strong);
+    max-width: 48ch;
+  }
+
+  .ink-model {
+    color: var(--data-model);
+  }
+
+  /* One game of the project: a ruled header, the point, the figure. */
+  .game + .game {
+    margin-top: clamp(3.5rem, 2rem + 4vw, 5.5rem);
+  }
+
+  .game__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.2rem 1.5rem;
+    margin-bottom: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .game__title {
+    margin: 0;
+    font-size: var(--step-2);
+    font-weight: 460;
+    line-height: 1.15;
+    color: var(--fg-strong);
+  }
+
+  .game__kind {
+    margin: 0;
+    font: 0.75rem/1.4 var(--font-mono);
+    letter-spacing: 0.02em;
+    color: var(--fg-muted);
+  }
+
+  /* In a game block the point sits under the ruled header, not on a rule. */
+  .game .feature__point {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .game__links {
+    margin-top: 0.8rem;
+  }
+
+  .game__head--cta {
+    align-items: center;
+  }
+
+  .game__head--cta .game__kind {
+    margin-top: 0.3rem;
+  }
+
+  /* The way into the full benchmark: a large button beside the title. */
+  .benchmark-cta {
+    gap: 1.1rem;
+    padding: 0.75rem 1.1rem 0.75rem 1.25rem;
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 6%, var(--bg-control));
+  }
+
+  .benchmark-cta:hover {
+    background: color-mix(in srgb, var(--accent) 14%, var(--bg-control));
+  }
+
+  .benchmark-cta__text {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .benchmark-cta__title {
+    font-size: var(--step-1);
+    line-height: 1.2;
+    color: var(--fg-strong);
+  }
+
+  .benchmark-cta__note {
+    font: var(--step--2)/1.4 var(--font-mono);
+    color: var(--fg-muted);
+  }
+
+  .benchmark-cta__arrow {
+    flex: none;
+    width: 1.3rem;
+    height: 1.3rem;
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 120ms ease;
+  }
+
+  .benchmark-cta:hover .benchmark-cta__arrow {
+    transform: translateX(3px);
+  }
+
+  @media (max-width: 40rem) {
+    .benchmark-cta {
+      width: 100%;
+      justify-content: space-between;
+    }
   }
 
   @media (min-width: 60rem) {
     .feature__head {
       grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-      align-items: start;
+      align-items: end;
     }
   }
 
-  /* ---------- More selected work ---------- */
-  .more {
-    display: grid;
-    gap: clamp(4rem, 8vw, 6.5rem);
+  /* ---------- The thread: PokéAgent to RoboCasa ---------- */
+  .thread {
     padding-top: var(--space-section);
   }
 
-  .more__pair {
+  .thread__head {
+    margin-bottom: clamp(2.5rem, 5vw, 4rem);
+  }
+
+  /* A dated spine down the left; each step hangs a dot on it. */
+  .thread__list {
+    --spine: 0.4rem;
+    --indent: 1.75rem;
+    position: relative;
     display: grid;
-    gap: clamp(4rem, 8vw, 6.5rem) 3.5rem;
+    gap: clamp(3.5rem, 2rem + 5vw, 6.5rem);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .thread__list::before {
+    content: '';
+    position: absolute;
+    left: var(--spine);
+    top: 0.5rem;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(var(--border) 88%, transparent);
+  }
+
+  .thread__step {
+    position: relative;
+    padding-left: var(--indent);
+  }
+
+  .thread__when {
+    margin: 0 0 0.9rem;
+    font: 0.75rem/1.4 var(--font-mono);
+    letter-spacing: 0.02em;
+    color: var(--fg-strong);
+  }
+
+  .thread__when::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--spine) - 4px);
+    top: 0.25rem;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px var(--bg);
+  }
+
+  /* Milestones between projects: a hollow dot and one italic line. */
+  .thread__step--note .thread__when {
+    margin-bottom: 0.2rem;
+    color: var(--fg-muted);
+  }
+
+  .thread__step--note .thread__when::before {
+    background: var(--bg);
+    border: 1px solid var(--fg-muted);
+  }
+
+  .thread__note {
+    margin: 0;
+    max-width: 48ch;
+    font-size: var(--step-1);
+    font-style: italic;
+    line-height: 1.4;
+    color: var(--fg);
+  }
+
+  /* The notes sit closer to their neighbours than the projects do. */
+  .thread__list > .thread__step--note {
+    margin-block: calc(clamp(3.5rem, 2rem + 5vw, 6.5rem) * -0.45);
   }
 
   @media (min-width: 60rem) {
-    .more__pair {
-      grid-template-columns: 1fr 1fr;
+    .thread__list {
+      --spine: 6.6rem;
+      --indent: 8.6rem;
+    }
+
+    .thread__when {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 5.6rem;
+      margin: 0;
+      text-align: right;
+    }
+
+    .thread__step--note .thread__when {
+      top: 0.3rem;
+    }
+
+    .thread__step--note .thread__when::before {
+      top: 0.25rem;
+    }
+  }
+
+  /* Two figures side by side, each under a small heading. */
+  .figure-pair {
+    display: grid;
+    gap: 2.2rem 2.5rem;
+    align-items: start;
+  }
+
+  .figure-pair__item {
+    min-width: 0;
+  }
+
+  .figure-pair__title {
+    margin: 0 0 0.7rem;
+    font: 0.75rem/1.4 var(--font-mono);
+    letter-spacing: 0.02em;
+    font-weight: 400;
+    color: var(--fg-muted);
+  }
+
+  @media (min-width: 60rem) {
+    .figure-pair {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
   }
 
@@ -347,97 +683,100 @@ const education = [
     padding-top: var(--space-section);
   }
 
-  .about__grid {
-    display: grid;
-    gap: 2.5rem 4rem;
-    margin-top: 1.4rem;
+  .about__head {
+    margin-bottom: 1.2rem;
   }
 
-  .about__bio p {
-    margin: 0 0 1.1rem;
-    max-width: 58ch;
-  }
-
-  .about__label {
-    font-size: 1.05rem;
-    font-weight: 560;
-    color: var(--fg-muted);
-    font-style: italic;
-    margin: 0 0 0.8rem;
-  }
-
-  .about__label + .timeline {
-    margin-bottom: 2.2rem;
-  }
-
-  .timeline {
-    list-style: none;
+  .about__bio {
     margin: 0;
-    padding: 0;
-    border-top: 1px solid var(--border);
-  }
-
-  .timeline li {
-    display: grid;
-    grid-template-columns: 7.5rem minmax(0, 1fr);
-    gap: 1.2rem;
-    padding: 0.9rem 0;
-    border-bottom: 1px solid var(--rule);
-  }
-
-  .timeline__years {
-    color: var(--fg-muted);
-    font-variant-numeric: tabular-nums lining-nums;
-    font-size: var(--step--1);
-    padding-top: 0.15rem;
-  }
-
-  .timeline__org {
-    margin: 0;
-    color: var(--fg-strong);
-    font-weight: 560;
-  }
-
-  .timeline__text {
-    margin: 0.2rem 0 0;
-    font-size: var(--step--1);
-    line-height: 1.55;
-    color: var(--fg);
-  }
-
-  @media (min-width: 60rem) {
-    .about__grid {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    }
-  }
-
-  @media (max-width: 30rem) {
-    .timeline li {
-      grid-template-columns: 1fr;
-      gap: 0.2rem;
-    }
+    max-width: 52ch;
   }
 
   /* ---------- Contact ---------- */
   .contact {
-    padding-top: var(--space-section);
+    padding-top: clamp(3rem, 2rem + 4vw, 5rem);
+  }
+
+  .contact__card {
+    display: grid;
+    gap: 1.4rem 3rem;
+    align-items: center;
+    padding: clamp(1.4rem, 3vw, 2.2rem) clamp(1.2rem, 3vw, 2.4rem);
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-plate);
+  }
+
+  .contact__title {
+    margin: 0 0 0.5rem;
+    font: 0.75rem/1.4 var(--font-mono);
+    letter-spacing: 0.02em;
+    color: var(--accent);
   }
 
   .contact__line {
-    font-size: var(--step-1);
-    max-width: 40ch;
-    margin: 0.6rem 0 1.2rem;
-    line-height: 1.45;
+    margin: 0;
+    max-width: 24ch;
+    font-size: var(--step-2);
+    line-height: 1.2;
+    color: var(--fg-strong);
+    text-wrap: balance;
   }
 
   .contact__email {
-    margin: 0 0 1.4rem;
-    font-size: var(--step-3);
-    line-height: 1.1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 0.9rem;
+    margin: 0 0 1rem;
+    font-size: var(--step-2);
+    line-height: 1.15;
     overflow-wrap: anywhere;
   }
 
-  .contact__email a {
-    text-decoration-thickness: 1px;
+  .contact__copy {
+    padding: 0.2rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--bg-control);
+    color: var(--fg);
+    font: var(--step--2)/1.4 var(--font-mono);
+    cursor: pointer;
+  }
+
+  .contact__copy:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .contact__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .contact__links a {
+    display: inline-block;
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--bg-control);
+    color: var(--fg-strong);
+    font-size: var(--step--1);
+    text-decoration: none;
+  }
+
+  .contact__links a:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  @media (min-width: 60rem) {
+    .contact__card {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    }
   }
 </style>

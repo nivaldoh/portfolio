@@ -1,38 +1,87 @@
 ---
-// Homepage entry for a case study: real media, title, status, the
-// collection's summary, and a link to the full page.
-import type { CollectionEntry } from 'astro:content';
+// Homepage entry for a piece of work: real media, a title, a sentence or two
+// (plus anything in the default slot, under the summary) and its evidence
+// links. The title links to a case study only when `href`
+// is given; work without its own page stays on the homepage.
 
 interface Props {
-  project: CollectionEntry<'projects'>;
-  /** `wide`: media and text side by side. `stacked`: media above text. */
+  /** Unique slug: the panel's anchor and its heading id. */
+  id: string;
+  title: string;
+  summary: string;
+  /** Small label above the title, e.g. "03 / Robot evaluation". */
+  eyebrow?: string;
+  /** A few short results, shown as chips under the title. */
+  facts?: string[];
+  /** Case-study page, if the work has one. */
+  href?: string;
+  links?: { label: string; url: string }[];
+  /** `wide`: media beside the text on desktop, below it on narrow screens.
+      `stacked`: media above the text, or below it with `textFirst`. */
   layout?: 'wide' | 'stacked';
-  /** Put the media on the right in the wide layout. */
-  flip?: boolean;
+  /** Stacked layout: put the text above the media. */
+  textFirst?: boolean;
+  /** `small`: a lighter entry with narrower media and a smaller title. */
+  size?: 'regular' | 'small';
+  /** Heading level for the title: 3 when the panel sits under a section
+      heading of its own. */
+  level?: 2 | 3;
 }
 
-const { project, layout = 'stacked', flip = false } = Astro.props;
-const { title, subtitle, status, summary } = project.data;
-const href = `/projects/${project.id}/`;
-const headingId = `panel-${project.id}`;
+const {
+  id,
+  title,
+  summary,
+  eyebrow,
+  facts = [],
+  href,
+  links = [],
+  layout = 'stacked',
+  textFirst = false,
+  size = 'regular',
+  level = 2,
+} = Astro.props;
+const Heading = level === 3 ? 'h3' : 'h2';
+const headingId = `panel-${id}`;
+// Text leads in the DOM (and on narrow screens) unless the media should.
+const mediaFirst = layout === 'stacked' && !textFirst;
 ---
 
 <article
-  class:list={['panel', `panel--${layout}`, { 'panel--flip': flip }]}
+  id={id}
+  class:list={['panel', `panel--${layout}`, `panel--${size}`]}
   aria-labelledby={headingId}
 >
-  <div class="panel__media">
-    <slot name="media" />
-  </div>
+  {mediaFirst && (
+    <div class="panel__media">
+      <slot name="media" />
+    </div>
+  )}
   <div class="panel__text">
-    <h2 class="panel__title" id={headingId}>
-      <a href={href}>{title}</a>
-    </h2>
-    {subtitle && <p class="panel__subtitle">{subtitle}</p>}
-    <p class="status">{status}</p>
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    <Heading class="panel__title" id={headingId}>
+      {href ? <a href={href}>{title}</a> : title}
+    </Heading>
+    {facts.length > 0 && (
+      <ul class="panel__facts">
+        {facts.map((fact) => <li>{fact}</li>)}
+      </ul>
+    )}
     <p class="panel__summary">{summary}</p>
-    <a class="panel__more" href={href}>Read the case study</a>
+    <slot />
+    {links.length > 0 && (
+      <ul class="link-row">
+        {links.map((link) => (
+          <li><a href={link.url} rel={link.url.startsWith('http') ? 'noopener' : undefined}>{link.label}</a></li>
+        ))}
+      </ul>
+    )}
   </div>
+  {!mediaFirst && (
+    <div class="panel__media">
+      <slot name="media" />
+    </div>
+  )}
 </article>
 
 <style>
@@ -63,6 +112,7 @@ const headingId = `panel-${project.id}`;
     font-weight: 460;
     margin: 0;
     line-height: 1.15;
+    color: var(--fg-strong);
   }
 
   .panel__title a {
@@ -74,24 +124,40 @@ const headingId = `panel-${project.id}`;
     color: var(--accent);
   }
 
-  .panel__subtitle {
-    margin: 0.35rem 0 0;
-    font-style: italic;
-    color: var(--fg);
-    line-height: 1.4;
+  .panel__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.8rem 0 0;
+    padding: 0;
+    list-style: none;
+    font: 0.75rem/1.4 var(--font-mono);
   }
 
-  .panel .status {
-    margin-top: 0.5rem;
+  .panel__facts li {
+    padding: 0.25rem 0.55rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    color: var(--fg-strong);
   }
 
   .panel__summary {
-    margin: 0.9rem 0 1rem;
-    max-width: 60ch;
+    margin: 0.7rem 0 0.9rem;
+    max-width: 52ch;
   }
 
-  .panel__more {
-    font-size: 1rem;
+  .panel--small .panel__media {
+    max-width: 26rem;
+  }
+
+  .panel--small .panel__title {
+    font-size: var(--step-1);
+  }
+
+  .panel--small .panel__summary {
+    font-size: var(--step--1);
+    line-height: 1.6;
+    color: var(--fg);
   }
 
   @media (min-width: 60rem) {
@@ -101,8 +167,16 @@ const headingId = `panel-${project.id}`;
       align-items: center;
     }
 
-    .panel--wide.panel--flip .panel__media {
-      order: 2;
+    /* Media on the left, though the text leads in the DOM. */
+    .panel--wide .panel__media {
+      order: -1;
+    }
+
+    /* On the same two columns as the paired panels above it. */
+    .panel--wide.panel--small {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 3.5rem;
+      align-items: start;
     }
   }
 </style>

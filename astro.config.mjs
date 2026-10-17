@@ -58,6 +58,8 @@ export default defineConfig({
   redirects: {
     '/about': '/#about',
     '/projects': '/#work',
+    '/projects/robocasa': '/#robocasa',
+    '/projects/slay-the-spire': '/#slay-the-spire',
   },
   markdown: {
     shikiConfig: {

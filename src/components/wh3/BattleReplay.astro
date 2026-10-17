@@ -51,7 +51,6 @@ const setting = `${r.meta.effort} reasoning, ${r.meta.prompt}`;
 const modelUnits = r.units.filter((u) => u.side === 'model');
 const aiUnits = r.units.filter((u) => u.side === 'ai');
 const sideOf = new Map(r.units.map((u) => [u.id, u.side]));
-const heading = r.meta.heading.charAt(0).toLowerCase() + r.meta.heading.slice(1);
 const uid = `br-${Math.random().toString(36).slice(2, 8)}`;
 ---
 
@@ -140,11 +139,15 @@ const uid = `br-${Math.random().toString(36).slice(2, 8)}`;
     </div>
 
     <figcaption class="caption br__caption" id={`${uid}-cap`}>
-      A recorded battle, {heading}, that {model} ({setting}) won in {clock(r.meta.battle_s)}; I chose it
-      for its flank, not as a typical result, since across this scenario’s development battles {model}
-      with {r.meta.effort} reasoning won 2 of 9. Positions were recorded about once a second and are
-      shown without interpolation, outlines mark the model’s view, and replay speed is separate from
-      the game, which ran at 1×.
+      {variant === 'full' && <Fragment>{r.meta.heading}. </Fragment>}
+      Chosen for the manoeuvre, not as a typical result: in this scenario {model} with
+      {r.meta.effort} reasoning won 2 of its 9 recorded battles.
+      {variant === 'full' && (
+        <Fragment>
+          Positions were recorded about once a second and are never interpolated; outlines
+          mark the model’s view, and the game ran at 1×.
+        </Fragment>
+      )}
     </figcaption>
   </figure>
 

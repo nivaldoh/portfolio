@@ -1,14 +1,15 @@
 ---
 title: PokéAgent and Metamon
-subtitle: Competition, self-play infrastructure, and upstream contributions
-description: 'Competing as MetaHorns in the PokéAgent Challenge (NeurIPS 2025): quarterfinalist in the Gen 1 OU and Gen 9 OU tournaments, containerised Metamon self-play on Cloud Run Jobs, and two merged Metamon pull requests.'
-summary: Competing as MetaHorns, I qualified for the top-eight tournament in both Gen 1 OU and Gen 9 OU of the PokéAgent Challenge, a NeurIPS 2025 competition. Alongside the competition, I built containerised self-play for Metamon on Cloud Run Jobs and contributed data-tooling improvements that were merged upstream.
-status: Competition completed; two upstream pull requests merged; self-play experiments kept as a snapshot
+subtitle: Competition, a search hybrid, self-play infrastructure, and Metamon contributions
+description: 'Competing as MetaHorns in the PokéAgent Challenge (NeurIPS 2025): quarterfinalist in the Gen 1 OU and Gen 9 OU tournaments, a hybrid of Metamon and PokéChamp’s minimax search, containerised Metamon self-play on Cloud Run Jobs, and Metamon pull requests.'
+summary: Quarterfinalist as MetaHorns in Gen 1 OU and Gen 9 OU of the PokéAgent Challenge (NeurIPS 2025), a Metamon–PokéChamp search hybrid, Metamon self-play on Cloud Run Jobs, and Metamon pull requests.
 period: '2025–2026'
-order: 4
+order: 3
 links:
   - label: Official brackets
     url: https://pokeagent.github.io/leaderboard.html
+  - label: Hybrid entry (PokéChamp fork)
+    url: https://github.com/nivaldoh/pokechamp/tree/fb520c95a298518c929adb09cc4c105b68b29f3e
   - label: Competition repository
     url: https://github.com/nivaldoh/metamon_pokeagent_comp/tree/3c54f02f9bfd718f4081c1b377346efedd236cd6
   - label: 'Metamon PR #65'
@@ -19,16 +20,18 @@ credits:
   - Metamon (UT-Austin-RPL/metamon), maintained by Jake Grigsby, for the agents, data tooling and evaluation code the competition repository starts from.
   - Metamon’s pretrained SyntheticRLV2 checkpoint (and SyntheticRLV1 in the self-play manifests), downloaded from Hugging Face.
   - AMAGO (UT-Austin-RPL/amago), the reinforcement-learning framework Metamon builds on, installed in the container image.
+  - PokéChamp (sethkarten/pokechamp), by Seth Karten and colleagues, the LLM minimax agent my entry forks; its search, battle simulator and LLM prompts are theirs.
   - Pokémon Showdown (smogon/pokemon-showdown), run as a local server inside each container.
   - poke-env, the battle backend the self-play runner uses with Showdown.
   - The PokéAgent Challenge organisers, for the ladder, the tournament and the published brackets.
 ---
 
+import HybridSearch from '../../components/pokeagent/HybridSearch.astro';
 import SelfPlayDiagram from '../../components/pokeagent/SelfPlayDiagram.astro';
 import TournamentBrackets from '../../components/pokeagent/TournamentBrackets.astro';
 import Details from '../../components/Details.astro';
 
-I entered the PokéAgent Challenge's competitive battling track as MetaHorns, building on Metamon's Pokémon Showdown agents and pretrained models. The challenge was a NeurIPS 2025 competition. Alongside the tournament entry, I built self-play infrastructure and contributed improvements to upstream Metamon.
+A post on X by Prof. Yuke Zhu of UT Austin pointed me to the PokéAgent Challenge, a NeurIPS 2025 competition. I entered its competitive battling track as MetaHorns. In Gen 9 OU my entry was a hybrid of my own that puts Metamon, an offline-RL agent, inside PokéChamp's minimax search. Alongside the entry, I built self-play infrastructure for Metamon, and after the tournament I contributed to Metamon itself.
 
 ## Competition result
 
@@ -36,7 +39,7 @@ MetaHorns qualified for the eight-entrant tournament in both Gen 1 OU and Gen 9 
 
 <TournamentBrackets wide />
 
-The ladder launcher checked into my repository runs Metamon’s public SyntheticRLV2 checkpoint as PAC-MetaHorns, in Gen 9 OU. It doesn’t pin a complete tournament submission: there is no Gen 1 OU launcher, and nothing in the repository records which of its experimental changes, if any, either entry used. The result shouldn’t be read as evidence for any of the custom models or heads in that repository.
+In Gen 9 OU the entry was the hybrid described below. The hybrid supports Gen 9 only, so in Gen 1 OU MetaHorns built on Metamon's pretrained agents. I kept no record of the exact settings each tournament match ran with, so the result is evidence for the approach as a whole rather than for any single setting, and it says nothing about the separate training experiments in the competition repository.
 
 <Details summary="Qualifying record on the official leaderboard">
 
@@ -51,6 +54,14 @@ The top two players by Elo qualified automatically; the other six places went by
 | Elo | 1749 | 1754 |
 
 </Details>
+
+## A Metamon and PokéChamp hybrid
+
+Metamon is an offline-RL agent trained on human battles; PokéChamp is an LLM agent that searches a minimax tree. PokéChamp's search can look ahead with a battle simulator, but judging a position means asking an LLM for a score, while Metamon has learned from human battles which moves are likely and how likely a position is to be won. In late October 2025 I combined them in [a fork of PokéChamp](https://github.com/nivaldoh/pokechamp/tree/fb520c95a298518c929adb09cc4c105b68b29f3e). Metamon's policy proposes our candidate moves, PokéChamp predicts the opponent's replies and plays each pair one turn ahead, Metamon's critic scores every resulting position, and minimax takes the move whose worst case is best. A turn needs no LLM call; an earlier version still asked the LLM for the candidate moves.
+
+<HybridSearch />
+
+The hard part was the bridge between the two codebases. Metamon reads a battle as a sequence of observations, so [`metamon_bridge.py`](https://github.com/nivaldoh/pokechamp/blob/fb520c95a298518c929adb09cc4c105b68b29f3e/pokechamp/metamon_bridge.py) mirrors every message of the live battle into Metamon's trajectory format, normalises the simplified messages the simulator emits, and clones that context for every simulated branch, so the critic scores each leaf with the history that led to it. I kept no search logs, so the scores in the diagram are illustrative.
 
 ## Competition repository and experiments
 
@@ -85,11 +96,11 @@ The image is built with Cloud Build and pushed to Artifact Registry. Its entry p
 
 </Details>
 
-## Upstream Metamon contributions
+## Metamon contributions
 
 Two of my pull requests were merged into Metamon:
 
 - [**#65, Team prediction improvements**](https://github.com/UT-Austin-RPL/metamon/pull/65), merged on 31 January 2026 into the maintainers’ staging branch and carried forward to `dev` the next day; its validator is now on `main`. Team validation reuses one persistent Showdown validator process instead of starting one for each item. Usage-statistics aggregation can filter data by a Smogon rank baseline. The Smogon scraper, which was timing out on some files, gained exponential backoff and a concurrency limit.
 - [**#70, Fix error when creating usage stats JSON files**](https://github.com/UT-Austin-RPL/metamon/pull/70), merged on 1 February 2026: a follow-up fix once #65 reached `dev`.
 
-A separate proposal to add timestep-encoder profiling ([#78](https://github.com/UT-Austin-RPL/metamon/pull/78)) was closed without being merged.
+These came out of a formal appointment at UT Austin's Robot Perception and Learning Lab in early 2026, with weekly meetings with Jake Grigsby. A third piece of work was an experiment: it started as timestep-encoder profiling in [#78](https://github.com/UT-Austin-RPL/metamon/pull/78) and continued as #111 in the lab's private development repository. It rewrites the grouped timestep encoder so that it keeps working under `torch.compile`'s `reduce-overhead` mode (CUDA graphs); in my A/B runs the rewrite was about 10% faster than the encoder it replaces. It also adds a profiler that accepts a candidate change only if its outputs match the baseline's and it is no slower, so that a coding agent could try many small optimisations and keep only the ones that pass.

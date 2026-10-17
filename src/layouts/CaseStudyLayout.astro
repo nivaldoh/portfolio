@@ -9,8 +9,7 @@ interface Props {
 }
 
 const { entry, prev, next } = Astro.props;
-const { title, subtitle, description, status, period, links, credits, cover } =
-  entry.data;
+const { title, subtitle, description, period, links, credits, cover } = entry.data;
 ---
 
 <BaseLayout title={title} description={description} image={cover?.src.src}>
@@ -20,10 +19,6 @@ const { title, subtitle, description, status, period, links, credits, cover } =
       <h1 class="case__title">{title}</h1>
       {subtitle && <p class="case__subtitle">{subtitle}</p>}
       <dl class="case__facts">
-        <div>
-          <dt>Status</dt>
-          <dd>{status}</dd>
-        </div>
         <div>
           <dt>When</dt>
           <dd>{period}</dd>
@@ -104,6 +99,13 @@ const { title, subtitle, description, status, period, links, credits, cover } =
     line-height: 1.02;
     margin: 0.9rem 0 0;
     max-width: 18ch;
+  }
+
+  /* Phones: untracked, so "WARHAMMER III" keeps to one line. */
+  @media (max-width: 30rem) {
+    .case__title {
+      letter-spacing: 0;
+    }
   }
 
   .case__subtitle {

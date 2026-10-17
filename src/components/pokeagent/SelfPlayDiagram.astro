@@ -5,11 +5,20 @@
 // hosts two Metamon agents, which load pretrained or local checkpoints; each
 // agent writes its trajectories. Workers never save checkpoints. No fleet
 // size, throughput or cost: the repository has no run records.
+// Sources at that revision: docker/run_self_play.sh (manifest line =
+// CLOUD_RUN_TASK_INDEX + 1, per-task trajectory path), docker/with_showdown.sh
+// (local server), examples/self_play_battle.py (Hugging Face or local
+// checkpoints), metamon/rl/evaluate.py (pretrained_vs_pretrained_headtohead:
+// loads both agents, writes agent1/ and agent2/ trajectories, saves no
+// checkpoint), manifests/selfplay_rlv2.jsonl, and docker/README.md (one job,
+// several tasks: `--tasks 3`).
 //
-// `compact` (homepage panel): a tighter, always-stacked diagram.
-// `wide`: spans the full case-study container (left-to-right when it fits).
-import { BRACKETS_URL } from './brackets';
-
+// `compact` (homepage panel): line icons with one- or two-word labels; the
+// stacked card edges behind the task stand for the job's other tasks (no
+// count is drawn). The figure's text alternative carries the flow in words.
+// Static: no script, no motion.
+// `wide`: the full labelled diagram, spanning the case-study container
+// (left-to-right when it fits).
 interface Props {
   compact?: boolean;
   wide?: boolean;
@@ -19,86 +28,162 @@ interface Props {
 const { compact = false, wide = false, class: className } = Astro.props;
 const REPO =
   'https://github.com/nivaldoh/metamon_pokeagent_comp/tree/3c54f02f9bfd718f4081c1b377346efedd236cd6';
+const COMPACT_ALT =
+  'Self-play on Cloud Run Jobs. One job runs several tasks, each in its own ' +
+  'container; each task reads its own line of a JSONL task manifest, which ' +
+  'sets its battle configuration. Inside each task, two Metamon agents ' +
+  'load pretrained (Hugging Face) or local checkpoints, read-only, and ' +
+  'battle each other through a local Pokémon Showdown server. Each agent ' +
+  'writes trajectory files; no checkpoints are saved.';
 ---
 
-<figure class:list={['plate', 'sp', { 'sp--compact': compact, wide }, className]}>
-  <div class="plate__frame sp__frame">
-    <div class="sp__part">
-      <div class="sp__flow">
-        <div class="sp__node sp__manifest">
-          <p class="sp__title">Task manifest</p>
-          <p class="sp__text">
-            {compact ? 'one JSON line per task' : 'One JSON line per task: both agents, format, team set, battle count'}
-          </p>
-          <p class="sp__code"><code>selfplay_rlv2<wbr />.jsonl</code></p>
+<figure class:list={['plate', 'sp', { wide }, className]}>
+  {compact ? (
+    <div class="plate__frame spc__frame">
+      <div class="spc" role="img" aria-label={COMPACT_ALT}>
+        <div class="spc__node spc__manifest">
+          <svg class="spc__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+            <path d="M14 3v5h5" />
+            <path d="M8.5 12h7M8.5 15h7M8.5 18h4" />
+          </svg>
+          <span class="spc__label">Task manifest</span>
         </div>
 
-        <div class="sp__edge sp__edge--manifest" aria-hidden="true">
-          <span class="sp__edge-label">task <i>i</i> reads <span class="sp__nowrap">line <i>i</i>&#8201;+&#8201;1</span></span>
+        <div class="spc__edge spc__edge--manifest"></div>
+
+        <div class="spc__node spc__weights">
+          <svg class="spc__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 3.5 21 8l-9 4.5L3 8z" />
+            <path d="m3 12 9 4.5 9-4.5" />
+            <path d="m3 16 9 4.5 9-4.5" />
+          </svg>
+          <span class="spc__label">Checkpoints</span>
         </div>
 
-        <div class="sp__node sp__weights">
-          <p class="sp__title">Model checkpoints</p>
-          <p class="sp__text">
-            {compact ? 'Hugging Face or local' : 'Metamon pretrained models from Hugging Face, or a local checkpoint'}
-          </p>
-          <p class="sp__code"><code>SyntheticRLV2</code></p>
+        <div class="spc__edge spc__edge--weights">
+          <span class="spc__edge-label">read-only</span>
         </div>
 
-        <div class="sp__edge sp__edge--weights" aria-hidden="true">
-          <span class="sp__edge-label">loaded at start</span>
-        </div>
-
-        <div class="sp__worker" role="group" aria-label={`Inside one Cloud Run Job task`}>
-          <p class="sp__worker-label">
-            <span class="sp__worker-name">Cloud Run Job task <i>i</i></span>
-            <span class="sp__worker-note">
-              {compact ? 'one container' : 'one container, nothing shared with other tasks'}
-            </span>
-          </p>
-          <div class="sp__agents">
-            <div class="sp__node sp__agent">
-              <p class="sp__title">Metamon agent&nbsp;1</p>
-              {!compact && <p class="sp__text">its own username</p>}
+        <div class="spc__task">
+          <span class="spc__tag">Cloud Run task</span>
+          <div class="spc__battle">
+            <div class="spc__unit spc__agent">
+              <svg class="spc__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <rect x="5" y="8" width="15" height="12" rx="2.5" />
+                <path d="M12.5 8V5.5" />
+                <circle cx="12.5" cy="4" r="1.25" />
+                <path d="M14 12.5v2M17 12.5v2" />
+                <path d="M5 12.5H3.5v4H5" />
+              </svg>
+              <span class="spc__label">Metamon</span>
             </div>
-            <div class="sp__node sp__agent">
-              <p class="sp__title">Metamon agent&nbsp;2</p>
-              {!compact && <p class="sp__text">its own username</p>}
+            <div class="spc__unit spc__server">
+              <svg class="spc__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <rect x="3.5" y="4" width="17" height="7" rx="1.5" />
+                <rect x="3.5" y="13" width="17" height="7" rx="1.5" />
+                <path d="M7 7.5h.01M7 16.5h.01" />
+              </svg>
+              <span class="spc__label">Showdown</span>
+            </div>
+            <div class="spc__unit spc__agent">
+              <svg class="spc__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <g transform="matrix(-1 0 0 1 24 0)">
+                  <rect x="5" y="8" width="15" height="12" rx="2.5" />
+                  <path d="M12.5 8V5.5" />
+                  <circle cx="12.5" cy="4" r="1.25" />
+                  <path d="M14 12.5v2M17 12.5v2" />
+                  <path d="M5 12.5H3.5v4H5" />
+                </g>
+              </svg>
+              <span class="spc__label">Metamon</span>
             </div>
           </div>
-          <div class="sp__links" aria-hidden="true">
-            <span class="sp__link"></span>
-            <span class="sp__links-label">battle through</span>
-            <span class="sp__link"></span>
-          </div>
-          <div class="sp__node sp__server">
-            <p class="sp__title">Pokémon Showdown server</p>
-            {!compact && <p class="sp__text">local to the container, started before the battles</p>}
-          </div>
         </div>
 
-        <div class="sp__edge sp__edge--out" aria-hidden="true">
-          <span class="sp__edge-label">each agent writes</span>
-        </div>
+        <div class="spc__edge spc__edge--out"></div>
 
-        <div class="sp__node sp__output">
-          <p class="sp__title">Trajectory files</p>
-          {!compact && <p class="sp__text">per run, configuration tag and task; no checkpoints are saved</p>}
-          <p class="sp__code">
-            <code>run=…/<wbr />cfg=…/<wbr /><span class="sp__nowrap">task-<i>i</i>/</span><wbr />agent1/</code>
-          </p>
+        <div class="spc__node spc__output">
+          <svg class="spc__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M9 6V4.5A1.5 1.5 0 0 1 10.5 3H16l4 4v10.5a1.5 1.5 0 0 1-1.5 1.5H17" />
+            <rect x="4" y="6" width="13" height="15" rx="1.5" />
+            <path d="m7 17 2.5-3.5 2 2 3-4.5" />
+          </svg>
+          <span class="spc__label">Trajectories</span>
         </div>
       </div>
     </div>
-  </div>
+  ) : (
+    <div class="plate__frame sp__frame">
+      <div class="sp__part">
+        <div class="sp__flow">
+          <div class="sp__node sp__manifest">
+            <p class="sp__title">Task manifest</p>
+            <p class="sp__text">One JSON line per task: both agents, format, team set, battle count</p>
+            <p class="sp__code"><code>selfplay_rlv2<wbr />.jsonl</code></p>
+          </div>
+
+          <div class="sp__edge sp__edge--manifest" aria-hidden="true">
+            <span class="sp__edge-label">task <i>i</i> reads <span class="sp__nowrap">line <i>i</i>&#8201;+&#8201;1</span></span>
+          </div>
+
+          <div class="sp__node sp__weights">
+            <p class="sp__title">Model checkpoints</p>
+            <p class="sp__text">Metamon pretrained models from Hugging Face, or a local checkpoint</p>
+            <p class="sp__code"><code>SyntheticRLV2</code></p>
+          </div>
+
+          <div class="sp__edge sp__edge--weights" aria-hidden="true">
+            <span class="sp__edge-label">loaded at start</span>
+          </div>
+
+          <div class="sp__worker" role="group" aria-label="Inside one Cloud Run Job task">
+            <p class="sp__worker-label">
+              <span class="sp__worker-name">Cloud Run Job task <i>i</i></span>
+              <span class="sp__worker-note">one container, nothing shared with other tasks</span>
+            </p>
+            <div class="sp__agents">
+              <div class="sp__node sp__agent">
+                <p class="sp__title">Metamon agent&nbsp;1</p>
+                <p class="sp__text">its own username</p>
+              </div>
+              <div class="sp__node sp__agent">
+                <p class="sp__title">Metamon agent&nbsp;2</p>
+                <p class="sp__text">its own username</p>
+              </div>
+            </div>
+            <div class="sp__links" aria-hidden="true">
+              <span class="sp__link"></span>
+              <span class="sp__links-label">battle through</span>
+              <span class="sp__link"></span>
+            </div>
+            <div class="sp__node sp__server">
+              <p class="sp__title">Pokémon Showdown server</p>
+              <p class="sp__text">local to the container, started before the battles</p>
+            </div>
+          </div>
+
+          <div class="sp__edge sp__edge--out" aria-hidden="true">
+            <span class="sp__edge-label">each agent writes</span>
+          </div>
+
+          <div class="sp__node sp__output">
+            <p class="sp__title">Trajectory files</p>
+            <p class="sp__text">per run, configuration tag and task; no checkpoints are saved</p>
+            <p class="sp__code">
+              <code>run=…/<wbr />cfg=…/<wbr /><span class="sp__nowrap">task-<i>i</i>/</span><wbr />agent1/</code>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
 
   <figcaption>
     {compact ? (
       <Fragment>
-        The self-play setup I built for competition experiments: each task
-        runs two Metamon agents on a private Showdown server, loads checkpoints
-        and writes only trajectories. Tournament results are in the
-        <a href={BRACKETS_URL} rel="noopener">official brackets</a>.
+        Self-play on Cloud Run Jobs: each task runs two Metamon agents on its
+        own Showdown server and writes only trajectories.
       </Fragment>
     ) : (
       <Fragment>
@@ -113,6 +198,250 @@ const REPO =
 </figure>
 
 <style>
+  /* =========================================================================
+     Compact: icon diagram (homepage)
+     ========================================================================= */
+  .spc__frame {
+    padding: clamp(1rem, 3vw, 1.5rem) clamp(0.8rem, 2vw, 1rem);
+    container-type: inline-size;
+    container-name: spc;
+  }
+
+  .spc {
+    --icon: 2.5rem;
+    /* How far the stacked task cards show below the front one. */
+    --peek: 1.1rem;
+    /* From the task's top border to its icons: border + padding + tag line
+       + tag margin. Side nodes drop by the same amount so every icon sits on
+       one line in the left-to-right layout. */
+    --axis: calc(1px + 0.55rem + 1rem + 0.55rem);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      'manifest weights'
+      'e-manifest e-weights'
+      'task task'
+      'e-out e-out'
+      'output output';
+    isolation: isolate;
+    hyphens: manual;
+  }
+
+  .spc__manifest { grid-area: manifest; }
+  .spc__weights { grid-area: weights; }
+  .spc__edge--manifest { grid-area: e-manifest; }
+  .spc__edge--weights { grid-area: e-weights; }
+  .spc__task { grid-area: task; }
+  .spc__edge--out { grid-area: e-out; }
+  .spc__output { grid-area: output; }
+
+  .spc__node,
+  .spc__unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-width: 0;
+  }
+
+  .spc__unit {
+    padding-inline: 0.15rem;
+  }
+
+  .spc__icon {
+    display: block;
+    flex: none;
+    width: var(--icon);
+    height: var(--icon);
+    color: var(--fg);
+    fill: none;
+    stroke: currentColor;
+    /* About 1.5 px at 2.5rem, the weight of the site's other line marks. */
+    stroke-width: 0.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* The one colour: the two agents (the models being run). */
+  .spc__agent .spc__icon {
+    color: var(--data-model);
+  }
+
+  .spc__label {
+    margin-top: 0.3rem;
+    color: var(--fg-strong);
+    font-size: var(--step--1);
+    line-height: 1.25;
+  }
+
+  /* Edges: vertical with an arrowhead by default (stacked layout). */
+  .spc__edge {
+    position: relative;
+    min-height: 2.5rem;
+  }
+
+  .spc__edge::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0.4rem;
+    bottom: 6px;
+    border-left: 1px solid var(--fg-muted);
+  }
+
+  .spc__edge::after {
+    content: '';
+    position: absolute;
+    left: calc(50% - 4px);
+    bottom: 0;
+    border: 4.5px solid transparent;
+    border-bottom: 0;
+    border-top: 7px solid var(--fg-muted);
+  }
+
+  .spc__edge-label {
+    position: absolute;
+    left: calc(50% + 0.5rem);
+    top: calc(50% + 0.2rem);
+    transform: translateY(-50%);
+    color: var(--fg-muted);
+    font-style: italic;
+    font-size: 0.86rem;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  /* The task boundary, with two more cards stacked behind it. */
+  .spc__task {
+    position: relative;
+    margin-bottom: var(--peek);
+    padding: 0.55rem 0.6rem 0.75rem;
+    border: 1px dashed color-mix(in srgb, var(--fg-muted) 75%, transparent);
+    border-radius: var(--radius-plate);
+    background: var(--bg-plate);
+    min-width: 0;
+  }
+
+  .spc__task::before,
+  .spc__task::after {
+    content: '';
+    position: absolute;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-plate);
+    background: var(--bg-plate);
+  }
+
+  /* The stack is the only mark for "more tasks", so the nearer card edge
+     keeps at least 3:1 against --bg-plate; the farther one fades. */
+  .spc__task::before {
+    inset: 0 0.6rem calc(var(--peek) / -2);
+    border-color: color-mix(in srgb, var(--fg-muted) 75%, var(--bg-plate));
+    z-index: -1;
+  }
+
+  .spc__task::after {
+    inset: 0 1.2rem calc(var(--peek) * -1);
+    border-color: color-mix(in srgb, var(--fg-muted) 50%, var(--bg-plate));
+    z-index: -2;
+  }
+
+  .spc__tag {
+    display: block;
+    margin-bottom: 0.55rem;
+    color: var(--fg-muted);
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    line-height: 1rem;
+    white-space: nowrap;
+  }
+
+  /* Agent, server, agent; a line from each agent to the server. */
+  .spc__battle {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .spc__battle::before,
+  .spc__battle::after {
+    content: '';
+    position: absolute;
+    top: calc(var(--icon) / 2);
+    width: calc(100% / 3 - var(--icon) - 0.3rem);
+    border-top: 1px solid var(--fg-muted);
+  }
+
+  .spc__battle::before {
+    left: calc(100% / 6 + var(--icon) / 2 + 0.15rem);
+  }
+
+  .spc__battle::after {
+    right: calc(100% / 6 + var(--icon) / 2 + 0.15rem);
+  }
+
+  /* Smallest phones: keep a clear gap between the three labels in the task. */
+  @container spc (max-width: 19rem) {
+    .spc__task {
+      padding-inline: 0.35rem;
+    }
+
+    .spc__unit .spc__label {
+      font-size: 0.86rem;
+    }
+  }
+
+  /* Left to right: manifest in, trajectories out, checkpoints from above,
+     every icon on one horizontal line. */
+  @container spc (min-width: 30rem) {
+    .spc {
+      max-width: 38rem;
+      margin-inline: auto;
+      grid-template-columns:
+        4.25rem minmax(2.5rem, 0.5fr) minmax(0, 5fr) minmax(2.5rem, 0.5fr) 5.25rem;
+      grid-template-areas:
+        '. . weights . .'
+        '. . e-weights . .'
+        'manifest e-manifest task e-out output';
+      align-items: start;
+    }
+
+    .spc__manifest,
+    .spc__output {
+      padding-top: var(--axis);
+    }
+
+    .spc__edge--manifest,
+    .spc__edge--out {
+      align-self: stretch;
+      min-height: 0;
+    }
+
+    .spc__edge--manifest::before,
+    .spc__edge--out::before {
+      left: 0.35rem;
+      right: calc(0.35rem + 6px);
+      top: calc(var(--axis) + var(--icon) / 2);
+      bottom: auto;
+      border-left: 0;
+      border-top: 1px solid var(--fg-muted);
+    }
+
+    .spc__edge--manifest::after,
+    .spc__edge--out::after {
+      left: auto;
+      right: 0.35rem;
+      top: calc(var(--axis) + var(--icon) / 2 - 4px);
+      bottom: auto;
+      border: 4.5px solid transparent;
+      border-right: 0;
+      border-left: 7px solid var(--fg-muted);
+    }
+
+  }
+
+  /* =========================================================================
+     Full diagram (case study)
+     ========================================================================= */
   .sp__frame {
     padding: clamp(0.85rem, 2.5vw, 1.6rem);
     container-type: inline-size;
@@ -123,10 +452,6 @@ const REPO =
   .sp__frame p,
   .sp__frame span {
     hyphens: manual;
-  }
-
-  .sp--compact .sp__frame {
-    padding: clamp(0.8rem, 2vw, 1.15rem);
   }
 
   .sp__nowrap {
@@ -162,10 +487,6 @@ const REPO =
     min-width: 0;
   }
 
-  .sp--compact .sp__node {
-    padding: 0.5rem 0.7rem 0.55rem;
-  }
-
   .sp__node p {
     margin: 0;
   }
@@ -187,10 +508,6 @@ const REPO =
   .sp__node .sp__code {
     margin-top: 0.4rem;
     line-height: 1.3;
-  }
-
-  .sp--compact .sp__node .sp__code {
-    margin-top: 0.25rem;
   }
 
   .sp__code code {
@@ -220,11 +537,6 @@ const REPO =
     padding: 0.5rem 0 0.7rem 2rem;
     display: flex;
     align-items: center;
-  }
-
-  .sp--compact .sp__edge {
-    min-height: 2.15rem;
-    padding-block: 0.35rem 0.5rem;
   }
 
   .sp__edge::before {
@@ -261,10 +573,6 @@ const REPO =
     min-width: 0;
   }
 
-  .sp--compact .sp__worker {
-    padding: 0.55rem 0.6rem 0.6rem;
-  }
-
   .sp__worker-label {
     margin: 0 0 0.6rem;
     display: flex;
@@ -272,10 +580,6 @@ const REPO =
     align-items: baseline;
     column-gap: 0.6rem;
     line-height: 1.3;
-  }
-
-  .sp--compact .sp__worker-label {
-    margin-bottom: 0.45rem;
   }
 
   .sp__worker-name {
@@ -302,10 +606,6 @@ const REPO =
     column-gap: 0.6rem;
     position: relative;
     min-height: 2.2rem;
-  }
-
-  .sp--compact .sp__links {
-    min-height: 1.7rem;
   }
 
   .sp__link {
@@ -340,13 +640,11 @@ const REPO =
 
   /* Very narrow: tighten the boxes so the agent names keep to one line. */
   @container sp (max-width: 21rem) {
-    .sp__node,
-    .sp--compact .sp__node {
+    .sp__node {
       padding-inline: 0.55rem;
     }
 
-    .sp__worker,
-    .sp--compact .sp__worker {
+    .sp__worker {
       padding-inline: 0.45rem;
     }
 
@@ -362,7 +660,7 @@ const REPO =
 
   /* ---------- Wide layout: left to right, checkpoints from above ---------- */
   @container sp (min-width: 50rem) {
-    .sp:not(.sp--compact) .sp__flow {
+    .sp__flow {
       grid-template-columns:
         minmax(0, 1fr) 6.5rem minmax(0, 2.1fr) 6.5rem minmax(0, 1fr);
       grid-template-areas:
@@ -373,33 +671,33 @@ const REPO =
       align-items: center;
     }
 
-    .sp:not(.sp--compact) .sp__weights,
-    .sp:not(.sp--compact) .sp__edge--weights {
+    .sp__weights,
+    .sp__edge--weights {
       justify-self: center;
       width: min(100%, 23rem);
     }
 
-    .sp:not(.sp--compact) .sp__edge--weights {
+    .sp__edge--weights {
       padding-left: calc(50% + 0.9rem);
     }
 
-    .sp:not(.sp--compact) .sp__edge--weights::before {
+    .sp__edge--weights::before {
       left: 50%;
     }
 
-    .sp:not(.sp--compact) .sp__edge--weights::after {
+    .sp__edge--weights::after {
       left: calc(50% - 4px);
     }
 
-    .sp:not(.sp--compact) .sp__edge--manifest,
-    .sp:not(.sp--compact) .sp__edge--out {
+    .sp__edge--manifest,
+    .sp__edge--out {
       min-height: 0;
       align-self: stretch;
       padding: 0;
     }
 
-    .sp:not(.sp--compact) .sp__edge--manifest .sp__edge-label,
-    .sp:not(.sp--compact) .sp__edge--out .sp__edge-label {
+    .sp__edge--manifest .sp__edge-label,
+    .sp__edge--out .sp__edge-label {
       position: absolute;
       left: 0.4rem;
       right: 0.4rem;
@@ -407,8 +705,8 @@ const REPO =
       text-align: center;
     }
 
-    .sp:not(.sp--compact) .sp__edge--manifest::before,
-    .sp:not(.sp--compact) .sp__edge--out::before {
+    .sp__edge--manifest::before,
+    .sp__edge--out::before {
       left: 0.4rem;
       right: calc(0.4rem + 6px);
       top: 50%;
@@ -417,8 +715,8 @@ const REPO =
       border-top: 1px solid var(--fg-muted);
     }
 
-    .sp:not(.sp--compact) .sp__edge--manifest::after,
-    .sp:not(.sp--compact) .sp__edge--out::after {
+    .sp__edge--manifest::after,
+    .sp__edge--out::after {
       left: auto;
       right: 0.4rem;
       top: calc(50% - 4px);

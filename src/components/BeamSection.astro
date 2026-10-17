@@ -23,7 +23,7 @@ const contributions = [
   },
   {
     title: 'Firestore configuration source',
-    note: 'An alternative to Google Sheets for configuring pipelines',
+    note: 'An alternative to Google Sheets for configuring Megalista’s Dataflow pipeline',
     project: 'Google Megalista',
     ref: 'PR #12',
     year: '2021',
@@ -32,25 +32,25 @@ const contributions = [
 ];
 ---
 
-<section class="beam container" aria-labelledby="beam-title">
+<section id="beam" class="beam container" aria-labelledby="beam-title">
   <div class="beam__text">
+    <p class="eyebrow">06 / Distributed systems</p>
     <h2 class="section-heading" id="beam-title">
       Starting an experimental Rust SDK for Apache Beam
     </h2>
-    <p class="status">2022–2023; experimental, never released as part of Beam</p>
     <p>
-      In late 2022 I started an experimental Rust SDK for Apache Beam, built on
-      Beam’s portability protos with an async runtime and modelled on the
-      TypeScript SDK. I wrote the pipeline and PCollection structures, the
-      first coders, an Impulse transform, worker bundle processing and an async
-      DirectRunner. By December the smallest possible pipeline ran end to end.
+      In late 2022 I started a Rust SDK for Apache Beam, modelled on the
+      TypeScript SDK. It was low-level distributed-systems work: speaking
+      Beam’s portability protos, processing bundles on the worker and running
+      pipelines on an async DirectRunner, plus the first coders and an Impulse
+      transform. By December the smallest possible pipeline ran end to end.
     </p>
     <p>
       When Google’s Dataflow team explored a Rust SDK during a hackathon in
       January 2023, the <a href={DISCUSSION_URL} rel="noopener">upstream
       discussion</a> recommended continuing from my repository, and
-      contributors opened pull requests against it. After my activity paused,
-      others carried the effort forward in a community fork built on my branch.
+      contributors opened pull requests against it. Others later carried the
+      effort forward in a community fork built on my branch.
     </p>
     <ul class="link-row">
       <li><a href={SDK_URL} rel="noopener">Code</a></li>
@@ -90,7 +90,12 @@ const contributions = [
     padding-top: var(--space-section);
   }
 
-  .beam__text p:not(.status) {
+  /* Sized like the other entries after the two featured sections. */
+  .beam .section-heading {
+    font-size: var(--step-2);
+  }
+
+  .beam__text p:not(.eyebrow) {
     max-width: 58ch;
   }
 

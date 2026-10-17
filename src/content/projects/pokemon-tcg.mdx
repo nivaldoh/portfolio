@@ -1,11 +1,10 @@
 ---
 title: 'Pokémon TCG: training and evaluating agents'
-subtitle: Behaviour cloning, PPO fine-tuning, and a closer look at one strong result
+subtitle: 'Built for a Kaggle competition: behaviour cloning, PPO fine-tuning, and a closer look at one strong result'
 description: 'A training and evaluation workflow for a supplied Pokémon TCG simulator: legal-action masking, a custom policy, behaviour cloning from scripted players, PPO fine-tuning, and an investigation of what a high win rate against one opponent meant.'
-summary: 'I built a training and evaluation workflow around a supplied Pokémon TCG simulator, with legal-action masking, a custom policy, behaviour cloning and PPO fine-tuning. Inspecting recorded games showed how a strong result against one scripted opponent could fail to establish broader playing strength.'
-status: 'Experiments from June–July 2026; figures from my dated evaluation reports'
+summary: 'I trained Pokémon TCG agents by behaviour cloning from scripted players, then fine-tuned them with PPO.'
 period: 'June–July 2026'
-order: 3
+order: 4
 credits:
   - 'The Pokémon TCG game simulator and Python SDK supplied for a Kaggle competition. Its licence restricts redistribution, so none of it appears here.'
   - 'Stable-Baselines3 and sb3-contrib, including MaskablePPO'
@@ -20,9 +19,11 @@ import TrainingLoop from '../../components/tcg/TrainingLoop.astro';
 Pokémon TCG is a card game with hidden information and long chains of small
 decisions: which card to play, which attack to use, which cards to choose for an
 effect. In these experiments the learner makes about 70 recorded decisions per
-game. I built a workflow around a supplied game simulator to train policies by
-imitating scripted players and by reinforcement learning, then to evaluate them
-against fixed scripted opponents. The most useful result came from asking what
+game. Unlike Metamon's battles, which it learns from a large archive of human
+games, this Kaggle competition came with no large training dataset. I built a
+workflow around the supplied game simulator to train policies by imitating
+scripted players and by reinforcement learning, then to evaluate them against
+fixed scripted opponents. The most useful result came from asking what
 a strong-looking number actually meant.
 
 <TrainingLoop />

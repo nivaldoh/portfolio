@@ -1,0 +1,53 @@
+---
+// Two RoboCasa365 recordings for the homepage panel: GR00T N1.5 after a scene
+// change and Astra after a goal change. Ambient loops; see RecordedVideo.
+import RecordedVideo from '../RecordedVideo.astro';
+---
+
+<div class="development-recordings">
+  <RecordedVideo
+    src="/media/robocasa/groot-undo-teleported-croissant.mp4"
+    poster="/media/robocasa/groot-undo-teleported-croissant.jpg"
+    width={768}
+    height={256}
+    ambient
+    name="GR00T N1.5 recording"
+    label="Three camera views of GR00T N1.5 fetching a jam jar, then retrieving a croissant that the simulator moved back to its plate and returning it to the cutting board."
+  >
+    <strong>GR00T N1.5 · The scene changes.</strong>{' '}
+    The simulator puts the placed croissant back on its plate; the policy
+    fetches the jam, then puts the croissant back on the board.
+  </RecordedVideo>
+
+  <RecordedVideo
+    src="/media/robocasa/astra-goal-change-config3.mp4"
+    poster="/media/robocasa/astra-goal-change-config3.jpg"
+    width={768}
+    height={256}
+    ambient
+    name="Astra recording"
+    label="Three camera views of Astra moving a croissant back onto a blue plate after the instruction changes, then placing a red-lidded jam jar on the cutting board."
+  >
+    <strong>Astra · The goal changes.</strong>{' '}
+    Mid-task, the instruction becomes: return the croissant, but still bring
+    the jam.
+  </RecordedVideo>
+</div>
+
+<style>
+  .development-recordings {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 768px;
+  }
+
+  .development-recordings :global(.recorded) {
+    margin: 0;
+  }
+
+  .development-recordings strong {
+    color: var(--fg);
+    font-style: normal;
+    font-weight: 560;
+  }
+</style>

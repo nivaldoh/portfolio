@@ -1,0 +1,55 @@
+---
+// How the Pokémon TCG agents got training data without a replay dataset:
+// games between four scripted teachers, cloned. Figures from the dated
+// behaviour-cloning report summarised in src/content/projects/pokemon-tcg.mdx
+// ("Cloning data, transfer and PPO settings"): 2,000 games covering all 16
+// ordered deck pairings, 286,035 recorded decisions, holdout accuracy 0.796
+// against 0.217 for a random legal option. Static HTML.
+const rows = [
+  { value: '4', text: 'scripted players as teachers' },
+  { value: '286,035', text: 'decisions recorded from 2,000 of their games' },
+  { value: '79.6%', text: 'of held-out decisions matched by the clone' },
+];
+---
+
+<ol class="td" aria-label="Making a training set">
+  {rows.map((row) => (
+    <li class="td__row">
+      <span class="td__value">{row.value}</span>
+      <span class="td__text">{row.text}</span>
+    </li>
+  ))}
+</ol>
+
+<style>
+  .td {
+    margin: 0 0 1rem;
+    padding: 0;
+    list-style: none;
+    max-width: 30rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .td__row {
+    display: grid;
+    grid-template-columns: 5.4rem minmax(0, 1fr);
+    gap: 0.9rem;
+    align-items: baseline;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .td__value {
+    color: var(--fg-strong);
+    font-size: var(--step-1);
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums lining-nums;
+    text-align: right;
+  }
+
+  .td__text {
+    color: var(--fg);
+    font-size: var(--step--1);
+    line-height: 1.4;
+  }
+</style>

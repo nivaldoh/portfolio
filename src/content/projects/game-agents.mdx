@@ -1,9 +1,8 @@
 ---
-title: Game agents and evaluation
-subtitle: 'Total War: WARHAMMER III battles and Slay the Spire runs, recorded so every decision can be inspected'
-description: 'Interfaces, scenarios and replay tools for studying language-model agents in real-time Total War: WARHAMMER III battles and full Slay the Spire runs.'
-summary: 'I build interfaces and evaluation tools for language-model agents playing Slay the Spire and real-time Total War: WARHAMMER III battles. Every decision is recorded, so I can replay a battle, see what the model was looking at when it gave an order, and work out whether a failure came from the model, the interface or the scenario.'
-status: Ongoing development; provisional benchmark and recorded experiments
+title: 'Game agents: Total War and Slay the Spire'
+subtitle: 'Training and benchmarking language-model agents in two commercial games'
+description: 'An agent training and benchmarking project: a real-time battle interface, provisional benchmark and recorded replays for language-model agents in Total War: WARHAMMER III, and full Slay the Spire runs through the same harness.'
+summary: 'Language models command armies in Total War through a Lua mod I built, and play full Slay the Spire runs through the same harness.'
 period: '2026'
 order: 1
 cover:
@@ -16,24 +15,24 @@ links:
     url: https://github.com/nivaldoh/slay_the_spire_ai/blob/main/docs/twwarhammer3/benchmark.md
   - label: Report guide
     url: https://github.com/nivaldoh/slay_the_spire_ai/blob/main/docs/twwarhammer3/reports.md
-  - label: Slay the Spire full-run notes
+  - label: Interactive benchmark
+    url: /benchmarks/total-war/index.html
+  - label: Slay the Spire run notes
     url: https://github.com/nivaldoh/slay_the_spire_ai/blob/main/docs/spire/fullrun/README.md
 credits:
   - 'Total War: WARHAMMER III, by Creative Assembly, published by SEGA. The game, its battle engine and its AI opponent are theirs; I built the evaluation mod and the tools around it.'
-  - 'Slay the Spire, by Mega Crit.'
-  - 'ModTheSpire, BaseMod and CommunicationMod, the community mods that let an outside program read Slay the Spire’s state and send it commands.'
   - 'rxi/json.lua for JSON inside the Total War mod, twpatcher (Frodo45127) to skip the startup video, and RPFM’s schemas to decode game tables locally.'
-  - 'Language models from OpenAI (gpt-6-luna, gpt-6-sol, gpt-6.1-sol) and, through OpenRouter, Z.ai (GLM-5.3) and Moonshot AI (Kimi K3). I evaluate these models; I didn’t train them.'
-  - 'Qwen3-0.6B, the base model for a small LoRA pilot.'
+  - 'Slay the Spire, by Mega Crit, played through the community mods ModTheSpire, BaseMod and CommunicationMod.'
+  - 'Language models from OpenAI (gpt-6-luna, gpt-6-sol, gpt-6.1-sol) and, through OpenRouter, Z.ai (GLM-5.3) and Moonshot AI (Kimi K3). I evaluate these models; I didn’t train them. Qwen3-0.6B was the base model for a small LoRA pilot in Slay the Spire.'
 ---
 
 import Plate from '../../components/Plate.astro';
 import Details from '../../components/Details.astro';
 import BattleReplay from '../../components/wh3/BattleReplay.astro';
-import DecisionSteps from '../../components/slay/DecisionSteps.astro';
 import ControllerModes from '../../components/game-agents/ControllerModes.astro';
 import PlatePair from '../../components/game-agents/PlatePair.astro';
 import ArtDirectedPlate from '../../components/game-agents/ArtDirectedPlate.astro';
+import RunProgress from '../../components/slay/RunProgress.astro';
 import reportShot from '../../assets/work/game-agents/wh3-replay.png';
 import scenariosShot from '../../assets/work/game-agents/wh3-scenarios.png';
 import scenariosMedium from '../../assets/work/game-agents/wh3-scenarios-medium.png';
@@ -43,9 +42,11 @@ import comparisonNarrow from '../../assets/work/game-agents/wh3-comparison-narro
 import advisorShot from '../../assets/work/game-agents/wh3-ingame-advisor.jpg';
 import siegeShot from '../../assets/work/game-agents/wh3-ingame-siege.jpg';
 
+This is my ongoing project for training and benchmarking AI agents in real games: one harness, two games with very different decisions. Most of this page is about Total War; [Slay the Spire](#slay-the-spire) is at the end.
+
 In Total War: WARHAMMER III the battle keeps moving while a language model decides what to do. I build the game interface, scenarios and replay tools to study that: live battle control, a small matched comparison between models, and experiments in making scenarios harder in ways that test a real tactical choice.
 
-Slay the Spire is the slower counterpart, where planning and interface errors build up over a full run. In both games every decision is recorded, so I can go back to what the model saw, what it ordered and what happened next.
+Every decision is recorded, so I can go back to what the model saw, what it ordered and what happened next. [Open the interactive benchmark](/benchmarks/total-war/index.html) to compare scenarios, models and individual battles.
 
 <div class="wide">
   <BattleReplay variant="full" />
@@ -57,7 +58,7 @@ Halberds are built to stop cavalry. Here four Empire halberd units screen two un
 
 The recorded path follows it: west along the south of the central block, then north up its western side to the guns. The gun line broke between 3:06 and 3:56, and the game declared a win at 8:07.
 
-I picked this battle for the flank, not as a typical result: the model won two of its nine development battles here. The records don’t show that the route decided it; they point instead to the knights continuing to fight the halberd line afterwards. Quoted reasons are what the model wrote in its replies, not a view of its internal reasoning.
+I picked this battle for the flank, not as a typical result: the model won two of its nine recorded battles here. The records don’t show that the route decided it; they point instead to the knights continuing to fight the halberd line afterwards. Quoted reasons are what the model wrote in its replies, not a view of its internal reasoning.
 
 ## Why latency matters
 
@@ -104,7 +105,7 @@ Scripted rules give reference results. Each scenario’s setup is declared up fr
 - `llm` orders units directly with a tactical prompt. `llm_rules` does the same with a rules-only prompt that covers objectives and the interface but no tactics; the matched round below uses it.
 - `commander` keeps one plan request in flight on a worker thread. Each plan sets standing skills (engage, shoot, hold, charge, move), and the scripted `skills` executor applies them on every observation, about three to four decisions a second.
 - Scripted references: `hold`, `attack_nearest`, `rush_nearest`, and `skills` on its own. Outside controllers plug in as a Python class.
-- 26 model and reasoning-mode configurations pass schema checks, but only low reasoning effort has been played in battle so far.
+- The report keeps reasoning effort and controller settings beside each model’s results. Mixed settings are labelled; the matched round below uses low reasoning effort throughout.
 - An offline exporter turns saved battles into training-oriented traces and has been checked on 304 saved episodes. Capturing providers’ reasoning summaries is implemented but not yet used in a paid battle.
 
 </Details>
@@ -175,23 +176,19 @@ The mod can also show each reply inside the game. Both captures are from early d
   />
 </PlatePair>
 
-<h2 id="slay-the-spire">Slay the Spire</h2>
+<h2 id="slay-the-spire">Slay the Spire: a whole run of consequences</h2>
 
-In Slay the Spire a model plays complete Ironclad runs through CommunicationMod. At each decision it sees a summary of the public game state, the legal choices labelled one by one, its recent decisions and its own notes. When a trace shows a mistake, I change one part of the prompt, memory or interface and run again.
+In Slay the Spire a bad choice can end a run an hour later. Through the same harness, a model plays complete Ironclad runs via CommunicationMod: at each decision it sees a summary of the public game state, the legal choices labelled one by one, its recent decisions and its own notes. When a recorded run shows a mistake, I change one part of the prompt, memory or interface and run again.
+
+<RunProgress class="wide" />
 
 The furthest run reached Act 4, floor 54; no run has won yet. Earlier first-combat pilots with scripted play, PPO and a small LoRA were small and are paused. Training an open-weight model on full runs is planned; so far only a code skeleton exists.
 
-One recorded mistake shows why the interface matters. At the start of a fight the Gambling Chip relic lets the player discard cards and draw replacements, but the prompt only said “Choose up to 99 card(s) from your hand.”
-
-<DecisionSteps class="wide" />
-
-The same misreading came back in later versions, which discarded cards the model meant to play. The newest prompt version names what asked for a hand selection; it hasn’t been tested in a full run yet.
-
-<Details summary="Slay the Spire: interface, pilots and plans">
+<Details summary="Interface, pilots and plans">
 
 - CommunicationMod exposes the public game state. The draw pile is shown unordered unless the Frozen Eye relic is held, and the model gets no seed, random-number state, or card and relic text.
-- Gambling Chip caused most of the hand-selection screens in earlier runs: 226 of 385 replayed hand-selection prompts.
 - Runs use the Ironclad at Ascension 0 with gpt-6-luna on low reasoning effort. The prompt, memory and interface are on their tenth version, each changing one thing. The furthest run, on version 8, reached Act 4, floor 54, and was ended by the Spire Shield and Spire Spear.
+- One recurring mistake came from the interface itself: the prompt for the Gambling Chip relic’s hand selection read like an ordinary choice, so the model discarded cards it meant to play. The newest prompt version names what asked for the selection; it hasn’t been tested in a full run yet.
 - The first-combat pilots compared a scripted heuristic, PPO and a LoRA fine-tune of Qwen3-0.6B, run locally on fixed floor-1 fights. The LoRA matched the heuristic’s average remaining HP on a three-encounter development set (76.33 against 76.00, over 12 attempts); PPO changed its weights without improving play.
 - Planned, with only a code skeleton so far: reinforcement learning on full runs with open-weight models on remote hardware, starting with Qwen3.6-35B-A3B and then GLM-5.3.
 

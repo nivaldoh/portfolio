@@ -2,6 +2,10 @@
 // A recorded clip with a poster and a caption. Nothing plays until the
 // visitor presses play; a playing clip pauses when it leaves the viewport,
 // and starting one pauses any other RecordedVideo on the page.
+// `ambient`: a muted loop that plays while it is mostly on screen, with a
+// Pause/Play toggle on the caption line in place of the native controls.
+// Without script, or when the visitor prefers reduced motion, it stays an
+// ordinary click-to-play clip.
 // `src` and `poster` are paths under public/. If either file is missing the
 // component renders nothing rather than an empty frame.
 import fs from 'node:fs';
@@ -18,10 +22,24 @@ interface Props {
   /** Accessible name describing what the recording shows. */
   label: string;
   wide?: boolean;
+  ambient?: boolean;
+  /** Ambient only: short name for the toggle, e.g. "Astra recording". */
+  name?: string;
   class?: string;
 }
 
-const { src, poster, caption, width, height, label, wide = false, class: className } = Astro.props;
+const {
+  src,
+  poster,
+  caption,
+  width,
+  height,
+  label,
+  wide = false,
+  ambient = false,
+  name = 'recording',
+  class: className,
+} = Astro.props;
 
 const inPublic = (p: string | undefined) => {
   if (!p) return false;
@@ -30,7 +48,7 @@ const inPublic = (p: string | undefined) => {
 };
 
 const available = inPublic(src) && inPublic(poster);
-const hasCaption = Boolean(caption) || Astro.slots.has('default');
+const hasCaption = ambient || Boolean(caption) || Astro.slots.has('default');
 ---
 
 {available && (
@@ -38,6 +56,7 @@ const hasCaption = Boolean(caption) || Astro.slots.has('default');
     class:list={['plate', 'recorded', { wide }, className]}
     style={`--recorded-max: ${width}px`}
     data-recorded-video
+    data-ambient={ambient ? '' : undefined}
   >
     <div class="plate__frame">
       <video
@@ -48,6 +67,7 @@ const hasCaption = Boolean(caption) || Astro.slots.has('default');
         preload="none"
         playsinline
         muted
+        loop={ambient}
         controls
         aria-label={label}
       >
@@ -56,6 +76,11 @@ const hasCaption = Boolean(caption) || Astro.slots.has('default');
     </div>
     {hasCaption && (
       <figcaption>
+        {ambient && (
+          <button type="button" class="recorded__toggle" data-toggle hidden>
+            <span class="recorded__icon" aria-hidden="true"></span><span data-toggle-label>Pause</span><span class="visually-hidden"> {name}</span>
+          </button>
+        )}
         {caption}
         <slot />
       </figcaption>
@@ -64,9 +89,86 @@ const hasCaption = Boolean(caption) || Astro.slots.has('default');
 )}
 
 <script>
+  interface Loop {
+    video: HTMLVideoElement;
+    toggle: HTMLButtonElement;
+    label: HTMLElement | null;
+    inView: boolean;
+    paused: boolean;
+  }
+
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
   const videos = [
-    ...document.querySelectorAll<HTMLVideoElement>('[data-recorded-video] video'),
+    ...document.querySelectorAll<HTMLVideoElement>('[data-recorded-video]:not([data-ambient]) video'),
   ];
+
+  // Ambient loops: play while at least half on screen, unless paused by hand.
+  // Under reduced motion they keep their native controls and never autoplay.
+  const loops: Loop[] = [];
+  if ('IntersectionObserver' in window) {
+    for (const figure of document.querySelectorAll<HTMLElement>('[data-recorded-video][data-ambient]')) {
+      const video = figure.querySelector('video');
+      const toggle = figure.querySelector<HTMLButtonElement>('[data-toggle]');
+      if (video && toggle) {
+        loops.push({
+          video,
+          toggle,
+          label: toggle.querySelector<HTMLElement>('[data-toggle-label]'),
+          inView: false,
+          paused: false,
+        });
+      }
+    }
+  }
+
+  if (loops.length > 0) {
+    const setPaused = (loop: Loop, paused: boolean) => {
+      loop.paused = paused;
+      loop.toggle.toggleAttribute('data-paused', paused);
+      if (loop.label) loop.label.textContent = paused ? 'Play' : 'Pause';
+    };
+    const update = (loop: Loop) => {
+      const visible = loop.inView && !document.hidden;
+      if (!reduce.matches && visible && !loop.paused) {
+        // A refused autoplay (e.g. a power-saving mode) leaves it one tap from playing.
+        // An AbortError only means a pause() interrupted loading; the next update retries.
+        loop.video.play().catch((error) => {
+          if (error?.name === 'NotAllowedError') setPaused(loop, true);
+        });
+      } else if ((!reduce.matches || !visible) && !loop.video.paused) {
+        loop.video.pause();
+      }
+    };
+    const setMotion = () => {
+      for (const loop of loops) {
+        loop.video.controls = reduce.matches;
+        loop.toggle.hidden = reduce.matches;
+        if (reduce.matches) loop.video.pause();
+        update(loop);
+      }
+    };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const loop = loops.find((l) => l.video === entry.target);
+          if (!loop) continue;
+          loop.inView = entry.intersectionRatio >= 0.5;
+          update(loop);
+        }
+      },
+      { threshold: [0, 0.5] }
+    );
+    for (const loop of loops) {
+      loop.toggle.addEventListener('click', () => {
+        setPaused(loop, !loop.paused);
+        update(loop);
+      });
+      observer.observe(loop.video);
+    }
+    document.addEventListener('visibilitychange', () => loops.forEach(update));
+    reduce.addEventListener('change', setMotion);
+    setMotion();
+  }
 
   if (videos.length > 0) {
     // Only one recording plays at a time.
@@ -103,5 +205,46 @@ const hasCaption = Boolean(caption) || Astro.slots.has('default');
     width: 100%;
     height: auto;
     background: var(--bg-plate);
+  }
+
+  /* Sits at the start of the caption, so it never covers the footage. */
+  .recorded__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 1.75rem;
+    margin-right: 0.55rem;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--bg-plate);
+    color: var(--fg);
+    font: normal 0.75rem/1 var(--font-mono);
+    vertical-align: 0.05em;
+    cursor: pointer;
+  }
+
+  .recorded__toggle[hidden] {
+    display: none;
+  }
+
+  .recorded__toggle:hover {
+    border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+    color: var(--fg-strong);
+  }
+
+  /* Two bars while playing; a play triangle once paused. */
+  .recorded__icon {
+    width: 0.45rem;
+    height: 0.55rem;
+    border-inline: 2px solid currentColor;
+  }
+
+  .recorded__toggle[data-paused] .recorded__icon {
+    width: 0;
+    height: 0;
+    border-block: 0.3rem solid transparent;
+    border-inline: 0.45rem solid var(--accent);
+    border-inline-end-width: 0;
   }
 </style>

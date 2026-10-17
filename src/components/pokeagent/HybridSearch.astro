@@ -1,0 +1,442 @@
+---
+// MetaHorns' Gen 9 OU entry in the PokéAgent Challenge (NeurIPS 2025): a
+// Metamon + PokéChamp hybrid, drawn as one turn of its search. Code:
+// nivaldoh/pokechamp @ fb520c9, the final version (last tested 2 Nov 2025,
+// pushed Oct 2026). Sources: pokechamp/minimax_strategy.py, tree_search():
+// the root's candidates come from Metamon's policy (top 3,
+// policy_top_n_traj) plus PokéChamp's damage-calculator move; opponent
+// replies come from PokéChamp's damage-calculator estimate and switches;
+// LocalSim steps each pair one turn ahead (K=2 in llm_player.py); every leaf
+// is scored by METAMON_BRIDGE.score(), Metamon's critic mapped to 0–100,
+// instead of PokéChamp's LLM value prompt; the backup takes the minimum over
+// replies and the maximum over our actions, so a turn makes no LLM call.
+// pokechamp/metamon_bridge.py mirrors the live battle into a Metamon
+// trajectory context and clones it for every branch; it defaults to Gen 9
+// "for our exclusive focus". An earlier version (8468e15) asked an LLM for
+// the root's candidates; the owner asked for one version only.
+// Schematic: three options with two replies each. The scores are
+// illustrative; no search traces were kept. Static HTML and CSS, no script.
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+
+// Leaf scores, illustrative. Each option keeps its worst reply; the option
+// with the best worst case wins (here the switch, at index 1).
+const options = [
+  { name: 'Attack', leaves: [0.38, 0.72] },
+  { name: 'Switch', leaves: [0.61, 0.54] },
+  { name: 'Set up', leaves: [0.86, 0.22] },
+];
+const worst = options.map((o) => Math.min(...o.leaves));
+const chosen = worst.indexOf(Math.max(...worst));
+
+// Wire paths in a 600-unit-wide box, stretched to the six tree columns.
+const optionX = [100, 300, 500];
+const rootWires = optionX.map((x) => `M300 0V20H${x}V40`);
+const replyWires = optionX.flatMap((x) => [`M${x} 0V20H${x - 50}V40`, `M${x} 20H${x + 50}V40`]);
+const chosenReply = options[chosen].leaves.indexOf(worst[chosen]);
+const chosenLeaf = chosen * 2 + chosenReply;
+const chosenX = optionX[chosen];
+const chosenReplyX = chosenX + (chosenReply === 0 ? -50 : 50);
+
+const ALT =
+  'Schematic of one turn of the hybrid search. From the current turn, ' +
+  'Metamon’s policy proposes three options: attack, switch and set up. For ' +
+  'each, PokéChamp predicts two opponent replies, and its battle simulator ' +
+  'plays the turn out. Metamon’s critic, trained with offline RL, scores ' +
+  'each resulting position, where PokéChamp would ask an LLM. Minimax keeps ' +
+  'each option’s worst score and picks the option whose worst case is best: ' +
+  'here, the switch. The scores are illustrative.';
+---
+
+<figure class:list={['plate', 'hs', className]}>
+  <div class="plate__frame hs__frame">
+    <ul class="hs__key">
+      <li class="hs__key-item hs__key-item--mm">
+        <span class="hs__swatch" aria-hidden="true"></span>
+        <span><b>Metamon</b> offline RL agent</span>
+      </li>
+      <li class="hs__key-item hs__key-item--pc">
+        <span class="hs__swatch" aria-hidden="true"></span>
+        <span><b>PokéChamp</b> minimax search</span>
+      </li>
+    </ul>
+
+    <div class="hs__grid" role="img" aria-label={ALT}>
+      <span class="hs__root">This turn</span>
+
+      <svg class="hs__wires hs__wires--root" viewBox="0 0 600 40" preserveAspectRatio="none" aria-hidden="true">
+        {rootWires.map((d) => <path d={d} />)}
+        <path class="hs__wire--chosen" d={rootWires[chosen]} />
+      </svg>
+
+      {options.map((o, i) => (
+        <span
+          class:list={['hs__option', { 'hs__option--chosen': i === chosen }]}
+          style={`grid-column: ${2 + i * 2} / span 2;`}
+        >
+          {o.name}
+        </span>
+      ))}
+
+      <svg class="hs__wires hs__wires--reply" viewBox="0 0 600 40" preserveAspectRatio="none" aria-hidden="true">
+        {replyWires.map((d) => <path d={d} />)}
+        <path class="hs__wire--chosen" d={`M${chosenX} 0V20H${chosenReplyX}V40`} />
+      </svg>
+
+      {replyWires.map((_, i) => (
+        <span class="hs__reply" style={`grid-column: ${2 + i};`}>
+          <span class:list={['hs__diamond', { 'hs__diamond--chosen': i === chosenLeaf }]}></span>
+        </span>
+      ))}
+
+      <svg class="hs__wires hs__wires--sim" viewBox="0 0 600 40" preserveAspectRatio="none" aria-hidden="true">
+        {replyWires.map((_, i) => (
+          <path class:list={{ 'hs__wire--chosen': i === chosenLeaf }} d={`M${50 + i * 100} 2V38`} />
+        ))}
+      </svg>
+
+      {options.flatMap((o, i) =>
+        o.leaves.map((v, j) => (
+          <span class="hs__leaf" style={`grid-column: ${2 + i * 2 + j};`}>
+            <span
+              class:list={[
+                'hs__bar',
+                {
+                  'hs__bar--worst': v === worst[i],
+                  'hs__bar--chosen': i === chosen && v === worst[i],
+                },
+              ]}
+              style={`--v: ${v};`}
+            ></span>
+          </span>
+        ))
+      )}
+
+      <span class="hs__pick" style={`grid-column: ${2 + chosen * 2} / span 2;`}>
+        best worst case
+      </span>
+
+      <span class="hs__badge" style="grid-row: 3;">1</span>
+      <span class="hs__badge" style="grid-row: 5;">2</span>
+      <span class="hs__badge" style="grid-row: 6;">3</span>
+      <span class="hs__badge" style="grid-row: 7;">4</span>
+      <span class="hs__badge" style="grid-row: 8;">5</span>
+
+      <p class="hs__label hs__label--1">
+        <span class="hs__num">1</span>
+        <span><b class="hs__mm">Metamon’s policy</b> proposes our top options</span>
+      </p>
+      <p class="hs__label hs__label--2">
+        <span class="hs__num">2</span>
+        <span><b class="hs__pc">PokéChamp</b> predicts the opponent’s replies</span>
+      </p>
+      <p class="hs__label hs__label--3">
+        <span class="hs__num">3</span>
+        <span>Its <b class="hs__pc">simulator</b> plays each pair one turn ahead</span>
+      </p>
+      <p class="hs__label hs__label--4">
+        <span class="hs__num">4</span>
+        <span><b class="hs__mm">Metamon’s critic</b> scores each position, in place of an LLM</span>
+      </p>
+      <p class="hs__label hs__label--5">
+        <span class="hs__num">5</span>
+        <span><b class="hs__pc">Minimax</b>: expect the worst reply, take the best option</span>
+      </p>
+    </div>
+  </div>
+  <figcaption>
+    One turn of my Gen 9 OU entry: PokéChamp’s minimax search, with Metamon’s
+    policy and critic inside it. Schematic; the scores are illustrative.
+  </figcaption>
+</figure>
+
+<style>
+  .hs__frame {
+    padding: clamp(0.9rem, 3vw, 1.4rem) clamp(0.75rem, 3vw, 1.4rem) clamp(1rem, 3vw, 1.4rem);
+    container-type: inline-size;
+    container-name: hs;
+  }
+
+  /* ---------- Key ---------- */
+  .hs__key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.4rem;
+    margin: 0 0 1.1rem;
+    padding: 0;
+    list-style: none;
+    font-size: var(--step--1);
+    line-height: 1.3;
+    color: var(--fg-muted);
+  }
+
+  .hs__key-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .hs__key b {
+    font-weight: 560;
+    margin-right: 0.3em;
+  }
+
+  .hs__key-item--mm b { color: var(--data-model); }
+  .hs__key-item--pc b { color: var(--data-ai); }
+
+  .hs__swatch {
+    flex: none;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 1px;
+    align-self: center;
+  }
+
+  .hs__key-item--mm .hs__swatch { background: var(--data-model); }
+  .hs__key-item--pc .hs__swatch {
+    background: var(--data-ai);
+    transform: rotate(45deg) scale(0.85);
+  }
+
+  /* ---------- Tree ----------
+     Column 1 holds the step numbers on narrow screens; columns 2–7 are the
+     tree's six leaves; column 8 (wide only) holds the step labels. */
+  .hs__grid {
+    --muted-wire: color-mix(in srgb, var(--fg-muted) 75%, transparent);
+    display: grid;
+    grid-template-columns: 1.6rem repeat(6, minmax(0, 1fr));
+    grid-template-rows:
+      auto minmax(1.5rem, auto) auto minmax(1.5rem, auto) auto
+      minmax(1.6rem, auto) minmax(4rem, auto) auto;
+    align-items: center;
+    hyphens: manual;
+  }
+
+  .hs__root,
+  .hs__wires,
+  .hs__pick {
+    grid-column: 2 / 8;
+  }
+
+  .hs__root { grid-row: 1; }
+  .hs__wires--root { grid-row: 2; }
+  .hs__option { grid-row: 3; }
+  .hs__wires--reply { grid-row: 4; }
+  .hs__reply { grid-row: 5; }
+  .hs__wires--sim { grid-row: 6; }
+  .hs__leaf { grid-row: 7; }
+  .hs__pick { grid-row: 8; }
+
+  .hs__root {
+    justify-self: center;
+    padding: 0.2rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--bg-elev);
+    color: var(--fg-strong);
+    font: var(--step--2)/1.4 var(--font-mono);
+    white-space: nowrap;
+  }
+
+  .hs__wires {
+    align-self: stretch;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .hs__wires path {
+    fill: none;
+    stroke: var(--muted-wire);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .hs__wires--sim path {
+    stroke: color-mix(in srgb, var(--data-ai) 70%, transparent);
+    stroke-dasharray: 3 3;
+  }
+
+  .hs__wires .hs__wire--chosen {
+    stroke: var(--accent);
+    stroke-width: 1.5;
+    stroke-dasharray: none;
+  }
+
+  .hs__wires--sim .hs__wire--chosen {
+    stroke-dasharray: 3 2;
+  }
+
+  /* Options: proposed by Metamon's policy, so ruled in its colour. */
+  .hs__option {
+    justify-self: center;
+    max-width: calc(100% - 0.4rem);
+    padding: 0.2rem 0.6rem;
+    border: 1px solid color-mix(in srgb, var(--data-model) 70%, transparent);
+    border-radius: var(--radius-control);
+    background: var(--bg-plate);
+    color: var(--fg-strong);
+    font-size: var(--step--1);
+    line-height: 1.35;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .hs__option--chosen {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+    color: var(--accent);
+  }
+
+  .hs__reply {
+    justify-self: center;
+    padding-block: 0.2rem;
+  }
+
+  .hs__diamond {
+    display: block;
+    width: 0.62rem;
+    height: 0.62rem;
+    border: 1px solid var(--data-ai);
+    background: color-mix(in srgb, var(--data-ai) 35%, var(--bg-plate));
+    transform: rotate(45deg);
+  }
+
+  .hs__diamond--chosen {
+    background: var(--data-ai);
+    outline: 1px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Leaf scores: a bar per position. Each option's worst reply is solid;
+     the others are outlines. */
+  .hs__leaf {
+    align-self: stretch;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hs__bar {
+    width: min(1rem, 45%);
+    height: calc(var(--v) * 100%);
+    border: 1px solid color-mix(in srgb, var(--data-model) 60%, transparent);
+    border-bottom: 0;
+    border-radius: 1px 1px 0 0;
+  }
+
+  .hs__bar--worst {
+    background: var(--data-model);
+    border-color: var(--data-model);
+  }
+
+  .hs__bar--chosen {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .hs__pick {
+    justify-self: center;
+    padding-top: 0.4rem;
+    color: var(--accent);
+    font: var(--step--2)/1.3 var(--font-mono);
+    text-align: center;
+  }
+
+  .hs__pick::before {
+    content: '↑ ';
+  }
+
+  /* ---------- Step numbers and labels ---------- */
+  .hs__badge,
+  .hs__num {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 1.15rem;
+    height: 1.15rem;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--fg-muted);
+    font: 0.68rem/1 var(--font-mono);
+  }
+
+  .hs__badge {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  /* Narrow: the labels form a numbered list under the tree. */
+  .hs__label {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin: 0;
+    padding-top: 0.4rem;
+    color: var(--fg);
+    font-size: var(--step--1);
+    line-height: 1.4;
+    text-wrap: pretty;
+  }
+
+  .hs__label .hs__num {
+    position: relative;
+    top: 0.1rem;
+  }
+
+  .hs__label--1 {
+    grid-row: 9;
+    margin-top: 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .hs__label--2 { grid-row: 10; }
+  .hs__label--3 { grid-row: 11; }
+  .hs__label--4 { grid-row: 12; }
+  .hs__label--5 { grid-row: 13; }
+
+  .hs__label b {
+    font-weight: 560;
+  }
+
+  .hs__mm { color: var(--data-model); }
+  .hs__pc { color: var(--data-ai); }
+
+  /* Wide: each label sits beside the step it names. */
+  @container hs (min-width: 38rem) {
+    .hs__grid {
+      grid-template-columns: 0 repeat(6, minmax(0, 1fr)) minmax(13.5rem, 2.4fr);
+    }
+
+    .hs__badge {
+      display: none;
+    }
+
+    .hs__label {
+      grid-column: 8;
+      margin: 0;
+      padding: 0.15rem 0 0.15rem 1rem;
+      border: 0;
+      font-size: 0.86rem;
+      line-height: 1.3;
+    }
+
+    .hs__label--1 { grid-row: 3; }
+    .hs__label--2 { grid-row: 5; }
+    .hs__label--3 { grid-row: 6; }
+    .hs__label--4 { grid-row: 7; }
+    .hs__label--5 { grid-row: 8; }
+
+    .hs__label--1 {
+      margin: 0;
+      padding-top: 0.15rem;
+      border: 0;
+    }
+  }
+</style>

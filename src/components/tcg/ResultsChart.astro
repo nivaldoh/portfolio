@@ -25,9 +25,10 @@ const rows = multi.entries.map((e) => ({
   ...e,
   baseline: e.approx,
   value: e.approx ? `about ${Math.round(e.win_rate)}%` : pct(e.win_rate),
-  // The homepage version keeps only the baseline's note; intervals stay as whiskers.
+  // The homepage version drops the notes ("about 13%" marks the approximate
+  // baseline); intervals stay as whiskers, and the hidden table keeps both.
   detail: compact
-    ? e.note
+    ? undefined
     : [e.note, `95% interval ${range(e.ci95)}`].filter(Boolean).join('; '),
 }));
 
@@ -105,19 +106,15 @@ const units = Array.from({ length: audit.games }, (_, i) =>
     </table>
     </div>
 
-    <p class="tcgc__notes">
-      {compact ? (
-        <>Whiskers show 95% intervals. The baseline comes from an earlier stack and is approximate.</>
-      ) : (
-        <>
-          Whiskers show 95% Wilson intervals. In a mirror game both sides play
-          the same deck; the teachers play Lucario, Abomasnow, Dragapult ex and
-          Iono decks, and a perfect copy of them would score about 50%. The
-          baseline is an earlier policy stack, reported approximately on 8 July;
-          the other three entries are from the 9 July report.
-        </>
-      )}
-    </p>
+    {!compact && (
+      <p class="tcgc__notes">
+        Whiskers show 95% Wilson intervals. In a mirror game both sides play
+        the same deck; the teachers play Lucario, Abomasnow, Dragapult ex and
+        Iono decks, and a perfect copy of them would score about 50%. The
+        baseline is an earlier policy stack, reported approximately on 8 July;
+        the other three entries are from the 9 July report.
+      </p>
+    )}
   </figure>
 ) : (
   <figure class:list={['tcgc', 'tcgc--spec', { 'tcgc--compact': compact, wide }]}>
@@ -248,7 +245,11 @@ const units = Array.from({ length: audit.games }, (_, i) =>
   }
 
   .tcgc--compact .tcgc__title {
-    font-size: 1.12rem;
+    font-size: 1.05rem;
+  }
+
+  .tcgc--compact .tcgc__head {
+    margin-bottom: 1rem;
   }
 
   .tcgc__scope {

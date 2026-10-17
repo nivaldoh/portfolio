@@ -1,0 +1,348 @@
+---
+// Work and study on one time axis, for the homepage's Background section.
+// Dates from the résumé (public/nivaldo-tokuda-resume.pdf): DP6 May 2017 –
+// Dec 2021, Globo Jan 2022 – Jan 2024, Globant Jul 2024 – May 2026,
+// Mackenzie Jul 2017 – Jul 2022, UT Austin Aug 2024 – Dec 2027 (expected).
+// The agents row starts with the PokéAgent Challenge (2025) and links up to
+// the homepage's thread of projects. "Now" is the build date.
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+
+const START = 2017;
+const END = 2028;
+const at = (year: number, month = 1) => year + (month - 1) / 12;
+const today = new Date();
+const now = at(today.getFullYear(), today.getMonth() + 1) + today.getDate() / 365;
+const pct = (t: number) => `${(((Math.min(t, END) - START) / (END - START)) * 100).toFixed(2)}%`;
+const ticks = [2017, 2019, 2021, 2023, 2025, 2027];
+
+type Row = {
+  org: string;
+  years: string;
+  text: string;
+  from: number;
+  to: number;
+  kind: 'agents' | 'work' | 'study';
+  href?: string;
+  /** Ends in the future: drawn hatched beyond today. */
+  expected?: boolean;
+};
+
+const groups: { label: string; rows: Row[] }[] = [
+  {
+    label: 'Work',
+    rows: [
+      {
+        org: 'AI agents',
+        years: '2025–',
+        text: 'From PokéAgent to RoboCasa365, above',
+        from: at(2025, 7),
+        to: now,
+        kind: 'agents',
+        href: '#thread',
+      },
+      {
+        org: 'Globant',
+        years: '2024–2026',
+        text: 'Multimodal video search for Paramount/CBS, LLM translation for Warner Bros., data engineering with Google teams',
+        from: at(2024, 7),
+        to: at(2026, 6),
+        kind: 'work',
+      },
+      {
+        org: 'Globo',
+        years: '2022–2024',
+        text: 'Senior data engineer on production data systems',
+        from: at(2022, 1),
+        to: at(2024, 2),
+        kind: 'work',
+      },
+      {
+        org: 'DP6',
+        years: '2017–2021',
+        text: 'Data engineer; Megalista, a Dataflow pipeline, with a Google team',
+        from: at(2017, 5),
+        to: at(2022, 1),
+        kind: 'work',
+      },
+    ],
+  },
+  {
+    label: 'Education',
+    rows: [
+      {
+        org: 'UT Austin',
+        years: '2024–2027',
+        text: 'MS in Computer Science, online; expected Dec 2027',
+        from: at(2024, 8),
+        to: at(2028, 1),
+        kind: 'study',
+        expected: true,
+      },
+      {
+        org: 'Mackenzie',
+        years: '2017–2022',
+        text: 'BS in Computer Science, Mackenzie Presbyterian University',
+        from: at(2017, 7),
+        to: at(2022, 8),
+        kind: 'study',
+      },
+    ],
+  },
+];
+---
+
+<div class:list={['career', className]} style={`--now: ${pct(now)};`}>
+  <div class="career__row career__row--axis" aria-hidden="true">
+    <span></span>
+    <span class="career__track">
+      {ticks.map((t) => (
+        <span class="career__tick" style={`--x: ${pct(t)};`}>{t}</span>
+      ))}
+      <span class="career__now-label">now</span>
+    </span>
+  </div>
+
+  {groups.map((group) => (
+    <section class="career__group" aria-label={group.label}>
+      <div class="career__row career__row--head">
+        <h3 class="career__label">{group.label}</h3>
+        <span class="career__track" aria-hidden="true"></span>
+      </div>
+      <ol class="career__list">
+        {group.rows.map((row) => {
+          // The text goes on whichever side of the bar has more room.
+          const side = row.from - START > END - Math.min(row.to, END) ? 'left' : 'right';
+          const style =
+            `--from: ${pct(row.from)}; --to: ${pct(row.to)};` +
+            (row.expected ? ` --split: ${(((now - row.from) / (row.to - row.from)) * 100).toFixed(1)}%;` : '');
+          return (
+            <li class:list={['career__row', `career__row--${row.kind}`]}>
+              <p class="career__org">
+                {row.href ? <a href={row.href}>{row.org}</a> : row.org}
+                <span class="career__years">{row.years}</span>
+              </p>
+              <div class="career__track" style={style}>
+                <span
+                  class:list={['career__bar', { 'career__bar--expected': row.expected }]}
+                  aria-hidden="true"
+                ></span>
+                <p class:list={['career__text', `career__text--${side}`]}><span>{row.text}</span></p>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  ))}
+</div>
+
+<style>
+  .career {
+    --info: 10.5rem;
+    container-type: inline-size;
+    min-width: 0;
+  }
+
+  .career__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .career__row {
+    display: grid;
+    grid-template-columns: var(--info) minmax(0, 1fr);
+    column-gap: 1.25rem;
+    align-items: center;
+  }
+
+  /* The track: two-year gridlines and today's line, drawn in every row so
+     they run down the whole chart. Its three columns are the time before the
+     bar, the bar and the time after it. */
+  .career__track {
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: var(--from, 0%) calc(var(--to, 0%) - var(--from, 0%)) minmax(0, 1fr);
+    align-items: center;
+    position: relative;
+    min-height: 2.3rem;
+    background:
+      linear-gradient(var(--accent), var(--accent)) var(--now) 0 / 1px 100% no-repeat,
+      linear-gradient(to right, var(--data-grid) 1px, transparent 1px) 0 0 / calc(100% * 2 / 11) 100%;
+  }
+
+  .career__row--axis .career__track {
+    display: block;
+    min-height: 1.5rem;
+  }
+
+  .career__tick,
+  .career__now-label {
+    position: absolute;
+    bottom: 0.25rem;
+    font: var(--step--2)/1 var(--font-mono);
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .career__tick {
+    left: var(--x);
+    padding-left: 0.3rem;
+  }
+
+  .career__now-label {
+    left: var(--now);
+    transform: translateX(-50%);
+    bottom: auto;
+    top: -0.35rem;
+    padding: 0 0.25rem;
+    background: var(--bg);
+    color: var(--accent);
+  }
+
+  .career__row--head .career__track {
+    min-height: 2rem;
+  }
+
+  .career__label {
+    margin: 0;
+    align-self: end;
+    padding-bottom: 0.3rem;
+    font: 0.75rem/1.4 var(--font-mono);
+    letter-spacing: 0.02em;
+    font-weight: 400;
+    color: var(--fg-muted);
+  }
+
+  .career__list .career__row {
+    border-top: 1px solid var(--rule);
+  }
+
+  .career__org {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0.45rem 0;
+    color: var(--fg-strong);
+    font-weight: 560;
+    line-height: 1.3;
+  }
+
+  .career__org a {
+    color: var(--accent);
+  }
+
+  .career__years {
+    flex: none;
+    font: var(--step--2)/1.3 var(--font-mono);
+    font-weight: 400;
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .career__bar {
+    grid-column: 2;
+    grid-row: 1;
+    position: relative;
+    height: 0.75rem;
+    border-radius: 1px;
+    background: color-mix(in srgb, var(--fg) 62%, transparent);
+  }
+
+  .career__row--agents .career__bar {
+    background: var(--accent);
+  }
+
+  .career__row--study .career__bar {
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--fg) 62%, transparent);
+  }
+
+  /* Past the build date, the expected part is hatched. */
+  .career__bar--expected::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 0 var(--split);
+    background: repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--fg) 40%, transparent) 0 1.5px,
+      transparent 1.5px 4.5px
+    );
+  }
+
+  .career__text {
+    grid-row: 1;
+    margin: 0;
+    padding-block: 0.35rem;
+    font-size: var(--step--1);
+    line-height: 1.4;
+    color: var(--fg);
+    text-wrap: pretty;
+  }
+
+  /* Gridlines and today's line pass behind the words, not through them. */
+  .career__text span {
+    background: var(--bg);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .career__text--left {
+    grid-column: 1;
+    padding-right: 0.8rem;
+    text-align: right;
+  }
+
+  .career__text--right {
+    grid-column: 3;
+    padding-left: 0.8rem;
+  }
+
+  /* Narrow: the bar on its own line, the text under it. */
+  @container (max-width: 40rem) {
+    .career {
+      --info: 7.5rem;
+    }
+
+    .career__text--left,
+    .career__text--right {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      padding: 0.45rem 0 0.55rem;
+      text-align: left;
+    }
+
+    .career__bar {
+      margin-top: 0.65rem;
+    }
+  }
+
+  @container (max-width: 26rem) {
+    .career__row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .career__row--axis > :first-child,
+    .career__row--head .career__track {
+      display: none;
+    }
+
+    .career__row--head .career__label {
+      padding-top: 1rem;
+    }
+
+    .career__org {
+      padding-bottom: 0;
+    }
+
+    .career__bar {
+      margin-top: 0.4rem;
+    }
+  }
+</style>

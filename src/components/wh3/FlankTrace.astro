@@ -1,0 +1,450 @@
+---
+// The cavalry flank as a route map: the recorded routes of gpt-6-sol's six mounted
+// units from the first sample (0:05) to the moment the guns have broken (3:56),
+// with the game AI's eight units where the model's army last saw them.
+//
+// Data: public/media/game-agents/wh3-cavalry-flank.json as committed in d632504
+// (exported by scripts/export_wh3_replay.py from the benchmark run
+// bench-c1-cavalry-ai11-02-20261015/episode-0000 at 8434cd3; read at build time,
+// as BattleReplay.astro does). The span runs from r.t[0] to r.key_moment.end.
+// Hollow circles: where each mounted unit started. The game AI's guns (handgunners
+// and the cannon) are squares, the rest diamonds; fleeing is faded and dashed, as
+// in the replay.
+// Positions are rounded to 1 m and never interpolated; consecutive samples are
+// joined only when at most 1.5 s apart (the replay's GAP_S rule). The obstruction
+// is r.terrain's restricted ('#') cells.
+//
+// Without script, or with reduced motion, the figure is this complete still. With
+// script it replays the span at 28x when in view, stepping sample by sample,
+// holds the full trace for 4 s and loops (flank-trace-client.ts).
+import fs from 'node:fs';
+import path from 'node:path';
+import { FLEEING, clock, sampleAt, type Replay, type Sample } from './replay-core';
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+
+const r: Replay = JSON.parse(
+  fs.readFileSync(path.join(process.cwd(), 'public/media/game-agents/wh3-cavalry-flank.json'), 'utf8')
+);
+
+/** Samples further apart than this are not joined (replay-render.ts, GAP_S). */
+const GAP_S = 1.5;
+/** Space around the routes and enemy positions, metres. */
+const MARGIN_M = 30;
+/** Scale bar length, metres. */
+const SCALE_M = 100;
+
+const placed = (p: Sample | undefined): p is NonNullable<Sample> => p != null;
+const tEnd = r.key_moment?.end ?? r.t[r.t.length - 1];
+const last = sampleAt(r.t, tEnd);
+const model = r.units.filter((u) => u.side === 'model');
+const ai = r.units.filter((u) => u.side === 'ai');
+
+// Crop: every recorded position in the span plus a margin, squared about its centre.
+let xmin = Infinity;
+let xmax = -Infinity;
+let zmin = Infinity;
+let zmax = -Infinity;
+for (const u of r.units) {
+  for (let i = 0; i <= last; i++) {
+    const p = r.pos[u.id][i];
+    if (!placed(p)) continue;
+    xmin = Math.min(xmin, p[0]);
+    xmax = Math.max(xmax, p[0]);
+    zmin = Math.min(zmin, p[1]);
+    zmax = Math.max(zmax, p[1]);
+  }
+}
+const side = Math.ceil(Math.max(xmax - xmin, zmax - zmin) + 2 * MARGIN_M);
+const X0 = Math.round((xmin + xmax) / 2 - side / 2);
+const Z1 = Math.round((zmin + zmax) / 2 + side / 2);
+const X = (x: number) => Math.round(x - X0);
+const Y = (z: number) => Math.round(Z1 - z);
+
+/** Numbers in path syntax: a space only where no minus sign separates them. */
+const seq = (nums: number[]) => nums.map((n, j) => (j > 0 && n >= 0 ? ' ' : '') + n).join('');
+
+// Restricted ground ('#' cells), merged into runs along each row and clipped to the crop.
+let terrain = '';
+if (r.terrain) {
+  const t = r.terrain;
+  const c = t.cell_m;
+  const cx = (v: number) => Math.min(side, Math.max(0, v));
+  t.rows.forEach((row, j) => {
+    const top = cx(Y(t.z0 + j * c + c / 2));
+    const bottom = cx(Y(t.z0 + j * c - c / 2));
+    if (bottom <= top) return;
+    for (let i = 0; i < row.length; i++) {
+      if (row[i] !== '#') continue;
+      let n = 1;
+      while (row[i + n] === '#') n++;
+      const left = cx(X(t.x0 + i * c - c / 2));
+      const right = cx(X(t.x0 + (i + n) * c - c / 2));
+      if (right > left) terrain += `M${left} ${top}h${right - left}v${bottom - top}h${left - right}z`;
+      i += n - 1;
+    }
+  });
+}
+
+// Each model unit's route: one subpath per run of joined samples ("M x y l dx dy ..."),
+// and the sample index where each run starts (data-i), so the client can step it.
+const routes = model.map((u) => {
+  const s = r.pos[u.id];
+  let d = '';
+  const starts: number[] = [];
+  let run: number[] = [];
+  let prev: [number, number] | null = null;
+  let prevT = -Infinity;
+  let first: [number, number] | null = null;
+  let now: [number, number] | null = null;
+  const flush = () => {
+    if (run.length) d += `l${seq(run)}`;
+    run = [];
+  };
+  for (let i = 0; i <= last; i++) {
+    const p = s[i];
+    if (!placed(p)) {
+      prev = null;
+      continue;
+    }
+    const at: [number, number] = [X(p[0]), Y(p[1])];
+    if (!prev || r.t[i] - prevT > GAP_S) {
+      flush();
+      d += `M${seq(at)}`;
+      starts.push(i);
+    } else run.push(at[0] - prev[0], at[1] - prev[1]);
+    first ??= at;
+    now = at;
+    prev = at;
+    prevT = r.t[i];
+  }
+  flush();
+  return { u, d, starts: starts.join(','), first, now };
+});
+
+// Each enemy unit's changes of state at 1 m: groups of (sample-index step × 4 +
+// unseen × 2 + fleeing, dx, dy). Unseen keeps the last-seen position.
+const enemies = ai.map((u) => {
+  const s = r.pos[u.id];
+  const out: number[] = [];
+  let pi = 0;
+  let px = 0;
+  let py = 0;
+  let state = '';
+  let seen = false;
+  let x = 0;
+  let y = 0;
+  let flee = false;
+  let unseen = false;
+  for (let i = 0; i <= last; i++) {
+    const p = s[i];
+    unseen = !placed(p);
+    if (placed(p)) {
+      x = X(p[0]);
+      y = Y(p[1]);
+      flee = (p[3] & FLEEING) !== 0;
+      seen = true;
+    }
+    if (!seen) continue;
+    const key = `${x},${y},${+flee},${+unseen}`;
+    if (key === state) continue;
+    state = key;
+    out.push((i - pi) * 4 + (unseen ? 2 : 0) + (flee ? 1 : 0), x - px, y - py);
+    pi = i;
+    px = x;
+    py = y;
+  }
+  const now = seen ? { x, y, flee, unseen } : null;
+  return { u, k: seq(out), now };
+});
+
+// Sample times in the span, in tenths of a second: the first, then the steps.
+const tenths = r.t.slice(0, last + 1).map((t) => Math.round(t * 10));
+const times = seq(tenths.map((v, i) => (i === 0 ? v : v - tenths[i - 1])));
+
+const spanText = `${clock(r.t[0])}–${clock(tEnd)}`;
+const scaleShare = (SCALE_M / side).toFixed(4);
+const label =
+  `Map of recorded routes from ${clock(r.t[0])} to ${clock(tEnd)} of the battle. ` +
+  `${r.meta.model}’s six cavalry units start in the south-east and ride north-west past the southern ` +
+  `end of a central obstruction. Four swing north around the western end of the game AI’s halberd ` +
+  `screen and turn east into the handgunners and cannon behind it, which are fleeing by ` +
+  `${clock(tEnd)}; the horse archers draw a halberd unit south.`;
+
+const DIAMOND = (h: number) => `M0-${h} ${h} 0 0 ${h}-${h} 0Z`;
+const SQUARE = (h: number) => `M-${h}-${h}H${h}V${h}H-${h}Z`;
+/** The guns the flank was after: handgunners and the cannon. */
+const isGun = (u: (typeof ai)[number]) => u.class === 'missile' || u.class === 'artillery';
+---
+
+<figure class:list={['plate', 'ft', className]} data-flank-trace data-t={times}>
+  <div class="plate__frame ft__frame">
+    <svg class="ft__map" viewBox={`0 0 ${side} ${side}`} role="img" aria-label={label}>
+      {terrain && <path class="ft__terrain" d={terrain} />}
+      <g class="ft__routes">
+        {routes.map((rt) => <path class="ft__route" d={rt.d} data-i={rt.starts} />)}
+      </g>
+      <g class="ft__starts">
+        {routes.map((rt) => rt.first && (
+          <g class="ft__start-model" transform={`translate(${rt.first[0]} ${rt.first[1]})`}><circle class="ft__mk" r="6" /></g>
+        ))}
+      </g>
+      <g class="ft__ais">
+        {enemies.map((e) => (
+          <g
+            class:list={['ft__ai', { 'is-fleeing': e.now?.flee, 'is-unseen': e.now?.unseen }]}
+            transform={e.now ? `translate(${e.now.x} ${e.now.y})` : undefined}
+            visibility={e.now ? undefined : 'hidden'}
+            data-k={e.k}
+          ><path class="ft__mk" d={isGun(e.u) ? SQUARE(7.5) : DIAMOND(10.5)} /></g>
+        ))}
+      </g>
+      <g class="ft__dots">
+        {routes.map((rt) => (
+          <g
+            class="ft__dot"
+            transform={rt.now ? `translate(${rt.now[0]} ${rt.now[1]})` : undefined}
+            visibility={rt.now ? undefined : 'hidden'}
+          ><circle class="ft__mk" r="8" /></g>
+        ))}
+      </g>
+    </svg>
+
+    <div class="ft__top">
+      <span class="ft__clock" aria-hidden="true" data-clock data-span={spanText}>{spanText}</span>
+      <button type="button" class="ft__pause" data-pause hidden>
+        <span class="ft__pause-icon" aria-hidden="true"></span><span data-pause-label>Pause</span><span class="visually-hidden"> animation</span>
+      </button>
+    </div>
+    <div class="ft__furn" aria-hidden="true">
+      <span class="ft__north"><svg viewBox="0 0 10 12"><path d="M5 0l5 12H0z" /></svg>N</span>
+      <span class="ft__scale" style={`--scale:${scaleShare}`}><span class="ft__bar"></span>{SCALE_M} m</span>
+    </div>
+  </div>
+  <figcaption>
+    An LLM’s flank in Total War: WARHAMMER III, from the recording
+    (<a href="#work">replayed below</a>): {r.meta.model}’s <span class="ft__nw">cavalry
+    <svg class="ft__key" viewBox="-6 -6 12 12" aria-hidden="true"><circle r="4.5" class="ft__key-model" /></svg>,</span>
+    the halberd screen and <span class="ft__nw">general
+    <svg class="ft__key" viewBox="-6 -6 12 12" aria-hidden="true"><path d="M0-5.5 5.5 0 0 5.5-5.5 0Z" class="ft__key-ai" /></svg>,</span>
+    and the <span class="ft__nw">guns
+    <svg class="ft__key" viewBox="-6 -6 12 12" aria-hidden="true"><path d="M-4-4H4V4H-4Z" class="ft__key-ai" /></svg></span>
+    behind them. Dashed: fleeing.
+  </figcaption>
+</figure>
+
+<script>
+  import { enhance } from './flank-trace-client';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-flank-trace]')) enhance(root);
+</script>
+
+<style>
+  .ft {
+    container-type: inline-size;
+    --mk: 1;
+  }
+
+  /* Marks keep about the same size on screen as the map scales with its column. */
+  @container (min-width: 640px) {
+    .ft__map {
+      --mk: 0.76;
+    }
+  }
+
+  @container (max-width: 439px) {
+    .ft__map {
+      --mk: 1.45;
+    }
+  }
+
+  .ft__frame {
+    isolation: isolate;
+  }
+
+  .ft__map {
+    display: block;
+    aspect-ratio: 1;
+  }
+
+  .ft__terrain {
+    fill: var(--data-terrain);
+    fill-opacity: 0.5;
+  }
+
+  .ft__route {
+    fill: none;
+    stroke: var(--data-model);
+    stroke-width: 1.5;
+    stroke-opacity: 0.8;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .ft__mk {
+    transform: scale(var(--mk));
+    vector-effect: non-scaling-stroke;
+  }
+
+  .ft__start-model .ft__mk {
+    fill: var(--bg-plate);
+    stroke: var(--data-model);
+    stroke-width: 1.25;
+  }
+
+  .ft__dot .ft__mk {
+    fill: var(--data-model);
+    stroke: var(--bg-plate);
+    stroke-width: 1.5;
+  }
+
+  .ft__ai .ft__mk {
+    fill: var(--data-ai);
+    stroke: var(--bg-plate);
+    stroke-width: 1.5;
+  }
+
+  .ft__ai.is-fleeing .ft__mk {
+    fill-opacity: 0.25;
+    stroke: var(--data-ai);
+    stroke-width: 1.25;
+    stroke-dasharray: 3 2;
+  }
+
+  .ft__ai.is-unseen .ft__mk {
+    fill: none;
+    stroke: var(--data-ai);
+    stroke-opacity: 0.65;
+    stroke-width: 1.25;
+    stroke-dasharray: 3 2.5;
+  }
+
+  /* ---------- Clock and pause (top right), north and scale (bottom left) ---------- */
+  .ft__top,
+  .ft__furn {
+    position: absolute;
+    display: flex;
+    gap: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1;
+    color: var(--fg-muted);
+  }
+
+  .ft__top {
+    top: 0.5rem;
+    right: 0.5rem;
+    align-items: center;
+  }
+
+  /* The halo keeps the labels at AA contrast where they sit on terrain. */
+  .ft__furn {
+    left: 0.85rem;
+    bottom: 0.85rem;
+    align-items: flex-end;
+    gap: 1rem;
+    text-shadow: 0 0 2px var(--bg-plate), 0 0 4px var(--bg-plate);
+  }
+
+  .ft__north {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .ft__north svg {
+    width: 0.5rem;
+    height: 0.6rem;
+    fill: var(--fg-muted);
+  }
+
+  .ft__scale {
+    display: grid;
+    justify-items: start;
+    gap: 0.3rem;
+  }
+
+  /* 100 m at the map's scale: a share of the map's width (the figure less its border). */
+  .ft__bar {
+    width: calc((100cqi - 2px) * var(--scale));
+    height: 5px;
+    border: 1px solid var(--fg-muted);
+    border-top: 0;
+  }
+
+  .ft__clock {
+    padding: 0.35rem 0.35rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .ft[data-playing] .ft__clock {
+    color: var(--fg);
+  }
+
+  .ft__pause {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 2rem;
+    padding: 0.3rem 0.55rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--bg-plate);
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    transition: border-color 120ms ease, color 120ms ease;
+  }
+
+  .ft__pause[hidden] {
+    display: none;
+  }
+
+  .ft__pause:hover {
+    border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+    color: var(--fg-strong);
+  }
+
+  /* Two bars while playing; a play triangle once paused. */
+  .ft__pause-icon {
+    width: 0.5rem;
+    height: 0.6rem;
+    border-inline: 2px solid currentColor;
+  }
+
+  .ft__pause[data-paused] .ft__pause-icon {
+    width: 0;
+    height: 0;
+    border-block: 0.32rem solid transparent;
+    border-inline: 0.5rem solid var(--accent);
+    border-inline-end-width: 0;
+  }
+
+  /* ---------- Caption and its key ---------- */
+  .ft__nw {
+    white-space: nowrap;
+  }
+
+  .ft__key {
+    display: inline-block;
+    width: 0.75em;
+    height: 0.75em;
+    margin: 0 0.1em;
+    vertical-align: -0.05em;
+  }
+
+  .ft__key-model {
+    fill: var(--data-model);
+  }
+
+  .ft__key-ai {
+    fill: var(--data-ai);
+  }
+</style>
