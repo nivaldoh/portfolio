@@ -47,6 +47,10 @@ const index = [
         8+ years in cloud and data engineering. MS in Computer Science at
         UT Austin, expected 2027. São Paulo, Brazil.
       </p>
+      <p class="hero__open">
+        Open to AI and research engineering roles:
+        <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+      </p>
       <nav class="hero__index" aria-label="Selected work">
         <ol>
           {index.map((item) => (
@@ -68,19 +72,20 @@ const index = [
     <div class="container">
       <div class="feature__head">
         <div>
-          <p class="eyebrow">01 / Agent training and benchmarking</p>
+          <p class="eyebrow">01 / Game environments and evaluation</p>
           <h2 class="section-heading" id="feature-title">
             <a href={`/projects/${game.id}/`}>Agents in real games</a>
           </h2>
         </div>
         <div>
           <p class="feature__summary">
-            One harness for training and benchmarking language-model agents in
-            two commercial games. Mods expose each game’s state and carry out
-            the agent’s actions; every decision is recorded for replay.
+            Language models play Total War and Slay the Spire through game
+            interfaces and evaluation tools I built. Every decision is
+            recorded, so I can replay a battle or a run and check what the
+            model saw, what it ordered and what the game actually did.
           </p>
           <ul class="link-row">
-            <li><a href={`/projects/${game.id}/`}>How I built it</a></li>
+            <li><a href={`/projects/${game.id}/`}>Case study</a></li>
             <li><a href="https://github.com/nivaldoh/slay_the_spire_ai" rel="noopener">Code</a></li>
           </ul>
         </div>
@@ -101,9 +106,10 @@ const index = [
           </a>
         </div>
         <p class="feature__point">
-          The LLM takes its all-cavalry army (<span class="ink-model">in&nbsp;blue</span>)
-          and skilfully circles the opponent to catch them out of position,
-          despite needing about 5&nbsp;s to act.
+          The LLM’s cavalry (<span class="ink-model">in&nbsp;blue</span>) rides
+          around the halberd screen and into the guns behind it, while its
+          horse archers pull a halberd unit away. Its orders act on a view of
+          the battle that is typically 5&nbsp;s old.
         </p>
         <BattleReplay variant="feature" />
       </section>
@@ -114,11 +120,17 @@ const index = [
           <p class="game__kind">Whole runs, one decision at a time</p>
         </div>
         <p class="feature__point">
-          A model plays complete Ironclad runs. When it slips, I trace the
-          mistake to the prompt, memory or interface, change one thing and run
-          again.
+          A model plays complete Ironclad runs. When one goes wrong, I first
+          check whether the model chose badly or the interface misled it.
         </p>
         <RunProgress />
+        <p class="game__note">
+          <span class="game__note-label">One diagnosis</span>
+          With the Gambling Chip relic the game asks which cards to discard,
+          but the prompt read like any other card choice, so the model
+          sometimes discarded cards it meant to play. The latest prompt says
+          the selection is Gambling Chip’s; it hasn’t had a full run yet.
+        </p>
         <ul class="link-row game__links">
           <li><a href="https://github.com/nivaldoh/slay_the_spire_ai/blob/main/docs/spire/fullrun/README.md" rel="noopener">Run notes</a></li>
         </ul>
@@ -132,14 +144,6 @@ const index = [
     </div>
 
     <ol class="thread__list">
-      <li class="thread__step thread__step--note">
-        <p class="thread__when">2025</p>
-        <p class="thread__note">
-          I found the PokéAgent Challenge through a post on X by Prof. Yuke Zhu
-          of UT Austin.
-        </p>
-      </li>
-
       <li class="thread__step">
         <p class="thread__when">Late 2025</p>
         <ProjectPanel
@@ -147,12 +151,14 @@ const index = [
           level={3}
           eyebrow="02 / NeurIPS 2025 competition"
           title="PokéAgent Challenge"
+          href="/projects/pokeagent-metamon/"
           facts={['Quarterfinalist · Gen 1 OU', 'Quarterfinalist · Gen 9 OU']}
           summary="I competed as MetaHorns. My Gen 9 OU entry combined two existing agents: PokéChamp’s minimax search looks one turn ahead, and Metamon, trained with offline RL on human battles, proposes the moves and scores each position. I also packaged Metamon self-play to run on Google Cloud Run."
           links={[
+            { label: 'Case study', url: '/projects/pokeagent-metamon/' },
             { label: 'Official brackets', url: BRACKETS_URL },
-            { label: 'Hybrid code', url: 'https://github.com/nivaldoh/pokechamp/tree/fb520c95a298518c929adb09cc4c105b68b29f3e' },
-            { label: 'Self-play code', url: 'https://github.com/nivaldoh/metamon_pokeagent_comp/tree/3c54f02f9bfd718f4081c1b377346efedd236cd6' },
+            { label: 'Hybrid code', url: 'https://github.com/nivaldoh/pokechamp/tree/635aa8d81a1fe73e817fd3d01e5c14a8485917e9' },
+            { label: 'Self-play code', url: 'https://github.com/nivaldoh/metamon_pokeagent_comp/tree/443b841252792e81775133208fa5c3c820b5cb31' },
           ]}
           textFirst
         >
@@ -176,19 +182,16 @@ const index = [
           level={3}
           eyebrow="03 / Open source · UT Austin RPL"
           title="Metamon"
-          summary="After the tournament I joined UT Austin’s Robot Perception and Learning Lab on a formal appointment, working on Metamon with PhD student Jake Grigsby in weekly meetings. Two pull requests were merged; a third was an experiment with a faster encoder."
-          links={[{ label: 'Repository', url: 'https://github.com/UT-Austin-RPL/metamon' }]}
+          href="/projects/pokeagent-metamon/#metamon-contributions"
+          summary="From January to March 2026 I worked on Metamon with PhD student Jake Grigsby at UT Austin’s Robot Perception and Learning Lab. My main merged change took its team validation from about a second per team to about a millisecond."
+          links={[
+            { label: 'Case study', url: '/projects/pokeagent-metamon/#metamon-contributions' },
+            { label: 'Repository', url: 'https://github.com/UT-Austin-RPL/metamon' },
+          ]}
           layout="wide"
         >
           <MetamonPRs slot="media" />
         </ProjectPanel>
-      </li>
-
-      <li class="thread__step thread__step--note">
-        <p class="thread__when">Apr 2026</p>
-        <p class="thread__note">
-          I met Prof. Zhu at ICLR 2026 in Rio de Janeiro.
-        </p>
       </li>
 
       <li class="thread__step">
@@ -198,7 +201,9 @@ const index = [
           level={3}
           eyebrow="04 / Kaggle competition"
           title="Pokémon TCG agents"
-          summary="A Kaggle competition I entered for more practice with RL and model training. The problem is close to Metamon’s, but there was no large dataset of human games, so I generated one from scripted players, cloned them, then fine-tuned with PPO."
+          href={`/projects/${tcg.id}/`}
+          summary="A Kaggle competition close to Metamon’s problem, but with no archive of human games to learn from. I recorded games between four scripted players, cloned them, then fine-tuned with PPO. A later specialist won 82.6% against one teacher; checking how, I found every win came from the opponent running out of cards."
+          links={[{ label: 'Case study', url: `/projects/${tcg.id}/` }]}
           layout="wide"
           size="small"
         >
@@ -214,9 +219,9 @@ const index = [
           level={3}
           eyebrow="05 / Robot evaluation"
           title="Changing goals during robot execution"
-          summary="A different kind of project: I extended RoboCasa365, a kitchen simulation benchmark from Prof. Zhu’s lab, so the goal or the scene can change mid-episode. In the evaluation, GR00T N1.5 met the changed goal in 0 of 4 episodes; Astra, my code-writing LLM agent with ground-truth state, in 1 of 5. These clips are not from the evaluation."
+          summary="I extended RoboCasa365, a kitchen simulation benchmark from the same UT Austin lab as Metamon, so the goal or the scene can change mid-episode, and recorded when each controller received the change. In 4 goal-change episodes, GR00T N1.5 completed the original task every time and the new goal never. Astra, my code-writing LLM agent with ground-truth state and evaluator feedback, met the new goal in 1 of 5 episodes. The clips are not from the evaluation."
           links={[
-            { label: 'Paper (PDF)', url: '/media/robocasa/teleporting-bread-and-changing-goals.pdf' },
+            { label: 'Paper (PDF, workshop submission, under review)', url: '/media/robocasa/teleporting-bread-and-changing-goals.pdf' },
             { label: 'Code', url: 'https://github.com/nivaldoh/robocasa/tree/main/robocasa/scenarios' },
           ]}
           layout="wide"
@@ -236,6 +241,9 @@ const index = [
         I’m a software and AI engineer in São Paulo. After eight years
         building cloud and data systems, I now work on agents in games and
         robotics while studying for an MS in Computer Science at UT Austin.
+        The agent work began in 2025, when a post by Prof. Yuke Zhu pointed
+        me to the PokéAgent Challenge; Metamon and RoboCasa365 both come from
+        his lab.
       </p>
     </div>
     <Career />
@@ -321,6 +329,12 @@ const index = [
     max-width: 42ch;
   }
 
+  .hero__open {
+    margin: 0.4rem 0 0;
+    font-size: var(--step--1);
+    color: var(--fg);
+  }
+
   /* The index of the work below: number, title and a short note. */
   .hero__index {
     margin-top: 2.2rem;
@@ -352,7 +366,7 @@ const index = [
   }
 
   .hero__index-n {
-    font: 0.75rem/1.4 var(--font-mono);
+    font: 0.8rem/1.4 var(--font-mono);
     color: var(--accent);
   }
 
@@ -468,7 +482,7 @@ const index = [
 
   .game__kind {
     margin: 0;
-    font: 0.75rem/1.4 var(--font-mono);
+    font: 0.8rem/1.4 var(--font-mono);
     letter-spacing: 0.02em;
     color: var(--fg-muted);
   }
@@ -481,6 +495,22 @@ const index = [
 
   .game__links {
     margin-top: 0.8rem;
+  }
+
+  /* A finding under a figure: smaller than the point, set off by a rule. */
+  .game__note {
+    margin: 1.4rem 0 0;
+    padding-left: 1rem;
+    border-left: 2px solid var(--accent);
+    max-width: 62ch;
+    color: var(--fg);
+  }
+
+  .game__note-label {
+    display: block;
+    margin-bottom: 0.2rem;
+    font: var(--step--2)/1.4 var(--font-mono);
+    color: var(--accent);
   }
 
   .game__head--cta {
@@ -587,7 +617,7 @@ const index = [
 
   .thread__when {
     margin: 0 0 0.9rem;
-    font: 0.75rem/1.4 var(--font-mono);
+    font: 0.8rem/1.4 var(--font-mono);
     letter-spacing: 0.02em;
     color: var(--fg-strong);
   }
@@ -604,31 +634,6 @@ const index = [
     box-shadow: 0 0 0 4px var(--bg);
   }
 
-  /* Milestones between projects: a hollow dot and one italic line. */
-  .thread__step--note .thread__when {
-    margin-bottom: 0.2rem;
-    color: var(--fg-muted);
-  }
-
-  .thread__step--note .thread__when::before {
-    background: var(--bg);
-    border: 1px solid var(--fg-muted);
-  }
-
-  .thread__note {
-    margin: 0;
-    max-width: 48ch;
-    font-size: var(--step-1);
-    font-style: italic;
-    line-height: 1.4;
-    color: var(--fg);
-  }
-
-  /* The notes sit closer to their neighbours than the projects do. */
-  .thread__list > .thread__step--note {
-    margin-block: calc(clamp(3.5rem, 2rem + 5vw, 6.5rem) * -0.45);
-  }
-
   @media (min-width: 60rem) {
     .thread__list {
       --spine: 6.6rem;
@@ -642,14 +647,6 @@ const index = [
       width: 5.6rem;
       margin: 0;
       text-align: right;
-    }
-
-    .thread__step--note .thread__when {
-      top: 0.3rem;
-    }
-
-    .thread__step--note .thread__when::before {
-      top: 0.25rem;
     }
   }
 
@@ -666,7 +663,7 @@ const index = [
 
   .figure-pair__title {
     margin: 0 0 0.7rem;
-    font: 0.75rem/1.4 var(--font-mono);
+    font: 0.8rem/1.4 var(--font-mono);
     letter-spacing: 0.02em;
     font-weight: 400;
     color: var(--fg-muted);
@@ -709,7 +706,7 @@ const index = [
 
   .contact__title {
     margin: 0 0 0.5rem;
-    font: 0.75rem/1.4 var(--font-mono);
+    font: 0.8rem/1.4 var(--font-mono);
     letter-spacing: 0.02em;
     color: var(--accent);
   }

@@ -11,6 +11,11 @@ const EXAMPLE_URL =
   'https://github.com/nivaldoh/beam/blob/df950aa26bb68c94b11a7b91b9c9c885f7a43a44/sdks/rust/src/tests/primitives_test.rs#L27-L36';
 const DISCUSSION_URL =
   'https://github.com/apache/beam/issues/21089#issuecomment-1374079495';
+// Sho Nakatani's Beam Summit 2023 talk; pp. 27–30 trace the Rust SDK from
+// kennknowles/beam and nivaldoh/beam (Nov 2022) to laysakura/beam (Feb 2023,
+// "Forked from nivaldoh/beam"). The quote below is Robert Bradshaw's comment
+// of 6 Jan 2023 on apache/beam#21089, verbatim.
+const SUMMIT_URL = 'https://beamsummit.org/slides/2023/Sho-Rust.pdf';
 
 const contributions = [
   {
@@ -46,21 +51,31 @@ const contributions = [
       transform. By December the smallest possible pipeline ran end to end.
     </p>
     <p>
-      When Google’s Dataflow team explored a Rust SDK during a hackathon in
-      January 2023, the <a href={DISCUSSION_URL} rel="noopener">upstream
-      discussion</a> recommended continuing from my repository, and
-      contributors opened pull requests against it. Others later carried the
-      effort forward in a community fork built on my branch.
+      In January 2023 Google’s Dataflow team started its own Rust SDK during a
+      hackathon. In the upstream discussion, the suggestion was to move that
+      work over to my branch:
+    </p>
+    <figure class="beam__quote">
+      <blockquote>
+        <p>“IMHO, @nivaldoh’s repo is further along, and better structured, so
+        I think it makes sense to start there.”</p>
+      </blockquote>
+      <figcaption>Robert Bradshaw, <a href={DISCUSSION_URL} rel="noopener">apache/beam #21089</a></figcaption>
+    </figure>
+    <p>
+      Contributors opened pull requests against it, and in February 2023 a
+      community fork picked it up. At Beam Summit 2023 the fork’s maintainer
+      traced its history back to my repository.
     </p>
     <ul class="link-row">
       <li><a href={SDK_URL} rel="noopener">Code</a></li>
-      <li><a href={DISCUSSION_URL} rel="noopener">Upstream discussion</a></li>
+      <li><a href={SUMMIT_URL} rel="noopener">Beam Summit 2023 slides (pp. 27–30)</a></li>
     </ul>
   </div>
 
   <figure class="plate beam__code">
     <div class="plate__frame">
-      <Code code={example} lang="rust" theme="vitesse-dark" wrap />
+      <Code code={example} lang="rust" theme="vitesse-dark" />
     </div>
     <figcaption>
       The first end-to-end run: a one-transform pipeline executed by the async
@@ -101,6 +116,30 @@ const contributions = [
 
   .beam__text .link-row {
     margin-top: 1.2rem;
+  }
+
+  .beam__quote {
+    margin: 1.1rem 0 1.2rem;
+    padding: 0.2rem 0 0.2rem 1.1rem;
+    border-left: 2px solid var(--accent);
+    max-width: 52ch;
+  }
+
+  .beam__quote blockquote {
+    margin: 0;
+  }
+
+  .beam__quote p {
+    margin: 0;
+    font-size: var(--step-1);
+    line-height: 1.4;
+    color: var(--fg-strong);
+  }
+
+  .beam__quote figcaption {
+    margin-top: 0.45rem;
+    font-size: var(--step--1);
+    color: var(--fg-muted);
   }
 
   .beam__code {

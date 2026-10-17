@@ -19,14 +19,19 @@ import TrainingLoop from '../../components/tcg/TrainingLoop.astro';
 Pokémon TCG is a card game with hidden information and long chains of small
 decisions: which card to play, which attack to use, which cards to choose for an
 effect. In these experiments the learner makes about 70 recorded decisions per
-game. Unlike Metamon's battles, which it learns from a large archive of human
-games, this Kaggle competition came with no large training dataset. I built a
+game. Metamon learns from a large archive of human games; this Kaggle
+competition came with no large training dataset. I built a
 workflow around the supplied game simulator to train policies by imitating
 scripted players and by reinforcement learning, then to evaluate them against
-fixed scripted opponents. The most useful result came from asking what
-a strong-looking number actually meant.
+fixed scripted opponents.
 
 <TrainingLoop />
+
+## My part, briefly
+
+- **Clone first.** PPO with the stock policy had plateaued at about a 13% win rate, so I cloned the scripted teachers first and fine-tuned the clone to 24.0%. A PPO-only run with my own network, measured alongside, reached 13.9%, so the network alone made little difference.
+- **The first fine-tuning run.** It slowly lost what the clone knew: across checkpoints the Iono mirror fell from 11.0% to 2.5%. My diagnosis was the entropy bonus pushing a sharply peaked clone back toward uniform, with a critic that started out predicting almost nothing. The recipe that worked dropped the bonus and lowered the learning rate and target KL, all at once, so it doesn't isolate the cause.
+- **Two checks.** Before fine-tuning, the training script stops unless the transferred policy gives bit-identical logits and value to the clone on the same observation. When the specialist reached 82.6%, I checked how its games ended: every win was a deck-out, in a 100-game audit and again across all 678 wins of an 800-game re-run.
 
 ## What I built
 
@@ -82,14 +87,11 @@ deck, against each of the four teachers.
 <ResultsChart variant="multi-deck" />
 
 PPO alone reached 13.9%, close to the earlier baseline of about 13%. Behaviour
-cloning reached 20.0%; tuning PPO after cloning reached 24.0%. The useful change
-was in the training recipe, while the custom architecture alone showed little
-improvement in this comparison.
+cloning reached 20.0%; tuning PPO after cloning reached 24.0%.
 
 Every model remained below parity with the teachers. The clone matched the
 teacher's move on 79.6% of held-out decisions, leaving room for errors to
-accumulate over a game. These are findings about this setup, not a general
-verdict on the architecture or PPO.
+accumulate over a game.
 
 <Details summary="Cloning data, transfer and PPO settings">
 
@@ -99,13 +101,17 @@ verdict on the architecture or PPO.
   both.
 - Holdout accuracy was 0.796 (0.803 for single picks, 0.765 for multi-select),
   against 0.217 for choosing a random legal option.
-- After the weights move into the Stable-Baselines3 policy, a check confirms the
-  transferred policy produces the same logits before training continues.
-- In the first fine-tuning recipe (learning rate 5e-5, target KL 0.02), the
-  entropy bonus pushed the sharply peaked clone toward uniform choices.
-  The recipe that worked used no entropy bonus, a learning rate of 3e-5 and a
-  target KL of 0.01. It climbed from 17% to 24% over 153,600 steps and then
-  plateaued. The Dragapult ex mirror rose from 7.0% after cloning to 22.5%
+- After the cloned weights load into the Stable-Baselines3 policy, the training
+  script feeds one observation through the cloning code's input path and
+  through Stable-Baselines3's own, and stops unless the logits and the value
+  are exactly equal (`torch.equal`, no tolerance). Every fine-tuning run logged
+  the check as passing.
+- The first fine-tuning recipe (entropy bonus 0.01, learning rate 5e-5, target
+  KL 0.02) didn't beat the clone. On checkpoints evaluated every 25,600 steps
+  the pooled rate stayed between 17% and 19%, and the Iono mirror fell from
+  11.0% to 2.5%. The recipe that worked used no entropy bonus, a learning rate
+  of 3e-5 and a target KL of 0.01. It climbed from 17% to 24% over 153,600
+  steps and then plateaued. The Dragapult ex mirror rose from 7.0% after cloning to 22.5%
   (95% interval 17.3–28.8), the first per-deck gain from PPO in these
   experiments that was separated from the clone by its interval.
 - The 9 July entries were evaluated over 200 seat-swapped games per deck and
@@ -114,7 +120,7 @@ verdict on the architecture or PPO.
 
 </Details>
 
-## One opponent, one strong number
+## A specialist for one opponent
 
 Next I narrowed the task to Lucario against the scripted Lucario teacher.
 A specialist clone followed by PPO reached a reported 82.6% over 800 games.
@@ -123,16 +129,15 @@ for this matchup.
 
 <ResultsChart variant="specialist" />
 
-## What did the improvement mean?
+## How the specialist won
 
 I recorded a separate 100-game audit to examine how the games ended. All 82
-model wins came from the opponent running out of cards to draw. Deck-out is a
-legal win condition; the finding points to exploiting this fixed opponent's
-behaviour, rather than a scoring bug.
-
-The campaign did not test transfer to other opponents. The high win rate alone
-did not establish broader playing strength; inspecting the outcomes exposed
-what the aggregate number left out.
+model wins came from the opponent running out of cards to draw; the
+simulator's own end-of-game reason and a count of the cards left agreed in
+every game. A later 800-game re-run found the same in all 678 of its wins, and
+in almost all of them the model was behind on prizes when it won. Deck-out is a
+legal win, so this isn't a scoring bug: the model learned one fixed opponent's
+habits, and the 82.6% says nothing on its own about how it plays anyone else.
 
 <Details summary="The specialist's training stages">
 
@@ -155,6 +160,6 @@ ended in a draw.
 
 The simulator is licensed for competition use only, so this page uses an
 original diagram and the figures from my dated evaluation reports (9 and 10
-July 2026) rather than code, replays or game data. The checkpoints, evaluation
-logs and audit recordings behind those figures are kept locally, and the
-results have not been independently reproduced.
+July 2026) rather than code, replays or game data. The checkpoints, evaluation logs and audit recordings stay
+local. My own July re-runs reproduced the headline numbers within their
+confidence intervals; nobody else has reproduced them.

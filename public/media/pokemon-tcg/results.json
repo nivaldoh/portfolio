@@ -1,6 +1,6 @@
 {
   "multi_deck": {
-    "source": "docs/reports/bc_warmstart_report.md (nivaldoh/poketcg @ 1c96a86af6c8289cb781bf9e9283225d75ca2dd8); baseline row from docs/reports/sb3_selfplay_report.md (same commit)",
+    "source": "docs/reports/bc_warmstart_report.md (nivaldoh/pokemon-tcg-ai @ 198babd799f53a2f8890423fcb3d291ba60bd705); baseline row from docs/reports/archive/sb3_selfplay_report.md (same commit)",
     "date": "2026-07-09",
     "metric": "Reported pooled mirror win rate (%), sampled policy, seat-swapped, Wilson 95% CI",
     "opponents": ["Lucario (rule-based)", "Abomasnow (rule-based)", "Dragapult ex (rule-based)", "Iono (rule-based)"],
@@ -17,7 +17,7 @@
     "caveat": "Local reported evaluation against four fixed scripted opponents. Every model remained below parity with the scripted teachers."
   },
   "specialist": {
-    "source": "docs/reports/lucario_mirror_report.md (nivaldoh/poketcg @ 1c96a86af6c8289cb781bf9e9283225d75ca2dd8)",
+    "source": "docs/reports/lucario_mirror_report.md (nivaldoh/pokemon-tcg-ai @ 198babd799f53a2f8890423fcb3d291ba60bd705)",
     "date": "2026-07-10",
     "metric": "Reported win rate (%), sampled policy, seat-swapped, Wilson 95% CI",
     "learner_deck": "Lucario",

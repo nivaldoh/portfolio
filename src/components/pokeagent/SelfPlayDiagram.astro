@@ -27,7 +27,7 @@ interface Props {
 
 const { compact = false, wide = false, class: className } = Astro.props;
 const REPO =
-  'https://github.com/nivaldoh/metamon_pokeagent_comp/tree/3c54f02f9bfd718f4081c1b377346efedd236cd6';
+  'https://github.com/nivaldoh/metamon_pokeagent_comp/tree/443b841252792e81775133208fa5c3c820b5cb31';
 const COMPACT_ALT =
   'Self-play on Cloud Run Jobs. One job runs several tasks, each in its own ' +
   'container; each task reads its own line of a JSONL task manifest, which ' +
@@ -190,8 +190,7 @@ const COMPACT_ALT =
         The self-play setup as implemented in my
         <a href={REPO} rel="noopener">competition repository</a>. A task reads
         its line of the manifest, starts a private Showdown server, and runs two
-        Metamon agents against each other. Agents only load checkpoints; the task
-        only writes trajectories. Training on them is a separate step.
+        Metamon agents against each other.
       </Fragment>
     )}
   </figcaption>
@@ -655,6 +654,13 @@ const COMPACT_ALT =
 
     .sp__agent .sp__title {
       font-size: 0.92rem;
+    }
+
+    /* File and model names stay whole on the narrowest phones; the manifest
+       name may still break at its <wbr>, before ".jsonl". */
+    .sp__code code {
+      font-size: 0.72rem;
+      overflow-wrap: normal;
     }
   }
 

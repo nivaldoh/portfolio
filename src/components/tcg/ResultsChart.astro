@@ -44,7 +44,7 @@ const units = Array.from({ length: audit.games }, (_, i) =>
 {variant === 'multi-deck' ? (
   <figure class:list={['tcgc', { 'tcgc--compact': compact, wide }]}>
     <figcaption class="tcgc__head">
-      <span class="tcgc__title">All four models stayed below parity with the teachers</span>
+      <span class="tcgc__title">The training recipe mattered more than the architecture</span>
       <span class="tcgc__scope">
         Pooled win rate, {multi.games_per_entry} seat-swapped mirror games per
         entry against four fixed scripted teachers; reported evaluation, July 2026
@@ -196,10 +196,7 @@ const units = Array.from({ length: audit.games }, (_, i) =>
     </div>
 
     <p class="tcgc__notes">
-      Deck-out is a legal way to win. Against this one scripted opponent it was
-      the only way the model won in the audit, which points to exploiting that
-      opponent rather than general playing strength. The audit games are sorted
-      by outcome, not shown in the order played.
+      The audit games are sorted by outcome, not shown in the order played.
     </p>
   </figure>
 )}
