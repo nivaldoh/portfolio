@@ -122,7 +122,7 @@ The original HTML is about 59.4 MB and exceeds the [Cloudflare Pages 25 MiB asse
 python3 scripts/import_wh3_benchmark.py dev/benchmark.html
 ```
 
-Run this only when deliberately replacing the public snapshot. Ordinary builds do not read `dev/`. The adapter adds portfolio navigation, a dark theme, scenario deep links, retry after a failed replay fetch, and a static results table for visitors without JavaScript. It recomputes the inline script's CSP hash. `manifest.json` records the source hash and all 99 replay hashes. Upstream template changes fail explicitly for review.
+Run this only when deliberately replacing the public snapshot. Ordinary builds do not read `dev/`. The adapter adds portfolio navigation, a dark theme, retry after a failed replay fetch, and a static results table for visitors without JavaScript. It recomputes the inline script's CSP hash. Links can open a scenario (`?scenario=scenario-1`) or a battle at a time in seconds (`?battle=g2-t4&t=186.2`); while a visitor uses the page, `history.replaceState` keeps the address on the open battle, and on its time after a pause or seek. The adapter also removes the internal scenario status and the masthead summary, rewrites the cavalry footnote and a few labels in plain terms, labels Figure 1 as the fixed cavalry round of 15 October 2026, and moves the scenario thumbnails below the viewer. `manifest.json` records the source hash and all 99 replay hashes. Upstream template changes fail explicitly for review.
 
 The static results table uses the matched M1 round's exact trial IDs and outcomes. M1 includes the two initial `bench-b12-caster-assault-20261016` trials and four subsequent caster trials. Each of the six scenarios has three trials for each model. Do not replace this with the report's pooled model totals: those combine different harness versions. The later gpt-6.1-sol round is separate.
 
@@ -183,7 +183,7 @@ Pages limits each file to 25 MiB. Use the benchmark importer above to split the 
 
 Run `npm run check`, `npm run test:replay` and `npm run build` before publishing changes. The replay tests cover recorded sample selection, application-time decisions, ties, the key moment and endpoint, absent replies/positions/terrain, and HTML escaping.
 
-For changes to layout or interactions, preview the build and check the homepage, the three project pages, and the benchmark at phone, tablet and desktop widths. Exercise keyboard playback and scrubbing, replay fetch failure and retry, benchmark scenario links and downloads, the hero trace's pause button, the email copy button, and video pausing. Check reduced motion and readable static content with JavaScript disabled.
+For changes to layout or interactions, preview the build and check the homepage, the three project pages, and the benchmark at phone, tablet and desktop widths. Exercise keyboard playback and scrubbing, replay fetch failure and retry, benchmark scenario and battle links (including the address updating on pause and seek) and downloads, the hero trace's pause button, the email copy button, and video pausing. Check reduced motion and readable static content with JavaScript disabled.
 
 ## Font license
 
