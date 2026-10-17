@@ -38,7 +38,7 @@
   /* Ink */
   --fg:        #d6cfb8;   /* candlewax ivory */
   --fg-strong: #ece5cf;
-  --fg-muted:  #8c8572;   /* AA on --bg and --bg-elev */
+  --fg-muted:  #a09985;   /* 6.9:1 on --bg, 6.1:1 on --bg-control */
   --border:    #23262f;
   --rule:      #191b22;
 
@@ -69,7 +69,7 @@
   --font-mono:  ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 
   /* Type scale (body 1.125rem, ratio ~1.25 up to display) */
-  --step--2: 0.8rem;
+  --step--2: 0.84rem;
   --step--1: 0.92rem;
   --step-0:  1.125rem;
   --step-1:  1.35rem;
@@ -357,15 +357,9 @@ figcaption {
 .plate figcaption {
   color: var(--fg-muted);
   font-size: var(--step--1);
-  line-height: 1.5;
-  font-style: italic;
+  line-height: 1.55;
   margin-top: 0.7rem;
   max-width: 72ch;
-}
-
-.caption a,
-.plate figcaption a {
-  font-style: normal;
 }
 
 /* Bordered control button (e.g. the Slay the Spire step controls). */
@@ -409,7 +403,7 @@ figcaption {
 
 /* Small mono label above a homepage section or panel title. */
 .eyebrow {
-  font: 0.75rem/1.4 var(--font-mono);
+  font: 0.8rem/1.4 var(--font-mono);
   letter-spacing: 0.02em;
   color: var(--accent);
   margin: 0 0 0.9rem;
@@ -604,7 +598,6 @@ figcaption {
   color: var(--fg-muted);
   font-size: var(--step--1);
   margin-top: 0.55em;
-  font-style: italic;
 }
 
 /* GFM-style footnotes */
