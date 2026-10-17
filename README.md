@@ -1,6 +1,6 @@
 # Portfolio
 
-Portfolio of AI-agent, evaluation and systems work, with case studies, recorded media and a few interactions built from real records. Astro 5, fully static, deployed to Cloudflare Pages.
+Portfolio website. Astro 5, fully static, deployed to Cloudflare Pages.
 
 ## Commands
 
