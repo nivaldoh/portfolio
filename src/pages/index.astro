@@ -35,20 +35,6 @@ const index = [
   { n: '05', href: '#robocasa', title: 'Changing robot goals', note: 'RoboCasa365' },
   { n: '06', href: '#beam', title: 'Apache Beam in Rust', note: 'Distributed systems' },
 ];
-
-// The Total War project in numbers, as of 2 November 2026, from the game-agents
-// repository (github.com/nivaldoh/slay_the_spire_ai): rows of
-// docs/twwarhammer3/results.csv at 6314b2f (661 rows, scripted and model battles, 13 Oct to
-// 2 Nov) and the 9 distinct models in it (OpenAI, Anthropic, Z.ai, Moonshot AI, Qwen,
-// StepFun); the featured replay's median view age (bench-c1-cavalry-ai11-02, 83 applied
-// batches, battle time); the agreed Land checkpoint check (docs/agreed-checks.md: 0
-// checksum mismatches over 2,001 ticks).
-const stats = [
-  { n: '650+', label: 'battles recorded' },
-  { n: '9', label: 'models have played' },
-  { n: '5.4 s', label: 'median age of the view behind an order' },
-  { n: '2,001', label: 'ticks matched in my restore check' },
-];
 ---
 
 <BaseLayout>
@@ -103,12 +89,6 @@ const stats = [
           </ul>
         </div>
       </div>
-
-      <ul class="stats" aria-label="The Total War project in numbers, as of 2 November 2026">
-        {stats.map((s) => (
-          <li class="stat"><span class="stat__n">{s.n}</span><span class="stat__label">{s.label}</span></li>
-        ))}
-      </ul>
 
       <section class="chapter" id="total-war" aria-labelledby="ch-live">
         <div class="chapter__head">
@@ -452,45 +432,6 @@ const stats = [
   }
 
   /* ---------- Total War: numbers and chapters ---------- */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1px;
-    margin: 0 0 clamp(3rem, 6vw, 4.5rem);
-    padding: 0;
-    list-style: none;
-    background: var(--border);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-plate);
-    overflow: hidden;
-  }
-
-  .stat {
-    display: grid;
-    gap: 0.15rem;
-    padding: 1rem 1.1rem 0.9rem;
-    background: var(--bg-elev);
-  }
-
-  .stat__n {
-    font-size: var(--step-3);
-    font-weight: 400;
-    line-height: 1;
-    color: var(--fg-strong);
-    font-variant-numeric: lining-nums tabular-nums;
-  }
-
-  .stat__label {
-    font: var(--step--2)/1.4 var(--font-mono);
-    color: var(--fg-muted);
-  }
-
-  @media (min-width: 48rem) {
-    .stats {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
-
   .chapter + .chapter,
   .chapter + .build {
     margin-top: clamp(4rem, 2.5rem + 5vw, 6.5rem);
