@@ -37,7 +37,7 @@ src/
 │  └─ posts/                 # .md / .mdx blog posts → /writing/ (not linked from the nav yet)
 ├─ components/
 │  ├─ Plate, Details, ProjectPanel, BeamSection, Career, RecordedVideo, ...
-│  ├─ wh3/                   # BattleReplay (the recorded Total War replay) + FlankTrace (hero route trace)
+│  ├─ wh3/                   # HeroBattle (homepage opening), BattleReplay (recorded replay), CheckpointBranches, ResultsGrid, TeamPlan
 │  ├─ slay/                  # RunProgress: the furthest full run (homepage and the game-agents case study)
 │  ├─ game-agents/           # small figures for the Total War case study
 │  ├─ robocasa/              # DevelopmentRecordings: the homepage clips
@@ -45,7 +45,7 @@ src/
 │  └─ pokeagent/             # HybridSearch, MetamonPRs, SelfPlayDiagram, TournamentBrackets
 ├─ layouts/                  # BaseLayout, CaseStudyLayout, PostLayout
 ├─ pages/
-│  ├─ index.astro            # / — hero with an index of the work, game agents (Total War + Slay the Spire), the PokéAgent → RoboCasa thread (#thread), Beam, background (#about), contact (#contact)
+│  ├─ index.astro            # / — in-game opening, intro with the index of the work, Total War chapters (#work: replay, #checkpoints, #benchmark, #multiplayer, how it is built) and Slay the Spire, the PokéAgent → RoboCasa thread (#thread), Beam, background (#about), contact (#contact)
 │  ├─ projects/[slug].astro  # /projects/<slug>/
 │  ├─ writing/               # /writing/, /writing/<slug>/
 │  ├─ 404.astro
@@ -59,12 +59,13 @@ public/
 ├─ media/<project>/          # videos, posters and JSON served as-is (replay data, chart data)
 ├─ nivaldo-tokuda-resume.pdf
 ├─ fonts/                    # Self-hosted Newsreader and its OFL license
-├─ og-default.png            # social card (1200×630)
+├─ og-default.jpg            # social card (1200×630): the opening's frame and headline
 ├─ favicon.svg               # plain dark square
 └─ _headers                  # Cloudflare Pages cache + security headers
 scripts/
 ├─ import_wh3_benchmark.py   # package an exported standalone benchmark without changing recordings
 ├─ export_wh3_replay.py      # rebuilds public/media/game-agents/wh3-cavalry-flank.json from a recorded job
+├─ export_wh3_branches.py    # rebuilds public/media/game-agents/wh3-checkpoint-branches.json from the checkpoint audit
 └─ replay.test.cjs           # focused tests of the replay's pure TypeScript logic
 ```
 
@@ -111,6 +112,22 @@ python3 -I scripts/export_wh3_replay.py \
 ```
 
 The current recording is `bench-c1-cavalry-ai11-02-20261015/episode-0000`. Its key moment starts at 166.2 s, focuses on 186.2 s, and ends at 236.0 s. For a byte-identical export of the checked-in file, use that episode and add `--clip 166.2 229.2` (the optional video-excerpt metadata). The map key and recorded-event list are expandable. A failed fetch keeps the real still visible and offers a keyboard-accessible retry.
+
+## The Total War opening and figures
+
+The homepage opens on a real in-game frame (`src/assets/work/game-agents/wh3-caster-assault-sol61.jpg`, the "first rout" still, with the top 56 px of game interface cropped off, of `bench-b13-v1e-caster-cannon2-sol61-20261016/episode-0000`, battle time 167.3 s) beside the model's own replies from that battle, quoted verbatim from the `reason` field of its decisions in `trace.jsonl`; each time is the battle time of the observation the reply answered. `HeroBattle.astro` names the source.
+
+`CheckpointBranches` shows one saved battle moment restored with different orders. Its data comes from the checkpoint-RL audit `hard-late` in the game repository; regenerate it with:
+
+```bash
+python3 -I scripts/export_wh3_branches.py \
+  <slay_the_spire_ai>/runs/twwarhammer3/rl hard-late \
+  public/media/game-agents/wh3-checkpoint-branches.json
+```
+
+The exporter drops rows published during the restore's fast-forward, keeps positions as recorded (never interpolated), checks that every future starts from the same saved frame, and folds launches with identical recordings into one future (`same_as`). Without script, or with reduced motion, the figure is the finished state; with script it replays all futures together and loops.
+
+`ResultsGrid` reads the published benchmark's embedded report data at build time, so its dots always match the benchmark: the matched round M1 (gpt-6-sol, gpt-6-luna), gpt-6.1-sol's later round on four scenarios, and every recorded scripted baseline on the same six scenarios. Each dot links to its replay. `TeamPlan` is the native-multiplayer plan with its status as of 2 November 2026; update its steps as the work moves.
 
 ## The full benchmark
 
@@ -183,7 +200,7 @@ Pages limits each file to 25 MiB. Use the benchmark importer above to split the 
 
 Run `npm run check`, `npm run test:replay` and `npm run build` before publishing changes. The replay tests cover recorded sample selection, application-time decisions, ties, the key moment and endpoint, absent replies/positions/terrain, and HTML escaping.
 
-For changes to layout or interactions, preview the build and check the homepage, the three project pages, and the benchmark at phone, tablet and desktop widths. Exercise keyboard playback and scrubbing, replay fetch failure and retry, benchmark scenario and battle links (including the address updating on pause and seek) and downloads, the hero trace's pause button, the email copy button, and video pausing. Check reduced motion and readable static content with JavaScript disabled.
+For changes to layout or interactions, preview the build and check the homepage, the three project pages, and the benchmark at phone, tablet and desktop widths. Exercise keyboard playback and scrubbing, replay fetch failure and retry, benchmark scenario and battle links (including the address updating on pause and seek) and downloads, the checkpoint figure's pause button, the email copy button, and video pausing. Check reduced motion and readable static content with JavaScript disabled.
 
 ## Font license
 

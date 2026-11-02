@@ -15,4 +15,4 @@ export const SOCIAL_LINKS: { label: string; url: string }[] = [
 ];
 
 // Default Open Graph image used when a page doesn't supply its own.
-export const OG_DEFAULT = '/og-default.png';
+export const OG_DEFAULT = '/og-default.jpg';

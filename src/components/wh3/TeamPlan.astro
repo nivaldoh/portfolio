@@ -1,0 +1,303 @@
+---
+// The native-multiplayer plan: one game client per agent, joined by the game's own
+// multiplayer. Status as of 2 November 2026, from the game-agents repository
+// (docs/twwarhammer3/native-multiplayer.md, docs/agreed-checks.md, docs/twwarhammer3/log.md):
+// - the scripted two-member team (one army, one PC) passed its agreed live check, 4/4
+//   launches at four revisions; it makes no claim about teamwork quality;
+// - platform detection, observe/control modes, the link, the worker and compare-peers are
+//   built and tested with fake workers;
+// - the observer smoke of 1 Nov 2026 read one live single-player battle through that path
+//   (n = 1; nothing multiplayer ran);
+// - zero live multiplayer battles; a second licence and a cloud client come first.
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+
+const clients = [
+  { name: 'Client 1', where: 'My PC' },
+  { name: 'Client 2', where: 'Cloud GPU machine' },
+];
+
+const steps = [
+  { done: true, text: 'Two agents split one army on one PC', note: 'live check passed, 4 of 4' },
+  { done: true, text: 'A worker and link for each client', note: 'built, tested with fakes' },
+  { done: true, text: 'A live battle read through the new path', note: '1 battle, 1 Nov' },
+  { done: false, text: 'Second game licence and a cloud client', note: 'next' },
+  { done: false, text: 'First multiplayer battle between agents', note: 'next' },
+];
+---
+
+<figure class:list={['tp', className]}>
+  <div class="tp__diagram" aria-label="Two game clients, each with its own agent, joined by the game's own multiplayer; a coordinator starts the battle and records both clients.">
+    {clients.map((c, k) => (
+      <div class:list={['tp__client', `tp__client--${k}`]}>
+        <p class="tp__where"><span>{c.name}</span> {c.where}</p>
+        <ol class="tp__stack">
+          <li class="tp__box tp__box--agent">
+            <span class="tp__box-title">Agent {k === 0 ? 'A' : 'B'}</span>
+            <span class="tp__box-note">a language model</span>
+          </li>
+          <li class="tp__arrow" aria-hidden="true"><span>its army’s view</span><span>orders</span></li>
+          <li class="tp__box">
+            <span class="tp__box-title">Total War + my Lua mod</span>
+            <span class="tp__box-note">one copy per player</span>
+          </li>
+        </ol>
+      </div>
+    ))}
+    <div class="tp__net" aria-hidden="true">
+      <span class="tp__net-line"></span>
+      <span class="tp__net-label">the game’s own multiplayer</span>
+    </div>
+    <p class="tp__coord"><span>Coordinator</span> starts the battle, records both clients, can stop it</p>
+  </div>
+
+  <ol class="tp__steps">
+    {steps.map((s) => (
+      <li class:list={['tp__step', { 'tp__step--done': s.done }]}>
+        <span class="tp__mark" aria-hidden="true">{s.done ? '✓' : ''}</span>
+        <span class="tp__step-text">{s.text}</span>
+        <span class="tp__step-note">{s.note}</span>
+      </li>
+    ))}
+  </ol>
+  <slot />
+</figure>
+
+<style>
+  .tp {
+    margin: 0;
+  }
+
+  /* Two clients side by side, the game's network between them, the coordinator below. */
+  .tp__diagram {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 7.5rem minmax(0, 1fr);
+    grid-template-areas:
+      'a net b'
+      'coord coord coord';
+    gap: 1rem 0;
+    padding: clamp(1rem, 3vw, 1.6rem);
+    background: var(--bg-plate);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-plate);
+  }
+
+  .tp__client--0 { grid-area: a; }
+  .tp__client--1 { grid-area: b; }
+
+  .tp__where {
+    margin: 0 0 0.6rem;
+    font: var(--step--2)/1.4 var(--font-mono);
+    color: var(--fg-muted);
+  }
+
+  .tp__where span {
+    color: var(--accent);
+    margin-right: 0.35rem;
+  }
+
+  .tp__stack {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tp__box {
+    display: grid;
+    gap: 0.1rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-plate);
+    background: var(--bg-elev);
+  }
+
+  .tp__box--agent {
+    border-color: color-mix(in srgb, var(--data-model) 55%, var(--border));
+    background: color-mix(in srgb, var(--data-model) 9%, var(--bg-elev));
+  }
+
+  .tp__box-title {
+    color: var(--fg-strong);
+    line-height: 1.3;
+  }
+
+  .tp__box-note {
+    font: var(--step--2)/1.4 var(--font-mono);
+    color: var(--fg-muted);
+  }
+
+  /* View up, orders down: two labelled arrows between agent and game. */
+  .tp__arrow {
+    display: flex;
+    justify-content: center;
+    gap: 1.6rem;
+    padding: 0.55rem 0;
+    font: var(--step--2)/1.3 var(--font-mono);
+    color: var(--fg-muted);
+  }
+
+  .tp__arrow span::before {
+    margin-right: 0.3rem;
+    color: var(--data-model);
+  }
+
+  .tp__arrow span:first-child::before { content: '↑'; }
+  .tp__arrow span:last-child::before { content: '↓'; }
+
+  .tp__net {
+    grid-area: net;
+    position: relative;
+    align-self: end;
+    height: 4.2rem;
+    margin-bottom: 0;
+  }
+
+  .tp__net-line {
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    top: 50%;
+    height: 2px;
+    background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 12px);
+    background-size: 24px 2px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .tp__net-line {
+      animation: tp-flow 1.2s linear infinite;
+    }
+  }
+
+  @keyframes tp-flow {
+    to { background-position: 24px 0; }
+  }
+
+  .tp__net-label {
+    position: absolute;
+    left: 0.3rem;
+    right: 0.3rem;
+    bottom: calc(50% + 0.45rem);
+    text-align: center;
+    font: var(--step--2)/1.25 var(--font-mono);
+    color: var(--accent);
+  }
+
+  .tp__coord {
+    grid-area: coord;
+    margin: 0;
+    padding: 0.6rem 0.85rem;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-plate);
+    text-align: center;
+    font-size: var(--step--1);
+    color: var(--fg-muted);
+  }
+
+  .tp__coord span {
+    color: var(--fg-strong);
+    margin-right: 0.35rem;
+  }
+
+  /* Phones: the clients stack, the network runs between them vertically. */
+  @media (max-width: 40rem) {
+    .tp__diagram {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: 'a' 'net' 'b' 'coord';
+    }
+
+    .tp__net {
+      height: 3.2rem;
+      align-self: stretch;
+    }
+
+    .tp__net-line {
+      left: 50%;
+      right: auto;
+      top: -0.5rem;
+      bottom: -0.5rem;
+      width: 2px;
+      height: auto;
+      background: repeating-linear-gradient(180deg, var(--accent) 0 6px, transparent 6px 12px);
+      background-size: 2px 24px;
+    }
+
+    @keyframes tp-flow {
+      to { background-position: 0 24px; }
+    }
+
+    .tp__net-label {
+      top: 50%;
+      bottom: auto;
+      left: calc(50% + 0.8rem);
+      right: auto;
+      transform: translateY(-50%);
+      text-align: left;
+    }
+  }
+
+  /* The road to the first multiplayer battle. */
+  .tp__steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+    gap: 0.9rem 1rem;
+    margin: 1.2rem 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+  }
+
+  @media (max-width: 50rem) {
+    .tp__steps {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.6rem;
+    }
+  }
+
+  .tp__step {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.4rem minmax(0, 1fr);
+    gap: 0.1rem 0.5rem;
+    padding-top: 0.7rem;
+    border-top: 2px solid var(--border);
+  }
+
+  .tp__step--done {
+    border-top-color: var(--data-ok);
+  }
+
+  .tp__mark {
+    grid-row: span 2;
+    width: 1.2rem;
+    height: 1.2rem;
+    border: 1.5px solid var(--fg-muted);
+    border-radius: 50%;
+    font: 700 0.75rem/1.05rem var(--font-mono);
+    text-align: center;
+    color: var(--bg);
+  }
+
+  .tp__step--done .tp__mark {
+    border-color: var(--data-ok);
+    background: var(--data-ok);
+  }
+
+  .tp__step-text {
+    font-size: var(--step--1);
+    line-height: 1.35;
+    color: var(--fg-strong);
+  }
+
+  .tp__step-note {
+    font: var(--step--2)/1.4 var(--font-mono);
+    color: var(--fg-muted);
+  }
+
+  .tp__step:not(.tp__step--done) .tp__step-note {
+    color: var(--accent);
+  }
+</style>

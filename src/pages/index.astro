@@ -3,7 +3,10 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProjectPanel from '../components/ProjectPanel.astro';
 import BattleReplay from '../components/wh3/BattleReplay.astro';
-import FlankTrace from '../components/wh3/FlankTrace.astro';
+import HeroBattle from '../components/wh3/HeroBattle.astro';
+import CheckpointBranches from '../components/wh3/CheckpointBranches.astro';
+import ResultsGrid from '../components/wh3/ResultsGrid.astro';
+import TeamPlan from '../components/wh3/TeamPlan.astro';
 import RunProgress from '../components/slay/RunProgress.astro';
 import DevelopmentRecordings from '../components/robocasa/DevelopmentRecordings.astro';
 import ResultsChart from '../components/tcg/ResultsChart.astro';
@@ -26,113 +29,186 @@ const tcg = byId['pokemon-tcg'];
 
 // The hero's index of the work below, in page order.
 const index = [
-  { n: '01', href: '#work', title: 'Agents in real games', note: 'Total War · Slay the Spire' },
+  { n: '01', href: '#work', title: 'Agents in Total War', note: 'Live battles · saves · benchmark' },
   { n: '02', href: '#pokeagent', title: 'PokéAgent Challenge', note: 'NeurIPS 2025 quarterfinalist' },
   { n: '03', href: '#metamon', title: 'Metamon', note: 'UT Austin RPL' },
   { n: '04', href: '#pokemon-tcg', title: 'Pokémon TCG agents', note: 'Kaggle' },
   { n: '05', href: '#robocasa', title: 'Changing robot goals', note: 'RoboCasa365' },
   { n: '06', href: '#beam', title: 'Apache Beam in Rust', note: 'Distributed systems' },
 ];
+
+// The Total War project in numbers, as of 2 November 2026, from the game-agents
+// repository (github.com/nivaldoh/slay_the_spire_ai): rows of
+// docs/twwarhammer3/results.csv (scripted and model battles, 13 Oct to 2 Nov); distinct
+// models in it (OpenAI, Anthropic, Z.ai, Moonshot AI, Qwen, StepFun); the agreed
+// checkpoint check (docs/agreed-checks.md: 0 checksum mismatches over 2,001 ticks);
+// git rev-list --count HEAD (both games; first commit 11 Oct 2026).
+const stats = [
+  { n: '650+', label: 'battles recorded' },
+  { n: '9', label: 'models have played' },
+  { n: '2,001', label: 'restored ticks, all matching the original' },
+  { n: '1,215', label: 'commits in 3 weeks' },
+];
+
+// The whole repository (both games), as of 2 November 2026: git rev-list --count HEAD;
+// `def test_` lines under tests/twwarhammer3; the planted-version replay at 515491c
+// (runs/cleanup-20261102, agreed check); wc -l of src/twwarhammer3 and the battle script.
+const buildFacts = [
+  { n: '920', label: 'Total War tests' },
+  { n: '341 of 341', label: 'deliberately planted bugs caught by the tests' },
+];
 ---
 
 <BaseLayout>
-  <section class="hero container" aria-labelledby="hero-title">
-    <div class="hero__text">
-      <h1 class="hero__title" id="hero-title">I build and evaluate AI agents.</h1>
-      <p class="hero__lede">
-        I build the interfaces that let agents act, then study what happens
-        when they do.
-      </p>
-      <p class="hero__context">
+  <HeroBattle ctaHref="#work" benchmarkHref="/benchmarks/total-war/index.html" />
+
+  <section class="intro container" aria-labelledby="intro-title">
+    <div class="intro__text">
+      <h2 class="intro__title" id="intro-title">I build environments and evaluations for AI agents.</h2>
+      <p class="intro__context">
         8+ years in cloud and data engineering. MS in Computer Science at
         UT Austin, expected 2027. São Paulo, Brazil.
       </p>
-      <p class="hero__open">
+      <p class="intro__open">
         Open to AI and research engineering roles:
         <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
       </p>
-      <nav class="hero__index" aria-label="Selected work">
-        <ol>
-          {index.map((item) => (
-            <li>
-              <a href={item.href}>
-                <span class="hero__index-n">{item.n}</span>
-                <span class="hero__index-title">{item.title}</span>
-                <span class="hero__index-note">{item.note}</span>
-              </a>
-            </li>
-          ))}
-        </ol>
-      </nav>
     </div>
-    <FlankTrace class="hero__visual" />
+    <nav class="hero__index" aria-label="Selected work">
+      <ol>
+        {index.map((item) => (
+          <li>
+            <a href={item.href}>
+              <span class="hero__index-n">{item.n}</span>
+              <span class="hero__index-title">{item.title}</span>
+              <span class="hero__index-note">{item.note}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
   </section>
 
   <section id="work" class="feature" aria-labelledby="feature-title">
     <div class="container">
       <div class="feature__head">
         <div>
-          <p class="eyebrow">01 / Game environments and evaluation</p>
+          <p class="eyebrow">01 / Total War: WARHAMMER III</p>
           <h2 class="section-heading" id="feature-title">
-            <a href={`/projects/${game.id}/`}>Agents in real games</a>
+            <a href={`/projects/${game.id}/`}>Agents in a real-time strategy game</a>
           </h2>
         </div>
         <div>
           <p class="feature__summary">
-            Language models play Total War and Slay the Spire through game
-            interfaces and evaluation tools I built. Every decision is
-            recorded, so I can replay a battle or a run and check what the
-            model saw, what it ordered and what the game actually did.
+            A Lua mod I built is the models’ only way into the game: game state in,
+            orders out. Nothing reads the screen or moves the mouse. A model sees
+            enemies only while its army can, and its thinking time counts against it.
           </p>
           <ul class="link-row">
             <li><a href={`/projects/${game.id}/`}>Case study</a></li>
             <li><a href="https://github.com/nivaldoh/slay_the_spire_ai" rel="noopener">Code</a></li>
+            <li><a href="/benchmarks/total-war/index.html">Benchmark</a></li>
           </ul>
         </div>
       </div>
 
-      <section class="game" id="total-war" aria-labelledby="total-war-title">
-        <div class="game__head game__head--cta">
-          <div>
-            <h3 class="game__title" id="total-war-title">Total War: WARHAMMER III</h3>
-            <p class="game__kind">Real-time battles</p>
-          </div>
+      <ul class="stats" aria-label="The Total War project in numbers, as of 2 November 2026">
+        {stats.map((s) => (
+          <li class="stat"><span class="stat__n">{s.n}</span><span class="stat__label">{s.label}</span></li>
+        ))}
+      </ul>
+
+      <section class="chapter" id="total-war" aria-labelledby="ch-live">
+        <div class="chapter__head">
+          <h3 class="chapter__title" id="ch-live">Five seconds behind.</h3>
+          <p class="chapter__lede">
+            The battle keeps moving while the model thinks: the view behind each batch of
+            orders was 5.4&nbsp;s old on median. Here gpt-6-sol’s cavalry
+            (<span class="ink-model">in&nbsp;blue</span>) rides around the halberd screen and
+            into the guns behind it.
+          </p>
+        </div>
+        <BattleReplay variant="feature" />
+      </section>
+
+      <section class="chapter" id="checkpoints" aria-labelledby="ch-save">
+        <div class="chapter__head">
+          <h3 class="chapter__title" id="ch-save">Save a battle. Try another future.</h3>
+          <p class="chapter__lede">
+            Total War can’t save mid-battle. I built a save from the game’s own replay file: a
+            restore fast-forwards to the saved moment, checking the engine’s checksum on every
+            tick, then plays on live. Below, one saved moment plays out four ways.
+          </p>
+        </div>
+        <CheckpointBranches>
+          <figcaption class="chapter__caption">
+            Six restores with five different orders; two played the same battle as “Both units
+            attack”. In my check of a restored battle, all 2,001 ticks matched the original.
+            Restores like these drive a small reinforcement-learning loop (early, mixed
+            results in the <a href={`/projects/${game.id}/#save-a-battle-try-another-future`}>case study</a>).
+            The <a href="https://github.com/nivaldoh/wh3-battle-checkpoints" rel="noopener">save tool is public</a>.
+          </figcaption>
+        </CheckpointBranches>
+      </section>
+
+      <section class="chapter chapter--split" id="benchmark" aria-labelledby="ch-bench">
+        <div class="chapter__head">
+          <h3 class="chapter__title" id="ch-bench">Which models can win?</h3>
+          <p class="chapter__lede">
+            Six scenarios, each built around one tactical decision, against the game’s AI
+            on very hard. Each dot is one battle: click it to watch the replay.
+          </p>
+          <p class="chapter__note">
+            Scripted rules lost all 27 of their battles here. Three battles per model is a
+            small sample, and I developed the prompts on these scenarios.
+          </p>
           <a class="action benchmark-cta" href="/benchmarks/total-war/index.html">
             <span class="benchmark-cta__text">
               <span class="benchmark-cta__title">Open the full benchmark</span>
-              <span class="benchmark-cta__note">Six scenarios · model comparisons · battle replays</span>
+              <span class="benchmark-cta__note">Scenarios · models · every battle replay</span>
             </span>
             <svg class="benchmark-cta__arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9.5M8.5 4l4 4-4 4" /></svg>
           </a>
         </div>
-        <p class="feature__point">
-          The LLM’s cavalry (<span class="ink-model">in&nbsp;blue</span>) rides
-          around the halberd screen and into the guns behind it, while its
-          horse archers pull a halberd unit away. Its orders act on a view of
-          the battle that is typically 5&nbsp;s old.
-        </p>
-        <BattleReplay variant="feature" />
+        <ResultsGrid />
       </section>
 
-      <section class="game" id="slay-the-spire" aria-labelledby="spire-title">
+      <section class="chapter" id="multiplayer" aria-labelledby="ch-team">
+        <div class="chapter__head">
+          <h3 class="chapter__title" id="ch-team">Next: agents as teammates.</h3>
+          <p class="chapter__lede">
+            Each agent gets its own copy of the game and sees only what its player can see.
+            The game’s own multiplayer joins them in one battle.
+          </p>
+        </div>
+        <TeamPlan />
+      </section>
+
+      <section class="game chapter" id="slay-the-spire" aria-labelledby="spire-title">
         <div class="game__head">
           <h3 class="game__title" id="spire-title">Slay the Spire</h3>
-          <p class="game__kind">Turn-based full runs</p>
+          <p class="game__kind">Same project · turn-based full runs</p>
         </div>
         <p class="feature__point">
           A model plays complete Ironclad runs. When one goes wrong, I first
           check whether the model chose badly or the interface misled it.
         </p>
         <RunProgress />
-        <p class="game__note">
-          <span class="game__note-label">One diagnosis</span>
-          With the Gambling Chip relic the game asks which cards to discard,
-          but the prompt read like any other card choice, so the model
-          sometimes discarded cards it meant to play. The latest prompt says
-          the selection is Gambling Chip’s, but it hasn’t had a full run yet.
-        </p>
         <ul class="link-row game__links">
           <li><a href="https://github.com/nivaldoh/slay_the_spire_ai/blob/main/docs/spire/fullrun/README.md" rel="noopener">Run notes</a></li>
+        </ul>
+      </section>
+
+      <section class="build" aria-labelledby="build-title">
+        <h3 class="build__title" id="build-title">How I build it</h3>
+        <p class="build__text">
+          Claude Code and Codex agents write most of the code. I decide what to build and
+          how to check it: nothing counts as working until a check I agreed on passes.
+        </p>
+        <ul class="build__facts">
+          {buildFacts.map((f) => (
+            <li><span class="build__n">{f.n}</span> {f.label}</li>
+          ))}
         </ul>
       </section>
     </div>
@@ -298,49 +374,42 @@ const index = [
 </BaseLayout>
 
 <style>
-  /* ---------- Hero ---------- */
-  .hero {
+  /* ---------- Who I am, and the index of the work ---------- */
+  .intro {
     display: grid;
-    gap: 2.5rem;
-    align-items: center;
-    padding-top: clamp(1.5rem, 4vw, 3.5rem);
-    padding-bottom: clamp(3rem, 6vw, 5rem);
+    gap: 2rem 4rem;
+    align-items: start;
+    padding-top: clamp(2rem, 4vw, 3rem);
+    padding-bottom: clamp(3rem, 6vw, 4.5rem);
   }
 
-  .hero__title {
-    font-size: var(--step-4);
-    font-weight: 380;
-    line-height: 1.02;
+  .intro__title {
     margin: 0;
-    max-width: 12ch;
+    max-width: 22ch;
+    font-size: var(--step-2);
+    font-weight: 460;
+    line-height: 1.2;
   }
 
-  .hero__lede {
-    font-size: var(--step-1);
-    line-height: 1.5;
-    margin: 1.6rem 0 0;
-    max-width: 34ch;
-  }
-
-  .hero__context {
+  .intro__context {
     color: var(--fg-muted);
     font-size: var(--step--1);
-    margin: 1rem 0 0;
-    max-width: 42ch;
+    margin: 0.9rem 0 0;
+    max-width: 44ch;
   }
 
-  .hero__open {
+  .intro__open {
     margin: 0.4rem 0 0;
     font-size: var(--step--1);
-    color: var(--fg);
+  }
+
+  @media (min-width: 64rem) {
+    .intro {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    }
   }
 
   /* The index of the work below: number, title and a short note. */
-  .hero__index {
-    margin-top: 2.2rem;
-    max-width: 34rem;
-  }
-
   .hero__index ol {
     margin: 0;
     padding: 0;
@@ -392,22 +461,157 @@ const index = [
     }
   }
 
-  /* A square (FlankTrace's own root, hence :global): cap it until it shares
-     the row with the headline. */
-  .hero :global(.hero__visual) {
-    width: 100%;
-    max-width: 34rem;
+  /* ---------- Total War: numbers and chapters ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    margin: 0 0 clamp(3rem, 6vw, 4.5rem);
+    padding: 0;
+    list-style: none;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-plate);
+    overflow: hidden;
+  }
+
+  .stat {
+    display: grid;
+    gap: 0.15rem;
+    padding: 1rem 1.1rem 0.9rem;
+    background: var(--bg-elev);
+  }
+
+  .stat__n {
+    font-size: var(--step-3);
+    font-weight: 400;
+    line-height: 1;
+    color: var(--fg-strong);
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  .stat__label {
+    font: var(--step--2)/1.4 var(--font-mono);
+    color: var(--fg-muted);
+  }
+
+  @media (min-width: 48rem) {
+    .stats {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .chapter + .chapter,
+  .chapter + .build {
+    margin-top: clamp(4rem, 2.5rem + 5vw, 6.5rem);
+  }
+
+  .chapter__head {
+    margin-bottom: 1.3rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .chapter__title {
+    margin: 0;
+    font-size: var(--step-3);
+    font-weight: 420;
+    line-height: 1.1;
+  }
+
+  .chapter__lede {
+    margin: 0.7rem 0 0;
+    max-width: 58ch;
+    font-size: var(--step-1);
+    line-height: 1.45;
+    color: var(--fg);
+  }
+
+  .chapter__note {
+    margin: 0.7rem 0 0;
+    max-width: 52ch;
+    font-size: var(--step--1);
+    color: var(--fg-muted);
+  }
+
+  .chapter__caption {
+    margin-top: 0.9rem;
+    max-width: 78ch;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    line-height: 1.55;
+  }
+
+  .chapter .benchmark-cta {
+    margin-top: 1.4rem;
+  }
+
+  /* Text beside the figure on wide screens. */
+  @media (min-width: 64rem) {
+    .chapter--split {
+      display: grid;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: 0 3.5rem;
+      align-items: start;
+    }
+
+    .chapter--split .chapter__head {
+      margin-bottom: 0;
+    }
+  }
+
+  /* How the work is done: one line and three facts. */
+  .build {
+    display: grid;
+    gap: 0.8rem 3.5rem;
+    padding: clamp(1.2rem, 3vw, 1.8rem);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-plate);
+    background: var(--bg-plate);
+  }
+
+  .build__title {
+    margin: 0;
+    font: 0.8rem/1.4 var(--font-mono);
+    letter-spacing: 0.02em;
+    color: var(--accent);
+    font-weight: 400;
+  }
+
+  .build__text {
+    margin: 0;
+    max-width: 52ch;
+    font-size: var(--step-1);
+    line-height: 1.45;
+    color: var(--fg-strong);
+  }
+
+  .build__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.8rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--step--1);
+    color: var(--fg-muted);
+  }
+
+  .build__n {
+    font-family: var(--font-mono);
+    color: var(--fg-strong);
   }
 
   @media (min-width: 64rem) {
-    .hero {
-      grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
-      gap: 4rem;
+    .build {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      grid-template-areas: 'title title' 'text facts';
+      align-items: center;
     }
 
-    .hero :global(.hero__visual) {
-      max-width: none;
-    }
+    .build__title { grid-area: title; }
+    .build__text { grid-area: text; }
+    .build__facts { grid-area: facts; flex-direction: column; }
   }
 
   /* ---------- Featured projects ---------- */
@@ -457,8 +661,9 @@ const index = [
   }
 
   /* One game of the project: a ruled header, the point, the figure. */
-  .game + .game {
-    margin-top: clamp(3.5rem, 2rem + 4vw, 5.5rem);
+  .chapter + .game,
+  .game + .build {
+    margin-top: clamp(4rem, 2.5rem + 5vw, 6.5rem);
   }
 
   .game__head {
@@ -682,6 +887,7 @@ const index = [
 
   .about__head {
     margin-bottom: 1.2rem;
+    align-items: start;
   }
 
   .about__bio {

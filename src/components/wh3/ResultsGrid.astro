@@ -1,0 +1,258 @@
+---
+// Every battle of the matched rounds as one dot, read at build time from the published
+// benchmark's embedded report data (public/benchmarks/total-war/index.html, imported by
+// scripts/import_wh3_benchmark.py), so the dots and the benchmark cannot disagree.
+//
+// Rounds, identified by recorded job names as the importer does:
+// - M1 (16 Oct 2026): gpt-6-sol and gpt-6-luna, three battles per scenario
+//   (jobs bench-b12-m1-*, plus the two initial bench-b12-caster-assault-20261016 trials);
+// - M1c, afterwards: gpt-6.1-sol on four of the six scenarios (jobs bench-b12-m1c-*);
+// - Scripted: every recorded scripted reference on the same six scenarios (attack_nearest,
+//   rush_nearest, hold and the hand-written calibration scripts), across rounds; not drawn,
+//   its total is in the page text (0 of 27 won).
+// All llm_rules at low reasoning effort against the game's AI on very hard, unpaused at 1x.
+import fs from 'node:fs';
+import path from 'node:path';
+
+const html = fs.readFileSync(path.join(process.cwd(), 'public/benchmarks/total-war/index.html'), 'utf8');
+const m = html.match(/<script id="report-data" type="application\/json">([\s\S]*?)<\/script>/);
+if (!m) throw new Error('ResultsGrid: no report-data in the benchmark page');
+const data = JSON.parse(m[1]);
+
+interface Dot { id: string; won: boolean; replay: boolean }
+type RowKey = 'gpt-6.1-sol' | 'gpt-6-sol' | 'gpt-6-luna' | 'scripted';
+const ROWS: { key: RowKey; label: string; note?: string }[] = [
+  { key: 'gpt-6-sol', label: 'gpt-6-sol' },
+  { key: 'gpt-6-luna', label: 'gpt-6-luna' },
+  { key: 'gpt-6.1-sol', label: 'gpt-6.1-sol', note: 'later, 4 scenarios' },
+];
+const SCRIPTED = /^(attack_nearest|rush_nearest|hold|twwarhammer3\.battle\.calibration:)/;
+
+function rowOf(trial: any): RowKey | null {
+  const job: string = trial.instance;
+  const model: string | undefined = trial.card?.model;
+  if (job.startsWith('bench-b12-m1c-') && model === 'gpt-6.1-sol') return 'gpt-6.1-sol';
+  if ((job.startsWith('bench-b12-m1-') || job === 'bench-b12-caster-assault-20261016')
+      && (model === 'gpt-6-sol' || model === 'gpt-6-luna')) return model;
+  if (!model && SCRIPTED.test(trial.policy)) return 'scripted';
+  return null;
+}
+
+const scenarios = data.scenarios.map((s: any) => ({ name: s.name, short: s.short, id: s.id, cells: {} as Record<RowKey, Dot[]> }));
+const byName = Object.fromEntries(scenarios.map((s: any) => [s.name, s]));
+data.report.groups.forEach((g: any, gi: number) => {
+  const s = byName[g.definition.scenario_name];
+  if (!s) return;
+  g.trials.forEach((tr: any, ti: number) => {
+    const row = rowOf(tr);
+    if (!row) return;
+    if (row !== 'scripted' && (tr.card?.effort !== 'low' || tr.policy.split('@')[0] !== 'llm_rules' || !tr.valid)) {
+      throw new Error(`ResultsGrid: unexpected trial settings in g${gi}-t${ti}`);
+    }
+    const id = `g${gi}-t${ti}`;
+    (s.cells[row] ??= []).push({ id, won: tr.outcome === 'won', replay: id in data.replays });
+  });
+});
+// The matched rounds are exactly three battles per model and scenario.
+for (const s of scenarios) for (const k of ['gpt-6-sol', 'gpt-6-luna'] as const) {
+  if (s.cells[k]?.length !== 3) throw new Error(`ResultsGrid: ${k} on ${s.name} has ${s.cells[k]?.length ?? 0} battles`);
+}
+const scriptedDots = scenarios.flatMap((s: any) => s.cells.scripted ?? []);
+if (scriptedDots.length !== 27 || scriptedDots.some((d: Dot) => d.won)) {
+  throw new Error('ResultsGrid: the page text says scripted rules lost all 27; update it');
+}
+const totals = Object.fromEntries(ROWS.map((r) => {
+  const dots = scenarios.flatMap((s: any) => s.cells[r.key] ?? []);
+  return [r.key, { won: dots.filter((d: Dot) => d.won).length, n: dots.length }];
+}));
+const replayUrl = (id: string) => `/benchmarks/total-war/index.html?battle=${id}`;
+---
+
+<figure class="rg">
+  <div class="rg__scroll">
+    <table class="rg__table">
+      <caption class="visually-hidden">Wins per battle against the game’s AI on very hard, by scenario and controller</caption>
+      <thead>
+        <tr>
+          <th scope="col" class="rg__corner"><span class="visually-hidden">Scenario</span><span aria-hidden="true">won / played</span></th>
+          {ROWS.map((r) => (
+            <th scope="col">
+              <span class="rg__model">{r.label.startsWith('gpt-') ? <Fragment>gpt-<wbr />{r.label.slice(4)}</Fragment> : r.label}</span>
+              <span class="rg__total"><span class="visually-hidden">won </span>{totals[r.key].won}/{totals[r.key].n}</span>
+              {r.note && <span class="rg__note">{r.note}</span>}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {scenarios.map((s: any) => (
+          <tr>
+            <th scope="row"><a href={`/benchmarks/total-war/index.html?scenario=${s.id}`}>{s.short}</a></th>
+            {ROWS.map((r) => {
+              const dots: Dot[] = s.cells[r.key] ?? [];
+              return (
+                <td>
+                  {dots.length === 0 ? <span class="rg__none">not played</span> : (
+                    <span class="rg__dots">
+                      {dots.map((dot) => dot.replay ? (
+                        <a class:list={['rg__dot', { 'rg__dot--won': dot.won }]} href={replayUrl(dot.id)}
+                           aria-label={`${r.label}, ${s.short}: ${dot.won ? 'won' : 'lost'}. Watch the replay`} title={`${dot.won ? 'Won' : 'Lost'}: watch the replay`} />
+                      ) : (
+                        <span class:list={['rg__dot', { 'rg__dot--won': dot.won }]} role="img" aria-label={dot.won ? 'won' : 'lost'} />
+                      ))}
+                    </span>
+                  )}
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+  <figcaption class="rg__key">
+    <span><span class="rg__dot rg__dot--won" aria-hidden="true"></span> won</span>
+    <span><span class="rg__dot" aria-hidden="true"></span> lost</span>
+    <slot />
+  </figcaption>
+</figure>
+
+<style>
+  .rg {
+    margin: 0;
+  }
+
+  .rg__scroll {
+    overflow-x: auto;
+  }
+
+  .rg__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--step--1);
+  }
+
+  .rg__table th,
+  .rg__table td {
+    padding: 0.55rem 0.5rem;
+    border-bottom: 1px solid var(--rule);
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  .rg__table thead th {
+    vertical-align: bottom;
+    border-bottom-color: var(--border);
+    font-weight: 400;
+  }
+
+  .rg__model {
+    display: block;
+    font: var(--step--2)/1.3 var(--font-mono);
+    color: var(--fg-strong);
+  }
+
+  .rg__note {
+    display: block;
+    font: var(--step--2)/1.3 var(--font-mono);
+    color: var(--fg-muted);
+    opacity: 0.8;
+  }
+
+  .rg__corner {
+    font: var(--step--2)/1.3 var(--font-mono);
+    color: var(--fg-muted);
+  }
+
+  .rg__total {
+    display: block;
+    font: var(--step--2)/1.3 var(--font-mono);
+    color: var(--fg-muted);
+  }
+
+  .rg__table tbody th {
+    font-weight: 400;
+    white-space: nowrap;
+  }
+
+  .rg__table tbody th a {
+    color: var(--fg-strong);
+    text-decoration: none;
+  }
+
+  .rg__table tbody th a:hover {
+    color: var(--accent);
+  }
+
+  .rg__dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-width: 7.2rem;
+  }
+
+  .rg__dot {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    border: 1.5px solid color-mix(in srgb, var(--fg-muted) 70%, transparent);
+    background: transparent;
+    flex: none;
+  }
+
+  .rg__dot--won {
+    border-color: var(--data-ok);
+    background: var(--data-ok);
+  }
+
+  a.rg__dot {
+    transition: transform 120ms ease, box-shadow 120ms ease;
+  }
+
+  a.rg__dot:hover,
+  a.rg__dot:focus-visible {
+    transform: scale(1.35);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+
+  .rg__none {
+    font: var(--step--2)/1.3 var(--font-mono);
+    color: var(--fg-muted);
+  }
+
+  .rg__key {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 1.2rem;
+    margin-top: 0.8rem;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+  }
+
+  .rg__key > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+  }
+
+  @media (max-width: 30rem) {
+    .rg__table th,
+    .rg__table td {
+      padding: 0.5rem 0.25rem;
+    }
+
+    .rg__table tbody th {
+      white-space: normal;
+      font-size: var(--step--2);
+    }
+
+    .rg__dot {
+      width: 11px;
+      height: 11px;
+    }
+  }
+</style>

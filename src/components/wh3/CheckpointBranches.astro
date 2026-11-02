@@ -1,0 +1,363 @@
+---
+// One saved battle moment, restored once per order batch: the recorded futures side by
+// side. Data: public/media/game-agents/wh3-checkpoint-branches.json, exported by
+// scripts/export_wh3_branches.py from the checkpoint-RL audit "hard-late" (rung at tick
+// 2700 of emp-handgunners-grn-savage-orcs-hard; docs/twwarhammer3/checkpoint-rl.md in
+// github.com/nivaldoh/slay_the_spire_ai). The orders are scripted candidates, not a model.
+//
+// Without script, or with reduced motion, this is the finished figure: every trail to its
+// engine ending. With script, the four panels replay together from the save at 10x, hold
+// the endings, and loop (branches-client.ts).
+import fs from 'node:fs';
+import path from 'node:path';
+import { clock } from './replay-core';
+import { frameFor, radius, stateAt, trail, type BranchData, type Pos } from './branches';
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+const DATA_URL = '/media/game-agents/wh3-checkpoint-branches.json';
+const d: BranchData = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'public', DATA_URL), 'utf8'));
+const fr = frameFor(d);
+const end = Math.max(...d.futures.map((f) => f.end_ms));
+const kind = (id: string) => d.units.find((u) => u.id === id)!;
+
+// Shapes: circle = Spearmen, square = Handgunners, diamond = the game AI's Savage Orcs.
+const shape = (id: string) => (kind(id).side === 'ai' ? 'diamond' : kind(id).name === 'Handgunners' ? 'square' : 'circle');
+
+function marker(id: string, p: Pos) {
+  if (!p) return null;
+  const u = kind(id);
+  const r = radius(p[2], u.men0);
+  return { x: p[0] - fr.x0, y: fr.z1 - p[1], r, flee: p[3] === 1, side: u.side, shape: shape(id) };
+}
+
+// The orcs' approach before the save, from the source battle (clipped by the crop).
+const approach = trail(fr, d.trunk.pos['e1'] ?? [], d.trunk.t.length - 1);
+const save = d.units.map((u) => ({ id: u.id, m: marker(u.id, stateAt(d.trunk.pos[u.id], d.trunk.t.length - 1)) }));
+
+const panels = d.futures.map((f) => ({
+  id: f.id,
+  label: f.label,
+  won: f.result === 'won',
+  end: clock(f.end_ms / 1000),
+  launches: 1 + f.same_as.length,
+  trails: d.units.map((u) => ({ id: u.id, side: u.side, d: trail(fr, f.pos[u.id], f.t.length - 1) })),
+  marks: d.units.map((u) => ({ id: u.id, m: marker(u.id, stateAt(f.pos[u.id], f.t.length - 1)) })),
+}));
+const launches = panels.reduce((n, p) => n + p.launches, 0);
+const orders = new Set(d.futures.flatMap((f) => [f.id, ...f.same_as.map((s) => s.order)])).size;
+const savePoint = save.find((s) => s.id === 'f1')?.m;
+
+// A faint 50 m grid aligned to the game's coordinates, and a 100 m scale bar.
+const GRID_M = 50;
+let grid = '';
+for (let x = Math.ceil(fr.x0 / GRID_M) * GRID_M; x < fr.x0 + fr.side; x += GRID_M) grid += `M${x - fr.x0} 0V${fr.side}`;
+for (let z = Math.floor(fr.z1 / GRID_M) * GRID_M; z > fr.z1 - fr.side; z -= GRID_M) grid += `M0 ${fr.z1 - z}H${fr.side}`;
+const SCALE_M = 100;
+---
+
+<figure
+  class:list={['cb', className]}
+  data-cb
+  data-src={DATA_URL}
+  aria-label={`One saved battle moment at ${clock(d.save_ms / 1000)}, restored ${launches} times with ${orders} different orders, which played out ${panels.length} different battles: ${panels.map((p) => `${p.label}, ${p.won ? 'won' : 'lost'} at ${p.end}`).join('; ')}.`}
+>
+  <div class="cb__bar">
+    <p class="cb__clock">
+      <span class="cb__saved">Saved at {clock(d.save_ms / 1000)}</span>
+      <span class="cb__now-label" aria-hidden="true">battle time</span>
+      <span class="cb__now" data-cb-now aria-hidden="true">{clock(end / 1000)}</span>
+    </p>
+    <ul class="cb__legend" aria-hidden="true">
+      <li><svg viewBox="-8 -8 16 16"><circle r="5.5" class="cb__mk cb__mk--model" /></svg>Spearmen</li>
+      <li><svg viewBox="-8 -8 16 16"><rect x="-5" y="-5" width="10" height="10" class="cb__mk cb__mk--model" /></svg>Handgunners</li>
+      <li><svg viewBox="-8 -8 16 16"><path d="M0-6.5L6.5 0 0 6.5-6.5 0z" class="cb__mk cb__mk--ai" /></svg>Savage Orcs (game AI)</li>
+      <li><svg viewBox="-8 -8 16 16"><circle r="5" class="cb__mk cb__mk--model cb__mk--flee" /></svg>fleeing</li>
+    </ul>
+    <button class="cb__toggle" type="button" data-cb-toggle hidden>Pause</button>
+  </div>
+
+  <ol class="cb__panels">
+    {panels.map((p, k) => (
+      <li class="cb__panel" data-cb-panel={k}>
+        <p class="cb__order">{p.label}</p>
+        <div class="cb__frame">
+          <svg class="cb__map" viewBox={`0 0 ${fr.side} ${fr.side}`} aria-hidden="true">
+            <path class="cb__grid" d={grid} />
+            <path class="cb__approach" d={approach} />
+            <g class="cb__scale" transform={`translate(${fr.side - SCALE_M - 14} ${fr.side - 16})`}>
+              <path d={`M0 -5V0H${SCALE_M}V-5`} />
+              <text x={SCALE_M / 2} y="-9">100 m</text>
+            </g>
+            {savePoint && <text class="cb__save-label" x={savePoint.x - 6} y={savePoint.y + 36}>saved here</text>}
+            <g class="cb__save">
+              {save.map(({ m }) => m && (
+                m.shape === 'diamond'
+                  ? <path d={`M${m.x} ${m.y - m.r}l${m.r} ${m.r}-${m.r} ${m.r}-${m.r}-${m.r}z`} />
+                  : m.shape === 'square'
+                    ? <rect x={m.x - m.r * 0.85} y={m.y - m.r * 0.85} width={m.r * 1.7} height={m.r * 1.7} />
+                    : <circle cx={m.x} cy={m.y} r={m.r} />
+              ))}
+            </g>
+            {p.trails.map((t) => <path class:list={['cb__trail', `cb__trail--${t.side}`]} d={t.d} data-u={t.id} />)}
+            {p.marks.map(({ id, m }) => m && (
+              <g class:list={['cb__unit', `cb__unit--${m.side}`, { 'cb__unit--flee': m.flee }]} data-u={id} transform={`translate(${m.x} ${m.y})`}>
+                {m.shape === 'diamond'
+                  ? <path class="cb__mk" d={`M0 ${-m.r}L${m.r} 0 0 ${m.r}${-m.r} 0z`} />
+                  : m.shape === 'square'
+                    ? <rect class="cb__mk" x={-m.r * 0.85} y={-m.r * 0.85} width={m.r * 1.7} height={m.r * 1.7} />
+                    : <circle class="cb__mk" r={m.r} />}
+              </g>
+            ))}
+          </svg>
+          <p class:list={['cb__stamp', p.won ? 'cb__stamp--won' : 'cb__stamp--lost']} data-cb-stamp>
+            {p.won ? 'Won' : 'Lost'} <span>{p.end}</span>
+          </p>
+        </div>
+      </li>
+    ))}
+  </ol>
+  <slot />
+</figure>
+
+<script>
+  import { initBranches } from './branches-client';
+  document.querySelectorAll<HTMLElement>('[data-cb]').forEach(initBranches);
+</script>
+
+<style>
+  .cb {
+    margin: 0;
+  }
+
+  .cb__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1.6rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .cb__clock {
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+    margin: 0;
+    font: var(--step--1)/1.3 var(--font-mono);
+  }
+
+  .cb__saved {
+    color: var(--accent);
+  }
+
+  .cb__now-label {
+    color: var(--fg-muted);
+  }
+
+  .cb__save-label {
+    fill: var(--fg-muted);
+    font: 15px var(--font-mono);
+    text-anchor: end;
+  }
+
+  .cb__now {
+    min-width: 4ch;
+    color: var(--fg-strong);
+    font-size: var(--step-1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cb__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font: var(--step--2)/1.4 var(--font-mono);
+    color: var(--fg-muted);
+  }
+
+  .cb__legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .cb__legend svg {
+    width: 0.9rem;
+    height: 0.9rem;
+    overflow: visible;
+  }
+
+  .cb__toggle {
+    margin-left: auto;
+    padding: 0.2rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--bg-control);
+    color: var(--fg);
+    font: var(--step--2)/1.4 var(--font-mono);
+    cursor: pointer;
+  }
+
+  .cb__toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .cb__panels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 56rem) {
+    .cb__panels {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .cb__order {
+    margin: 0 0 0.4rem;
+    font-size: var(--step-0);
+    line-height: 1.3;
+    color: var(--fg-strong);
+  }
+
+  .cb__frame {
+    position: relative;
+    background: var(--bg-plate);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-plate);
+    overflow: hidden;
+  }
+
+  .cb__map {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .cb__grid {
+    fill: none;
+    stroke: var(--data-grid);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .cb__scale path {
+    fill: none;
+    stroke: var(--fg-muted);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .cb__scale text {
+    fill: var(--fg-muted);
+    font: 15px var(--font-mono);
+    text-anchor: middle;
+  }
+
+  .cb__approach {
+    fill: none;
+    stroke: var(--data-ai);
+    stroke-opacity: 0.35;
+    stroke-width: 2;
+    stroke-dasharray: 2 6;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .cb__save > * {
+    fill: none;
+    stroke: var(--fg-muted);
+    stroke-opacity: 0.6;
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .cb__trail {
+    fill: none;
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .cb__trail--model {
+    stroke: var(--data-model);
+    stroke-opacity: 0.75;
+  }
+
+  .cb__trail--ai {
+    stroke: var(--data-ai);
+    stroke-opacity: 0.75;
+  }
+
+  .cb__mk {
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .cb__unit--model .cb__mk,
+  .cb__mk--model {
+    fill: var(--data-model);
+    stroke: var(--bg);
+  }
+
+  .cb__unit--ai .cb__mk,
+  .cb__mk--ai {
+    fill: var(--data-ai);
+    stroke: var(--bg);
+  }
+
+  .cb__unit--flee .cb__mk,
+  .cb__mk--flee {
+    fill: none;
+    stroke: var(--data-model);
+    stroke-dasharray: 2.5 2;
+  }
+
+  .cb__unit--ai.cb__unit--flee .cb__mk {
+    stroke: var(--data-ai);
+  }
+
+  .cb__stamp {
+    position: absolute;
+    left: 0.55rem;
+    bottom: 0.45rem;
+    margin: 0;
+    padding: 0.1rem 0.5rem;
+    border-radius: var(--radius-control);
+    font: 600 var(--step--1)/1.4 var(--font-mono);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: opacity 200ms ease;
+  }
+
+  .cb__stamp span {
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  .cb__stamp--won {
+    color: var(--bg);
+    background: var(--data-ok);
+  }
+
+  .cb__stamp--lost {
+    color: var(--bg);
+    background: var(--data-miss);
+  }
+
+  .cb__stamp[data-hidden] {
+    opacity: 0;
+  }
+</style>

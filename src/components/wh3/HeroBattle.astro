@@ -1,0 +1,265 @@
+---
+// The homepage opening: a real in-game frame and the model's own replies from the same
+// battle. Source: bench-b13-v1e-caster-cannon2-sol61-20261016/episode-0000 in the
+// game-agents repository (github.com/nivaldoh/slay_the_spire_ai): the "first rout" still
+// (battle time 167.3 s, game window only, no overlay; the top 56 px of game interface,
+// the battle countdown, cropped off) and the `reason` field of the
+// model's decisions in trace.jsonl, quoted verbatim. Each time is the battle time of the
+// observation the reply answered. gpt-6.1-sol, low reasoning, rules-only prompt v20,
+// Tzeentch (5 units) against Skaven (12 units, two extra Warp Lightning Cannons), the
+// game's AI on very hard, unpaused at 1x; won at 370.5 s (one battle, results.csv).
+import { Picture } from 'astro:assets';
+import still from '../../assets/work/game-agents/wh3-caster-assault-sol61.jpg';
+
+interface Props {
+  ctaHref: string;
+  benchmarkHref: string;
+}
+const { ctaHref, benchmarkHref } = Astro.props;
+
+const replies = [
+  { t: '0:05', text: 'Approach around the western side of the central obstruction while flyers prepare to neutralize enemy artillery.' },
+  { t: '2:22', text: 'Send both flyers directly onto the exposed cannons while the ground force holds and concentrates fire.' },
+  { t: '2:47', text: 'Switch ground attacks from routing spearmen to clanrats while keeping both cannons under melee pressure.', now: true },
+];
+---
+
+<section class="hb" aria-labelledby="hb-title">
+  <div class="hb__media">
+    <Picture
+      src={still}
+      formats={['avif', 'webp']}
+      widths={[640, 960, 1280, 1920]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+      alt="Total War: WARHAMMER III battle on snow by a pine forest: blue-bannered Tzeentch units, the model’s army, fire bolts into red-bannered Skaven infantry while flying units attack the Skaven artillery in the distance."
+    />
+  </div>
+
+  <div class="hb__body container">
+    <div class="hb__text">
+      <p class="hb__eyebrow">Total War: WARHAMMER III · gpt-6.1-sol against the game’s AI</p>
+      <h1 class="hb__title" id="hb-title">I put language models in command of Total War armies.</h1>
+      <p class="hb__lede">
+        In this battle gpt-6.1-sol beat the game’s AI on very hard with 5 units against 12.
+        The battle never pauses while it thinks.
+      </p>
+      <div class="hb__actions">
+        <a class="action hb__cta" href={ctaHref}>See how it works</a>
+        <a class="hb__link" href={benchmarkHref}>Open the benchmark →</a>
+      </div>
+    </div>
+
+    <figure class="hb__feed">
+      <figcaption class="hb__feed-head">
+        <span class="hb__feed-model">gpt-6.1-sol</span>’s replies in this battle, by battle time
+      </figcaption>
+      <ol class="hb__replies">
+        {replies.map((r, k) => (
+          <li class:list={['hb__reply', { 'hb__reply--now': r.now }]} style={`--k:${k}`}>
+            <span class="hb__t">{r.t}</span>
+            <q>{r.text}</q>
+            {r.now && <span class="hb__frame-tag">this frame</span>}
+          </li>
+        ))}
+      </ol>
+      <p class="hb__result">Won at 6:10</p>
+    </figure>
+  </div>
+</section>
+
+<style>
+  .hb {
+    position: relative;
+    isolation: isolate;
+    margin-top: -2rem; /* sit right under the header (main has 2rem of top padding) */
+  }
+
+  .hb__media :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    object-position: 62% 50%;
+  }
+
+  .hb__body {
+    display: grid;
+    gap: 1.8rem;
+    padding-top: 1.6rem;
+    padding-bottom: 1rem;
+  }
+
+  .hb__eyebrow {
+    margin: 0 0 0.9rem;
+    font: 0.8rem/1.4 var(--font-mono);
+    letter-spacing: 0.02em;
+    color: var(--accent);
+  }
+
+  .hb__title {
+    margin: 0;
+    max-width: 17ch;
+    font-size: clamp(2.4rem, 1.4rem + 3.6vw, 4.3rem);
+    font-weight: 400;
+    line-height: 1.02;
+    letter-spacing: 0;
+  }
+
+  .hb__lede {
+    margin: 1.2rem 0 0;
+    max-width: 30ch;
+    font-size: var(--step-1);
+    line-height: 1.45;
+    color: var(--fg-strong);
+  }
+
+  .hb__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.8rem 1.4rem;
+    margin-top: 1.6rem;
+  }
+
+  .hb__cta {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+
+  .hb__link {
+    color: var(--fg-strong);
+  }
+
+  /* The model's replies: a quiet panel, one line per reply, the frame's own reply marked. */
+  .hb__feed {
+    margin: 0;
+    padding: 1rem 1.1rem 0.9rem;
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--data-model);
+    border-radius: var(--radius-plate);
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    max-width: 36rem;
+  }
+
+  .hb__feed-head {
+    margin: 0 0 0.6rem;
+    font: var(--step--2)/1.4 var(--font-mono);
+    color: var(--fg-muted);
+  }
+
+  .hb__feed-model {
+    color: var(--data-model);
+  }
+
+  .hb__replies {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hb__reply {
+    display: grid;
+    grid-template-columns: 2.6rem minmax(0, 1fr);
+    gap: 0 0.6rem;
+    font-size: var(--step--1);
+    line-height: 1.45;
+    color: var(--fg);
+  }
+
+  .hb__reply q {
+    quotes: '“' '”';
+  }
+
+  .hb__reply--now {
+    color: var(--fg-strong);
+  }
+
+  .hb__t {
+    font: var(--step--2)/1.75 var(--font-mono);
+    color: var(--fg-muted);
+  }
+
+  .hb__reply--now .hb__t {
+    color: var(--data-model);
+  }
+
+  .hb__frame-tag {
+    grid-column: 2;
+    justify-self: start;
+    margin-top: 0.2rem;
+    padding: 0 0.4rem;
+    border: 1px solid color-mix(in srgb, var(--data-model) 60%, transparent);
+    border-radius: var(--radius-control);
+    font: var(--step--2)/1.5 var(--font-mono);
+    color: var(--data-model);
+  }
+
+  .hb__result {
+    margin: 0.8rem 0 0;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--border);
+    font: var(--step--2)/1.4 var(--font-mono);
+    color: var(--data-ok);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hb__reply {
+      animation: hb-in 500ms ease both;
+      animation-delay: calc(400ms + var(--k) * 650ms);
+    }
+
+    @keyframes hb-in {
+      from { opacity: 0; transform: translateY(4px); }
+    }
+  }
+
+  /* Wide screens: the frame fills the opening; text and replies sit over its darker left. */
+  @media (min-width: 64rem) {
+    .hb {
+      min-height: clamp(36rem, 86vh, 54rem);
+      display: grid;
+      align-items: end;
+    }
+
+    .hb__media {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+    }
+
+    .hb__media :global(picture),
+    .hb__media :global(img) {
+      width: 100%;
+      height: 100%;
+      aspect-ratio: auto;
+    }
+
+    .hb__media :global(img) {
+      object-position: 60% 40%;
+    }
+
+    .hb__media::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(10, 12, 16, 0.94) 0%, rgba(10, 12, 16, 0.82) 30%, rgba(10, 12, 16, 0.25) 58%, rgba(10, 12, 16, 0) 75%),
+        linear-gradient(0deg, var(--bg) 0%, rgba(10, 12, 16, 0) 22%);
+    }
+
+    .hb__body {
+      grid-template-columns: minmax(0, 34rem);
+      align-content: end;
+      gap: 2.2rem;
+      padding-top: 4rem;
+      padding-bottom: 3rem;
+    }
+  }
+</style>
