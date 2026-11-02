@@ -117,6 +117,8 @@ The current recording is `bench-c1-cavalry-ai11-02-20261015/episode-0000`. Its k
 
 The homepage opens on a real in-game frame (`src/assets/work/game-agents/wh3-caster-assault-sol61.jpg`, the "first rout" still, with the top 56 px of game interface cropped off, of `bench-b13-v1e-caster-cannon2-sol61-20261016/episode-0000`, battle time 167.3 s) beside the model's own replies from that battle, quoted verbatim from the `reason` field of its decisions in `trace.jsonl`; each time is the battle time of the observation the reply answered. `HeroBattle.astro` names the source.
 
+With motion allowed, the opening cross-fades to the same battle's "ending" still (6:10, the game's Victory banner). **To do (owner, 2 November 2026):** record a short gameplay clip of a model-commanded battle to replace the two stills, later, when the game is free (not during another job; the controller and capture tools are in the game repository).
+
 `CheckpointBranches` shows one saved battle moment restored with different orders. Its data comes from the checkpoint-RL audit `hard-late` in the game repository; regenerate it with:
 
 ```bash
