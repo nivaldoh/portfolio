@@ -10,9 +10,11 @@
 //   (n = 1; nothing multiplayer ran);
 // - zero live multiplayer battles; a second licence and a cloud client come first.
 interface Props {
+  /** false: the diagram alone (the homepage); the case study shows the status steps. */
+  steps?: boolean;
   class?: string;
 }
-const { class: className } = Astro.props;
+const { steps: showSteps = true, class: className } = Astro.props;
 
 const clients = [
   { name: 'Client 1', where: 'My PC' },
@@ -53,7 +55,7 @@ const steps = [
     <p class="tp__coord"><span>Coordinator</span> starts the battle, records both clients, can stop it</p>
   </div>
 
-  <ol class="tp__steps">
+  {showSteps && <ol class="tp__steps">
     {steps.map((s) => (
       <li class:list={['tp__step', { 'tp__step--done': s.done }]}>
         <span class="tp__mark" aria-hidden="true">{s.done ? '✓' : ''}</span>
@@ -61,7 +63,7 @@ const steps = [
         <span class="tp__step-note">{s.note}</span>
       </li>
     ))}
-  </ol>
+  </ol>}
   <slot />
 </figure>
 

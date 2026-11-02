@@ -29,10 +29,12 @@ import {
 interface Props {
   /** `feature`: homepage (map key folded). `full`: case study (map key open, event list). */
   variant?: 'feature' | 'full';
+  /** false: hide the analyst notes panel (the homepage keeps the replay lean). */
+  notes?: boolean;
   class?: string;
 }
 
-const { variant = 'feature', class: className } = Astro.props;
+const { variant = 'feature', notes = true, class: className } = Astro.props;
 
 const SRC = '/media/game-agents/wh3-cavalry-flank.json';
 const r: Replay = JSON.parse(
@@ -55,7 +57,7 @@ const uid = `br-${Math.random().toString(36).slice(2, 8)}`;
 ---
 
 <div
-  class:list={['br', `br--${variant}`, className]}
+  class:list={['br', `br--${variant}`, { 'br--no-notes': !notes }, className]}
   data-battle-replay
   data-src={SRC}
   data-t={T0}
@@ -671,6 +673,10 @@ const uid = `br-${Math.random().toString(36).slice(2, 8)}`;
     background: color-mix(in srgb, var(--accent) 5%, var(--bg-plate));
     font-size: var(--step--1);
     line-height: 1.5;
+  }
+
+  .br--no-notes .br__note {
+    display: none;
   }
 
   .br__note[hidden] {

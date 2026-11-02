@@ -7,7 +7,6 @@ import HeroBattle from '../components/wh3/HeroBattle.astro';
 import CheckpointBranches from '../components/wh3/CheckpointBranches.astro';
 import ResultsGrid from '../components/wh3/ResultsGrid.astro';
 import TeamPlan from '../components/wh3/TeamPlan.astro';
-import RunProgress from '../components/slay/RunProgress.astro';
 import DevelopmentRecordings from '../components/robocasa/DevelopmentRecordings.astro';
 import ResultsChart from '../components/tcg/ResultsChart.astro';
 import TeacherData from '../components/tcg/TeacherData.astro';
@@ -121,16 +120,18 @@ const stats = [
             orders act on a view of the battle seconds old.
           </p>
         </div>
-        <BattleReplay variant="feature" />
+        <BattleReplay variant="feature" notes={false} />
       </section>
 
       <section class="chapter" id="checkpoints" aria-labelledby="ch-save">
         <div class="chapter__head">
           <h3 class="chapter__title" id="ch-save">Save a battle. Try another future.</h3>
           <p class="chapter__lede">
-            Total War can’t save mid-battle. I built a save from the game’s own replay file: a
-            restore fast-forwards to the saved moment, checking the engine’s checksum on every
-            tick, then plays on live. Below, one saved moment plays out four ways.
+            Total War can’t save mid-battle, so I built a
+            <a href="https://github.com/nivaldoh/wh3-battle-checkpoints" rel="noopener">save tool</a>
+            on the game’s own replay file: a restore fast-forwards to the saved moment, checking
+            the engine’s checksum on every tick, then plays on live. Below, one saved moment
+            plays out four ways.
           </p>
         </div>
         <CheckpointBranches>
@@ -139,7 +140,6 @@ const stats = [
             attack”. In my check of a restored battle, all 2,001 ticks matched the original.
             Restores like these drive a small reinforcement-learning loop (early, mixed
             results in the <a href={`/projects/${game.id}/#save-a-battle-try-another-future`}>case study</a>).
-            The <a href="https://github.com/nivaldoh/wh3-battle-checkpoints" rel="noopener">save tool is public</a>.
           </figcaption>
         </CheckpointBranches>
       </section>
@@ -174,7 +174,12 @@ const stats = [
             The game’s own multiplayer joins them in one battle.
           </p>
         </div>
-        <TeamPlan />
+        <TeamPlan steps={false} />
+        <p class="chapter__caption">
+          Built and tested offline; one live battle read through the new path. Next: a second
+          game licence, a cloud client, then the first multiplayer battle between agents
+          (<a href={`/projects/${game.id}/#next-agents-as-teammates`}>status</a>).
+        </p>
       </section>
 
       <section class="game chapter" id="slay-the-spire" aria-labelledby="spire-title">
@@ -183,13 +188,10 @@ const stats = [
           <p class="game__kind">Same project · turn-based full runs</p>
         </div>
         <p class="feature__point">
-          gpt-6-luna plays complete Ironclad runs. When one goes wrong, I first
-          check whether the model chose badly or the interface misled it.
+          gpt-6-luna plays complete Ironclad runs; the furthest reached Act 4, floor 54.
+          When one goes wrong, I first check whether the model chose badly or the interface
+          misled it. <a href={`/projects/${game.id}/#slay-the-spire`}>The runs</a>
         </p>
-        <RunProgress />
-        <ul class="link-row game__links">
-          <li><a href="https://github.com/nivaldoh/slay_the_spire_ai/blob/main/docs/spire/fullrun/README.md" rel="noopener">Run notes</a></li>
-        </ul>
       </section>
 
       <section class="build" aria-labelledby="build-title">
