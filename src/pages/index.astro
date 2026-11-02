@@ -40,22 +40,15 @@ const index = [
 // The Total War project in numbers, as of 2 November 2026, from the game-agents
 // repository (github.com/nivaldoh/slay_the_spire_ai): rows of
 // docs/twwarhammer3/results.csv at 6314b2f (661 rows, scripted and model battles, 13 Oct to
-// 2 Nov); the 9 distinct models in it (OpenAI, Anthropic, Z.ai, Moonshot AI, Qwen, StepFun); the agreed
-// checkpoint check (docs/agreed-checks.md: 0 checksum mismatches over 2,001 ticks);
-// git rev-list --count HEAD (both games; first commit 11 Oct 2026).
+// 2 Nov) and the 9 distinct models in it (OpenAI, Anthropic, Z.ai, Moonshot AI, Qwen,
+// StepFun); the featured replay's median view age (bench-c1-cavalry-ai11-02, 83 applied
+// batches, battle time); the agreed Land checkpoint check (docs/agreed-checks.md: 0
+// checksum mismatches over 2,001 ticks).
 const stats = [
   { n: '650+', label: 'battles recorded' },
   { n: '9', label: 'models have played' },
-  { n: '2,001', label: 'restored ticks, all matching the original' },
-  { n: '1,215', label: 'commits in 3 weeks' },
-];
-
-// The whole repository (both games), as of 2 November 2026: git rev-list --count HEAD;
-// `def test_` lines under tests/twwarhammer3; the planted-version replay at 515491c
-// (runs/cleanup-20261102, agreed check); wc -l of src/twwarhammer3 and the battle script.
-const buildFacts = [
-  { n: '920', label: 'Total War tests' },
-  { n: '341 of 341', label: 'deliberately planted bugs caught by the tests' },
+  { n: '5.4 s', label: 'median age of the view behind an order' },
+  { n: '2,001', label: 'ticks matched in my restore check' },
 ];
 ---
 
@@ -122,10 +115,10 @@ const buildFacts = [
         <div class="chapter__head">
           <h3 class="chapter__title" id="ch-live">Five seconds behind.</h3>
           <p class="chapter__lede">
-            The battle keeps moving while the model thinks: the view behind each batch of
-            orders was 5.4&nbsp;s old on median. Here gpt-6-sol’s cavalry
+            A different battle, replayed in full: gpt-6-sol’s cavalry
             (<span class="ink-model">in&nbsp;blue</span>) rides around the halberd screen and
-            into the guns behind it.
+            into the guns behind it. The battle keeps moving while the model thinks, so its
+            orders act on a view of the battle seconds old.
           </p>
         </div>
         <BattleReplay variant="feature" />
@@ -190,7 +183,7 @@ const buildFacts = [
           <p class="game__kind">Same project · turn-based full runs</p>
         </div>
         <p class="feature__point">
-          A model plays complete Ironclad runs. When one goes wrong, I first
+          gpt-6-luna plays complete Ironclad runs. When one goes wrong, I first
           check whether the model chose badly or the interface misled it.
         </p>
         <RunProgress />
@@ -205,11 +198,6 @@ const buildFacts = [
           Claude Code and Codex agents write most of the code. I decide what to build and
           how to check it: nothing counts as working until a check I agreed on passes.
         </p>
-        <ul class="build__facts">
-          {buildFacts.map((f) => (
-            <li><span class="build__n">{f.n}</span> {f.label}</li>
-          ))}
-        </ul>
       </section>
     </div>
   </section>
@@ -586,33 +574,7 @@ const buildFacts = [
     color: var(--fg-strong);
   }
 
-  .build__facts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.8rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    font-size: var(--step--1);
-    color: var(--fg-muted);
-  }
 
-  .build__n {
-    font-family: var(--font-mono);
-    color: var(--fg-strong);
-  }
-
-  @media (min-width: 64rem) {
-    .build {
-      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-      grid-template-areas: 'title title' 'text facts';
-      align-items: center;
-    }
-
-    .build__title { grid-area: title; }
-    .build__text { grid-area: text; }
-    .build__facts { grid-area: facts; flex-direction: column; }
-  }
 
   /* ---------- Featured projects ---------- */
   .feature {
