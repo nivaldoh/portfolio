@@ -8,8 +8,12 @@
 // observation the reply answered. gpt-6.1-sol, low reasoning, rules-only prompt v20,
 // Tzeentch (5 units) against Skaven (12 units, two extra Warp Lightning Cannons), the
 // game's AI on very hard, unpaused at 1x; won at 370.5 s (one battle, results.csv).
+// With motion allowed, the frame cross-fades to the same battle's "ending" still (370.5 s,
+// the game's Victory banner; same crop) once the replies are in. Without it, the 2:47
+// frame stays: CSS only, no script.
 import { Picture } from 'astro:assets';
 import still from '../../assets/work/game-agents/wh3-caster-assault-sol61.jpg';
+import victory from '../../assets/work/game-agents/wh3-caster-assault-sol61-victory.jpg';
 
 interface Props {
   ctaHref: string;
@@ -35,6 +39,16 @@ const replies = [
       fetchpriority="high"
       alt="Total War: WARHAMMER III battle on snow by a pine forest: blue-bannered Tzeentch units, the model’s army, fire bolts into red-bannered Skaven infantry while flying units attack the Skaven artillery in the distance."
     />
+    <div class="hb__end">
+      <Picture
+        src={victory}
+        formats={['avif', 'webp']}
+        widths={[640, 960, 1280, 1920]}
+        sizes="100vw"
+        loading="eager"
+        alt="The same battle at 6:10: the game’s Victory banner over the snowfield, the Skaven banners turned white as their units flee."
+      />
+    </div>
   </div>
 
   <div class="hb__body container">
@@ -64,7 +78,10 @@ const replies = [
           </li>
         ))}
       </ol>
-      <p class="hb__result">Won at 6:10</p>
+      <p class="hb__result">
+        <span class="hb__t">6:10</span> Victory
+        <span class="hb__frame-tag hb__frame-tag--end">this frame</span>
+      </p>
     </figure>
   </div>
 </section>
@@ -202,21 +219,89 @@ const replies = [
   }
 
   .hb__result {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.2rem 0.6rem;
     margin: 0.8rem 0 0;
     padding-top: 0.6rem;
     border-top: 1px solid var(--border);
-    font: var(--step--2)/1.4 var(--font-mono);
+    font: var(--step--1)/1.4 var(--font-mono);
     color: var(--data-ok);
   }
 
+  .hb__result .hb__t {
+    width: 2.6rem;
+    color: var(--data-ok);
+  }
+
+  /* The ending frame waits under the opening one; only motion brings it in. */
+  .hb__media {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hb__end {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+  }
+
+  .hb__end :global(picture),
+  .hb__end :global(img) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .hb__frame-tag--end {
+    display: none;
+  }
+
+  /* The battle in two real frames: the replies arrive, then the frame cross-fades to the
+     same battle's ending and the "this frame" tag moves to the last line. */
   @media (prefers-reduced-motion: no-preference) {
-    .hb__reply {
+    .hb__reply,
+    .hb__result {
       animation: hb-in 500ms ease both;
-      animation-delay: calc(400ms + var(--k) * 650ms);
+      animation-delay: calc(400ms + var(--k) * 900ms);
+    }
+
+    .hb__result {
+      --k: 5;
     }
 
     @keyframes hb-in {
       from { opacity: 0; transform: translateY(4px); }
+    }
+
+    .hb__media :global(img) {
+      animation: hb-push 16s ease-out both;
+    }
+
+    @keyframes hb-push {
+      from { transform: scale(1); }
+      to { transform: scale(1.06); }
+    }
+
+    .hb__end {
+      animation: hb-show 1400ms ease 4.9s both;
+    }
+
+    @keyframes hb-show {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .hb__frame-tag--end {
+      display: inline-block;
+    }
+
+    .hb__reply--now .hb__frame-tag {
+      animation: hb-hide 400ms ease 4.9s both;
+    }
+
+    @keyframes hb-hide {
+      to { opacity: 0; }
     }
   }
 
