@@ -1,7 +1,7 @@
 ---
 title: 'Game agents: Total War and Slay the Spire'
-subtitle: 'Language models command real-time battles through a mod I built: the interface, a benchmark, mid-battle saves checked tick by tick and, next, teams of agents in multiplayer'
-description: 'Language models command Total War: WARHAMMER III armies in real time through a Lua mod I built: a six-scenario benchmark with replays, save and restore in the middle of a battle checked tick by tick, a small reinforcement-learning loop on saved moments, and multiplayer teams of agents next. Plus full Slay the Spire runs.'
+subtitle: 'Language models command real-time battles through a mod I built: the interface, a benchmark, six ways to command one army, mid-battle saves checked tick by tick and the first scripted battles across two machines'
+description: 'Language models command Total War: WARHAMMER III armies in real time through a Lua mod I built: a six-scenario benchmark with replays, a comparison of six ways to command one army, save and restore in the middle of a battle checked tick by tick, a small reinforcement-learning loop on saved moments, and the first scripted multiplayer battles across two machines. Plus full Slay the Spire runs.'
 summary: 'Language models command armies in Total War through a Lua mod I built, and play full Slay the Spire runs through CommunicationMod.'
 period: '2026'
 order: 1
@@ -13,6 +13,8 @@ links:
     url: https://github.com/nivaldoh/slay_the_spire_ai
   - label: Interactive benchmark
     url: /benchmarks/total-war/index.html
+  - label: Control-method comparison
+    url: /benchmarks/total-war/suite/index.html
   - label: Battle checkpoint tool
     url: https://github.com/nivaldoh/wh3-battle-checkpoints
   - label: Benchmark design
@@ -31,6 +33,8 @@ import Details from '../../components/Details.astro';
 import BattleReplay from '../../components/wh3/BattleReplay.astro';
 import CheckpointBranches from '../../components/wh3/CheckpointBranches.astro';
 import ResultsGrid from '../../components/wh3/ResultsGrid.astro';
+import SuiteGrid from '../../components/wh3/SuiteGrid.astro';
+import TwoClients from '../../components/wh3/TwoClients.astro';
 import TeamPlan from '../../components/wh3/TeamPlan.astro';
 import ControllerModes from '../../components/game-agents/ControllerModes.astro';
 import PlatePair from '../../components/game-agents/PlatePair.astro';
@@ -104,9 +108,11 @@ Total War can’t save in the middle of a battle. My checkpoint is the game’s 
   </CheckpointBranches>
 </div>
 
-The check I agreed on restores a three-unit battle twice, and once with a changed order. Over 2,001 ticks no checksum differed, and the readings taken through each restore (position, men, hit points, ammunition, morale, abilities, clock and script state) equaled the original. The changed restore split from the original at the new order, as it should. Three siege cases passed a separate check. All of this is on one game build.
+The check I agreed on restores a three-unit battle twice, and once with a changed order. On the current game build, both restores matched all 2,000 planned ticks, and the readings taken through each one (position, men, hit points, ammunition, morale, abilities, clock and script state) equaled the original. The changed restore split from the original soon after the new order, as it should. A separate check covers four saved siege states: eight restores of 2,400 ticks each matched, and all four changed-order controls split.
 
-I released the save as a small [public tool for players](https://github.com/nivaldoh/wh3-battle-checkpoints): type `save NAME` during a battle, then open NAME from Replays to play on from that moment.
+Checksums alone are not enough. When I built field towers by hand in a restored siege, supplies and construction changed and the checksums didn’t. The field readings caught it, so the siege check requires them alongside the checksums.
+
+I released the save as a small [public tool for players](https://github.com/nivaldoh/wh3-battle-checkpoints): type `save NAME` during a battle, then open NAME from Replays to play on from that moment. The release still targets the earlier game build (25961564); the port to the current build isn’t released yet.
 
 <Details summary="Reinforcement learning from saved moments">
 
@@ -149,11 +155,47 @@ Three battles per model is too few to rank models, and I developed the prompts o
 
 More enemies don’t automatically make a better test. With two or four extra Gyrocopters in the swarm battle, gpt-6.1-sol still won both times. Four extra cavalry in the siege did cause losses, partly by overwhelming the breach rather than by testing the reserve decision the scenario was built around. Each variant was a single battle. A harder variant should create a choice the controller can actually make.
 
-## Next: agents as teammates
+## Same army, six chains of command
 
-Two agents can already split one army on one PC: each commands its own units and sees its teammate’s units, never its orders. The scripted team passed its live check in 4 of 4 launches; a team of language models hasn’t played yet.
+The same army can be commanded in many ways. The coordination suite plays each way on six small battles built to call for coordination, against the game’s AI on very hard. Every method with a model uses Claude Haiku 5.5 on low reasoning. Colour shows who controls each unit, read from each battle’s own record.
 
-The next step uses the game’s own multiplayer: one game client per agent, each limited to what its player can see on that client. My code reads each client’s view and sends that client’s orders; the game carries the battle between clients.
+<div class="wide">
+  <SuiteGrid>
+    <figcaption class="caption">Pick a battle to replay it; click a map for that battle’s full replay. A dash means the method didn’t play that battle.</figcaption>
+  </SuiteGrid>
+</div>
+
+Model over scripts won 4 of 5 and the same scripts alone won 2 of 4, while one model won none of 6. Model over scripts was built with a page of tactics advice, so its lead could have been the advice. The “with tips” column tests that: one model gets similar advice, worded for direct orders, and no scripts. Tips changed how it played (units shared a target for 54% of fighting time, against 28%), but it also won none of 6.
+
+These are unverified leads, not rankings: one battle per pair, no agreed check yet, and I tuned the six battles on earlier rounds of the same battles. The [full comparison](/benchmarks/total-war/suite/index.html) has every replay, measure and cost.
+
+<Details summary="What each method does, and what this doesn’t show">
+
+- **One model.** Orders every unit directly.
+- **One model, with tips.** The same, plus similar tactics advice worded for direct orders.
+- **Three models.** One each for infantry, guns and knights, at the same time. They can’t talk to each other.
+- **Model over scripts.** One model gives standing instructions; scripts carry them out between its replies.
+- **Written rules.** Before each battle, models write frozen rules per unit class. In battle, a model only suggests targets every 30 seconds.
+- **Scripts only.** The same scripts with no model, at no cost.
+- **Paired result.** Model over scripts did better than one model on all 5 shared battles: it won 4, and in the fifth both lost and it scored higher (sign test p = 0.0625, the lowest five pairs can give). Against scripts alone it did better on 3 of 4 (p = 0.625), so the two aren’t separated.
+- **Unmeasured.** Model over scripts has never run without its tips, so the advice’s part in its wins is unknown.
+- **Coverage.** 32 of 34 planned battles played, on one game build. The tips battles ran later the same day, at a different code revision.
+- **Not as designed.** In Pincer the enemy block split in all six battles, in Defeat in detail the two waves arrived within 15 s of each other, and in Breakout neither win kept its infantry on one target.
+- **Status.** The suite’s check is only proposed, and its design choices wait for my review, so nothing here counts as verified yet.
+
+</Details>
+
+## Two machines, one battle
+
+On one PC, agents can already split an army; that’s the “three models” column above. The next step gives each agent its own copy of the game, limited to what its player can see on that client. My code reads each client’s view and sends that client’s orders. The game’s own multiplayer carries the battle between clients.
+
+On 3 November my PC and a cloud VM played the first two battles this way, with scripted moves and lobbies set up by hand; neither ran to a recorded ending. In the first, a move sent from the PC appeared on the VM, and all 553 unit positions compared at 79 shared battle times were identical. In the second, both machines sent moves, and each phase moved only the named army on both clients. No language model has played this way yet, each result rests on one battle, and no check is agreed yet.
+
+<div class="wide">
+  <TwoClients>
+    <figcaption class="caption">The first 100 seconds of the first battle as each machine recorded it, at the battle times both sampled. Only the PC sent a move here.</figcaption>
+  </TwoClients>
+</div>
 
 <div class="wide">
   <TeamPlan />
@@ -161,20 +203,20 @@ The next step uses the game’s own multiplayer: one game client per agent, each
 
 <Details summary="What makes it hard">
 
-- An order sent from one client’s script must reach every client’s simulation. Creative Assembly’s modding notes warn that game changes made from interface scripts can desync a multiplayer match. If they do, the fallbacks are the game’s own order queue or a command log replayed on every client.
+- An order sent from one client’s script must reach every client’s simulation. Creative Assembly’s modding notes warn that game changes made from interface scripts can desync a multiplayer match. The first two battles showed no desync, which is too little to rule it out.
+- Agents need the lobby and the Start Battle button without a person. Following the game’s internal command names found the command behind that button, and a Frida trace of one real click confirmed it. Called directly on one client, it replaced that click once; the lobby still ran on scripted menu clicks. Two of the four launches in that session that reached the menus stalled, cause unknown.
 - No client may pause or slow the battle while a model thinks, and the slowest client can slow everyone.
 - Each order is sent at most once. If an acknowledgement is lost, the effect is unknown and the order is not resent.
 - Times from different machines are never compared without a measured offset; battle time comes from the engine.
-- The game on a Windows cloud machine with a GPU is untested.
 
 </Details>
 
 ## How I build it
 
-I run the project with Claude Code and Codex. The agents write most of the code; I decide what to build and how each part is checked.
+I want to understand how models perform, how they decide and how they compare, and games make that visible. I run the project with Claude Code and Codex: the agents write most of the code, and I set the questions, the requirements and how each answer is checked. One question that shaped the benchmark: when a model loses, did it not know the tactic, or act too late while the battle kept moving?
 
 - **Nothing counts as working until a check I agreed on passes**, and only at the revision where it passed. Passing tests and single battles are evidence, not proof.
-- **A check must fail on a deliberately wrong version before it counts.** The tests are replayed against 341 planted bugs; the last replay caught all of them.
+- **A check must fail on a deliberately wrong version before it counts.** The tests are replayed against 357 planted bugs; the last full replay caught 355, and the two misses are still open.
 - **Agents may not edit an existing test in the same change as the code it judges**; the gate lists such edits for review. A separate reviewer agent sees the diff and the raw output, never the author’s explanation.
 - **Choices an agent makes without me are marked in the code** until I decide them.
 

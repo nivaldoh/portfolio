@@ -1,0 +1,477 @@
+---
+// The coordination suite on one figure: who controls what in each method, each method's
+// recorded battle on one clock, and who won each battle. Data: public/media/game-agents/
+// wh3-suite/, exported by scripts/export_wh3_suite.py from the suite report (suite-v1,
+// Claude Haiku 5.5 low, 32 battles, one per pair; docs/twwarhammer3/log.md in
+// github.com/nivaldoh/slay_the_spire_ai). Exploratory: the report claims no ranking.
+//
+// Without script, or with reduced motion, this shows finished battles. With script, the six
+// maps replay together; picking a battle swaps them (suite-client.ts).
+import fs from 'node:fs';
+import path from 'node:path';
+import { clock } from './replay-core';
+import { endOf, mapSvg, type MapSet } from './mini-maps';
+
+const FIRST = 'coord-two-fronts';
+const BASE = '/media/game-agents/wh3-suite';
+const FULL = '/benchmarks/total-war/suite/index.html';
+const read = (name: string) => JSON.parse(fs.readFileSync(path.join(process.cwd(), 'public', BASE, `${name}.json`), 'utf8'));
+
+interface Method { id: string; tag: string; name: string; note: string; models: string[]; scripts: boolean; rules: boolean; won: number; played: number }
+const { methods, battles } = read('index') as {
+  methods: Method[];
+  battles: { id: string; title: string; question: string; results: Record<string, string> }[];
+};
+const set = read(FIRST) as MapSet;
+const first = battles.find((b) => b.id === FIRST)!;
+const panelOf = (arm: string) => set.panels.find((p) => p.id === arm);
+const watchUrl = (battle: string, arm: string) => `${FULL}?battle=${battle}&arm=${arm}`;
+
+// Who controls what: the model or models above, the army's units below. As on the suite page.
+const W = 150;
+const UNITS: Record<string, number[]> = { front: [18, 34, 50], ranged: [78, 94], mobile: [132] };
+const SHAPES: Record<string, string> = { front: 'infantry', ranged: 'guns', mobile: 'knights' };
+function picture(m: Method) {
+  const whole = m.models.includes('all');
+  const hueOf = (member: string) => (!m.models.length ? 'scripts' : whole ? 'all' : member);
+  const headX = (member: string) => (whole ? W / 2 : ({ front: 34, ranged: 86, mobile: 132 } as Record<string, number>)[member]);
+  const lines: string[] = [];
+  const marks: string[] = [];
+  if (m.scripts) marks.push(`<rect class="mm-scripts mm-unit" x="10" y="28" width="${W - 20}" height="6" rx="3"/>`);
+  for (const [member, xs] of Object.entries(UNITS)) {
+    for (const x of xs) {
+      if (m.models.length && !m.scripts) {
+        lines.push(`<line class="mm-${hueOf(member)} sg__link${m.rules ? ' sg__link--rules' : ''}" x1="${headX(member)}" y1="14" x2="${x}" y2="46"/>`);
+      }
+      const cls = `mm-${hueOf(member)} mm-unit`;
+      const shape = SHAPES[member];
+      marks.push(shape === 'guns'
+        ? `<path class="${cls}" d="M${x} 43.25l5.5 10h-11z"/>`
+        : shape === 'knights'
+          ? `<rect class="${cls}" x="${x - 5}" y="44" width="10" height="10"/>`
+          : `<circle class="${cls}" cx="${x}" cy="49" r="5"/>`);
+    }
+  }
+  if (m.scripts && m.models.length) lines.push(`<line class="mm-all sg__link sg__link--strong" x1="${W / 2}" y1="14" x2="${W / 2}" y2="30"/>`);
+  for (const member of whole ? ['front'] : m.models) {
+    marks.push(m.rules
+      ? `<rect class="mm-${hueOf(member)} mm-unit" x="${headX(member) - 7}" y="3" width="14" height="14" rx="2"/>`
+      : `<circle class="mm-${hueOf(member)} mm-unit" cx="${headX(member)}" cy="10" r="8"/>`);
+  }
+  return `<svg class="sg__who" viewBox="0 0 ${W} 58" aria-hidden="true">${lines.join('')}${marks.join('')}</svg>`;
+}
+---
+
+<figure class="sg" data-sg data-base={BASE} data-full={FULL} data-first={FIRST}>
+  <div class="sg__strip">
+    <div class="sg__now">
+      <h4 class="sg__title" data-sg-title>{first.title}</h4>
+      <p class="sg__question" data-sg-question>{first.question}</p>
+      <p class="sg__clock">
+        <span class="sg__time" data-sg-time aria-hidden="true">{clock(endOf(set) / 1000)}</span>
+        <button class="sg__toggle" type="button" data-sg-toggle hidden>Pause</button>
+      </p>
+      <ul class="sg__key" aria-hidden="true">
+        <li><svg viewBox="-8 -8 16 16"><circle class="sg__keymark" r="5" /></svg>infantry</li>
+        <li><svg viewBox="-8 -8 16 16"><path class="sg__keymark" d="M0-6l5.5 10h-11z" /></svg>guns</li>
+        <li><svg viewBox="-8 -8 16 16"><rect class="sg__keymark" x="-5" y="-5" width="10" height="10" /></svg>knights</li>
+        <li><svg viewBox="-8 -8 16 16"><path class="mm-enemy mm-unit" d="M0-6L6 0 0 6-6 0z" /></svg>game AI</li>
+      </ul>
+    </div>
+    {methods.map((m) => {
+      const p = panelOf(m.id);
+      return (
+        <div class="sg__method" data-sg-method={m.id}>
+          <p class="sg__name"><span class="sg__tag">{m.tag}</span>{m.name}</p>
+          <Fragment set:html={picture(m)} />
+          <p class="sg__note">{m.note}</p>
+          <a class="sg__panel" data-sg-panel href={p ? watchUrl(FIRST, m.id) : undefined} aria-label={p ? `Watch ${m.name} on ${first.title}: ${p.result}` : undefined}>
+            <span class="sg__map" data-sg-map set:html={p ? mapSvg(set, p, Infinity) : ''} />
+            <span class:list={['sg__stamp', p?.result === 'won' ? 'sg__stamp--won' : 'sg__stamp--lost']} data-sg-stamp hidden={!p}>
+              {p ? `${p.result === 'won' ? 'Won' : 'Lost'} ${clock(p.end_ms / 1000)}` : ''}
+            </span>
+            <span class="sg__absent" data-sg-absent hidden={!!p}>not played</span>
+          </a>
+        </div>
+      );
+    })}
+  </div>
+
+  <table class="sg__table">
+    <caption class="visually-hidden">Who won each battle, by control method. One battle per pair.</caption>
+    <thead>
+      <tr>
+        <th scope="col"><span class="visually-hidden">Battle</span></th>
+        {methods.map((m) => <th scope="col"><span class="sg__tag" aria-hidden="true">{m.tag}</span><span class="visually-hidden">{m.name}</span></th>)}
+      </tr>
+    </thead>
+    <tbody>
+      {battles.map((b) => (
+        <tr class:list={[{ 'sg__row--on': b.id === FIRST }]} data-sg-row={b.id} data-title={b.title} data-question={b.question}>
+          <th scope="row"><button type="button" class="sg__pick" aria-pressed={b.id === FIRST}>{b.title}</button></th>
+          {methods.map((m) => {
+            const r = b.results[m.id];
+            return (
+              <td>
+                {r
+                  ? <span class:list={['sg__dot', { 'sg__dot--won': r === 'won' }]} role="img" aria-label={`${m.name}: ${r}`} />
+                  : <span class="sg__none" role="img" aria-label={`${m.name}: not played`}>–</span>}
+              </td>
+            );
+          })}
+        </tr>
+      ))}
+    </tbody>
+    <tfoot>
+      <tr>
+        <th scope="row">Won</th>
+        {methods.map((m) => <td><span class="visually-hidden">{m.won} of {m.played}</span><span aria-hidden="true">{m.won}/{m.played}</span></td>)}
+      </tr>
+    </tfoot>
+  </table>
+  <slot />
+</figure>
+
+<script>
+  import { initSuite } from './suite-client';
+  document.querySelectorAll<HTMLElement>('[data-sg]').forEach(initSuite);
+</script>
+
+<style>
+  .sg {
+    margin: 0;
+    --sg-columns: minmax(8.5rem, 1.25fr) repeat(6, minmax(0, 1fr));
+  }
+
+  .sg__strip {
+    display: grid;
+    grid-template-columns: var(--sg-columns);
+    gap: 0 0.6rem;
+  }
+
+  .sg__now {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding-right: 0.6rem;
+  }
+
+  .sg__title {
+    margin: 0;
+    color: var(--fg-strong);
+    font: var(--step-1)/1.2 var(--font-serif);
+  }
+
+  .sg__question {
+    margin: 0;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    line-height: 1.4;
+  }
+
+  .sg__clock {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin: auto 0 0;
+  }
+
+  .sg__time {
+    min-width: 4ch;
+    color: var(--fg-strong);
+    font: var(--step-1)/1.2 var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sg__toggle {
+    padding: 0.15rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--bg-control);
+    color: var(--fg);
+    font: var(--step--2)/1.4 var(--font-mono);
+    cursor: pointer;
+  }
+
+  .sg__key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem 0.7rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--fg-muted);
+    font: var(--step--2)/1.4 var(--font-mono);
+  }
+
+  .sg__key li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .sg__key svg {
+    width: 0.75rem;
+    height: 0.75rem;
+    overflow: visible;
+  }
+
+  .sg__keymark {
+    fill: var(--fg-muted);
+  }
+
+  .sg__method {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    min-width: 0;
+  }
+
+  .sg__name {
+    margin: 0 0 0.35rem;
+    color: var(--fg-strong);
+    font-size: var(--step--1);
+    line-height: 1.2;
+    min-height: 2.4em;
+  }
+
+  .sg__tag {
+    display: none;
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    color: var(--accent);
+  }
+
+  .sg__method :global(.sg__who) {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 8.5rem;
+  }
+
+  .sg :global(.sg__link) {
+    stroke: var(--mm);
+    stroke-width: 1.5;
+  }
+
+  .sg :global(.sg__link--rules) {
+    stroke-dasharray: 3 3;
+  }
+
+  .sg :global(.sg__link--strong) {
+    stroke-width: 2;
+  }
+
+  .sg__note {
+    margin: 0.25rem 0 0.55rem;
+    color: var(--fg-muted);
+    font-size: var(--step--2);
+    line-height: 1.3;
+  }
+
+  .sg__panel {
+    position: relative;
+    display: block;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-plate);
+    background: var(--bg-plate);
+    text-decoration: none;
+  }
+
+  a.sg__panel[href]:hover,
+  a.sg__panel[href]:focus-visible {
+    border-color: var(--accent);
+  }
+
+  .sg__map {
+    display: block;
+  }
+
+  .sg__stamp {
+    position: absolute;
+    left: 0.3rem;
+    bottom: 0.3rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: var(--radius-control);
+    color: var(--accent-fg);
+    font: 600 var(--step--2)/1.4 var(--font-mono);
+    text-transform: uppercase;
+  }
+
+  .sg__stamp[hidden],
+  .sg__absent[hidden] {
+    display: none;
+  }
+
+  .sg__stamp--won { background: var(--data-ok); }
+  .sg__stamp--lost { background: var(--data-miss); }
+
+  .sg__absent {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--fg-muted);
+    font: var(--step--2)/1.4 var(--font-mono);
+  }
+
+  /* The table's columns line up with the maps above. */
+  .sg__table {
+    display: block;
+    width: 100%;
+    margin-top: 1rem;
+    border-collapse: collapse;
+  }
+
+  .sg__table thead {
+    display: none;
+  }
+
+  .sg__table tbody,
+  .sg__table tfoot {
+    display: block;
+  }
+
+  .sg__table tr {
+    display: grid;
+    grid-template-columns: var(--sg-columns);
+    gap: 0 0.6rem;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sg__table tbody tr {
+    cursor: pointer;
+  }
+
+  .sg__table tbody tr:hover {
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+  }
+
+  .sg__table tr.sg__row--on {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+
+  .sg__table th,
+  .sg__table td {
+    padding: 0.4rem 0;
+    text-align: left;
+    font-weight: 400;
+  }
+
+  .sg__pick {
+    width: 100%;
+    padding: 0 0 0 0.6rem;
+    border: 0;
+    background: none;
+    color: var(--fg-strong);
+    font: var(--step--1)/1.3 var(--font-serif);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .sg__dot {
+    display: block;
+    width: 13px;
+    height: 13px;
+    border: 1.5px solid var(--fg-muted);
+    border-radius: 50%;
+    opacity: 0.55;
+  }
+
+  .sg__dot--won {
+    border-color: var(--data-ok);
+    background: var(--data-ok);
+    opacity: 1;
+  }
+
+  .sg__none {
+    color: var(--fg-muted);
+    font-family: var(--font-mono);
+  }
+
+  .sg__table tfoot th,
+  .sg__table tfoot td {
+    color: var(--fg-strong);
+    font: var(--step--2)/1.4 var(--font-mono);
+  }
+
+  .sg__table tfoot th {
+    padding-left: 0.6rem;
+    color: var(--fg-muted);
+  }
+
+  @media (max-width: 60rem) {
+    .sg {
+      --sg-columns: 6.5rem repeat(6, minmax(0, 1fr));
+    }
+
+    .sg__strip {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem 0.6rem;
+    }
+
+    .sg__now {
+      grid-column: 1 / -1;
+      padding: 0;
+    }
+
+    .sg__clock {
+      margin: 0;
+    }
+
+    .sg__table thead {
+      display: block;
+    }
+
+    .sg__tag {
+      display: inline;
+    }
+
+    .sg__name .sg__tag {
+      margin-right: 0.35rem;
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .sg {
+      --sg-columns: 5.2rem repeat(6, minmax(0, 1fr));
+    }
+
+    .sg__strip {
+      gap: 0.8rem 0.4rem;
+    }
+
+    .sg__name {
+      min-height: 3.6em;
+    }
+
+    .sg__note {
+      display: none;
+    }
+
+    .sg__who,
+    .sg__method :global(.sg__who) {
+      margin-bottom: 0.4rem;
+    }
+
+    .sg__stamp {
+      left: 0.15rem;
+      bottom: 0.15rem;
+      padding: 0 0.2rem;
+      font-size: 0.72rem;
+    }
+
+    .sg__table tr {
+      gap: 0 0.2rem;
+    }
+
+    .sg__dot {
+      width: 11px;
+      height: 11px;
+    }
+
+  }
+</style>

@@ -1,14 +1,13 @@
 ---
 // The native-multiplayer plan: one game client per agent, joined by the game's own
-// multiplayer. Status as of 2 November 2026, from the game-agents repository
-// (docs/twwarhammer3/native-multiplayer.md, docs/agreed-checks.md, docs/twwarhammer3/log.md):
-// - the scripted two-member team (one army, one PC) passed its agreed live check, 4/4
-//   launches at four revisions; it makes no claim about teamwork quality;
-// - platform detection, observe/control modes, the link, the worker and compare-peers are
-//   built and tested with fake workers;
-// - the observer smoke of 1 Nov 2026 read one live single-player battle through that path
-//   (n = 1; nothing multiplayer ran);
-// - zero live multiplayer battles; a second licence and a cloud client come first.
+// multiplayer. Status as of 4 November 2026, from the game-agents repository
+// (docs/twwarhammer3/native-multiplayer.md, multiplayer-control-foundation.md, log.md):
+// - scripted two-member team (one army, one PC): agreed live check, 4/4 launches; model
+//   teams on one PC played the initial comparison and the coordination suite;
+// - the worker, link and compare-peers are built; PC + cloud VM played two live battles on
+//   3 Nov 2026 with scripted moves and lobbies set up by hand (one battle each, unverified);
+// - direct readiness worked once on one client (4 Nov); two frontend launches stalled;
+// - no language model has played across two clients.
 interface Props {
   /** false: the diagram alone (the homepage); the case study shows the status steps. */
   steps?: boolean;
@@ -22,11 +21,11 @@ const clients = [
 ];
 
 const steps = [
-  { done: true, text: 'Two agents split one army on one PC', note: 'live check passed, 4 of 4' },
+  { done: true, text: 'Agents split one army on one PC', note: 'scripted check 4 of 4; model teams played' },
   { done: true, text: 'A worker and link for each client', note: 'built, tested with fakes' },
-  { done: true, text: 'A live battle read through the new path', note: '1 battle, 1 Nov' },
-  { done: false, text: 'Second game licence and a cloud client', note: 'next' },
-  { done: false, text: 'First multiplayer battle between agents', note: 'next' },
+  { done: true, text: 'First battles across two machines', note: '2 battles, scripted moves, 3 Nov' },
+  { done: false, text: 'Lobbies and readiness without clicks', note: 'in progress, one client' },
+  { done: false, text: 'First multiplayer battle between models', note: 'next' },
 ];
 ---
 

@@ -1,0 +1,120 @@
+---
+// The first multiplayer battle as each machine recorded it: my PC on the left, a cloud VM on
+// the right, at the battle times both sampled. Data: public/media/game-agents/
+// wh3-two-clients.json, exported by scripts/export_wh3_suite.py from native-multiplayer/mp1
+// (2026-11-03, build 26403568; PC hosting; scripted Lua moves, no language model).
+import fs from 'node:fs';
+import path from 'node:path';
+import { clock } from './replay-core';
+import { endOf, mapSvg, type MapSet } from './mini-maps';
+
+const DATA_URL = '/media/game-agents/wh3-two-clients.json';
+const d = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'public', DATA_URL), 'utf8')) as MapSet & { exact: number; units_compared: number };
+const labels: Record<string, string> = { pc: 'My PC', vm: 'Cloud VM' };
+---
+
+<figure class="tc" data-tc data-src={DATA_URL} aria-label={`The same battle as two machines recorded it. ${d.exact} of ${d.units_compared} unit positions taken at matching battle times were identical.`}>
+  <div class="tc__bar">
+    <p class="tc__time" data-tc-time aria-hidden="true">{clock(endOf(d) / 1000)}</p>
+    <ul class="tc__key" aria-hidden="true">
+      <li><svg viewBox="-8 -8 16 16"><circle class="mm-front mm-unit" r="5" /></svg>PC’s army</li>
+      <li><svg viewBox="-8 -8 16 16"><circle class="mm-ranged mm-unit" r="5" /></svg>VM’s army</li>
+      <li><svg viewBox="-8 -8 16 16"><path class="mm-enemy mm-unit" d="M0-6L6 0 0 6-6 0z" /></svg>game AI</li>
+    </ul>
+  </div>
+  <div class="tc__panels">
+    {d.panels.map((p) => (
+      <div class="tc__panel">
+        <p class="tc__label">{labels[p.id]}</p>
+        <div class="tc__map" data-tc-map={p.id} set:html={mapSvg(d, p, Infinity)} />
+      </div>
+    ))}
+  </div>
+  <slot />
+</figure>
+
+<script>
+  import { clock } from './replay-core';
+  import { playMaps, type MapSet } from './mini-maps';
+
+  document.querySelectorAll<HTMLElement>('[data-tc]').forEach((root) => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const io = new IntersectionObserver((entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      io.disconnect();
+      fetch(root.dataset.src!)
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+        .then((set: MapSet) => {
+          const slots = set.panels.map((panel) => ({ panel, map: root.querySelector<HTMLElement>(`[data-tc-map="${panel.id}"]`)! }));
+          playMaps(root, set, slots, root.querySelector('[data-tc-time]'), clock, 8, { lead: 0.6, hold: 2.5 });
+        })
+        .catch(() => { /* the finished figure stays */ });
+    }, { rootMargin: '200px' });
+    io.observe(root);
+  });
+</script>
+
+<style>
+  .tc {
+    max-width: 40rem;
+    margin: 0;
+  }
+
+  .tc__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 1.4rem;
+    margin-bottom: 0.7rem;
+  }
+
+  .tc__time {
+    min-width: 4ch;
+    margin: 0;
+    color: var(--fg-strong);
+    font: var(--step-1)/1.2 var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tc__key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--fg-muted);
+    font: var(--step--2)/1.4 var(--font-mono);
+  }
+
+  .tc__key li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .tc__key svg {
+    width: 0.8rem;
+    height: 0.8rem;
+    overflow: visible;
+  }
+
+  .tc__panels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+  }
+
+  .tc__label {
+    margin: 0 0 0.35rem;
+    color: var(--fg-strong);
+    font-size: var(--step--1);
+  }
+
+  .tc__map {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-plate);
+    background: var(--bg-plate);
+  }
+</style>

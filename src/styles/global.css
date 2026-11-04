@@ -698,3 +698,23 @@ figcaption {
   border-radius: 2px;
   margin-bottom: 0.6rem;
 }
+
+/* ---------- Small battle maps (components/wh3/mini-maps.ts) ----------
+   Colour is who controls a unit; the same colours as the suite report. */
+.mm {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.mm-all     { --mm: #ee8fc4; } /* one model, whole army */
+.mm-front   { --mm: #4aa3e8; } /* infantry model or rules */
+.mm-ranged  { --mm: #6cc04a; } /* guns model or rules */
+.mm-mobile  { --mm: #ae83ee; } /* knights model or rules */
+.mm-scripts { --mm: #95a3ab; } /* scripts alone */
+.mm-enemy   { --mm: var(--data-ai); }
+
+.mm-blocked { fill: var(--data-terrain); }
+.mm-unit    { fill: var(--mm); }
+.mm-path    { fill: none; stroke: var(--mm); stroke-width: 1.2px; stroke-opacity: 0.6; vector-effect: non-scaling-stroke; }
+.mm-flee    { fill: none; stroke: var(--mm); stroke-width: 1px; vector-effect: non-scaling-stroke; opacity: 0.6; }

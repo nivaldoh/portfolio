@@ -37,7 +37,7 @@ src/
 │  └─ posts/                 # .md / .mdx blog posts → /writing/ (not linked from the nav yet)
 ├─ components/
 │  ├─ Plate, Details, ProjectPanel, BeamSection, Career, RecordedVideo, ...
-│  ├─ wh3/                   # HeroBattle (homepage opening), BattleReplay (recorded replay), CheckpointBranches, ResultsGrid, TeamPlan
+│  ├─ wh3/                   # HeroBattle (homepage opening), BattleReplay (recorded replay), CheckpointBranches, ResultsGrid, SuiteGrid and TwoClients (small synced maps, mini-maps.ts), TeamPlan
 │  ├─ slay/                  # RunProgress: the furthest full run (homepage and the game-agents case study)
 │  ├─ game-agents/           # small figures for the Total War case study
 │  ├─ robocasa/              # DevelopmentRecordings: the homepage clips
@@ -45,7 +45,7 @@ src/
 │  └─ pokeagent/             # HybridSearch, MetamonPRs, SelfPlayDiagram, TournamentBrackets
 ├─ layouts/                  # BaseLayout, CaseStudyLayout, PostLayout
 ├─ pages/
-│  ├─ index.astro            # / — in-game opening, intro with the index of the work, Total War chapters (#work: replay, #checkpoints, #benchmark, #multiplayer, how it is built) and Slay the Spire, the PokéAgent → RoboCasa thread (#thread), Beam, background (#about), contact (#contact)
+│  ├─ index.astro            # / — in-game opening, intro with the index of the work, Total War chapters (#work: replay, #checkpoints, #benchmark, #coordination, #multiplayer, how it is built) and Slay the Spire, the PokéAgent → RoboCasa thread (#thread), Beam, background (#about), contact (#contact)
 │  ├─ projects/[slug].astro  # /projects/<slug>/
 │  ├─ writing/               # /writing/, /writing/<slug>/
 │  ├─ 404.astro
@@ -55,7 +55,7 @@ src/
 ├─ styles/global.css         # tokens, type scale, shared presentation units, prose
 └─ consts.ts                 # site title, description, URL, email, résumé path, social links
 public/
-├─ benchmarks/total-war/     # full report and compressed replays loaded on demand
+├─ benchmarks/total-war/     # full reports (the main benchmark and suite/, the control-method comparison) and compressed replays loaded on demand
 ├─ media/<project>/          # videos, posters and JSON served as-is (replay data, chart data)
 ├─ nivaldo-tokuda-resume.pdf
 ├─ fonts/                    # Self-hosted Newsreader and its OFL license
@@ -64,6 +64,8 @@ public/
 └─ _headers                  # Cloudflare Pages cache + security headers
 scripts/
 ├─ import_wh3_benchmark.py   # package an exported standalone benchmark without changing recordings
+├─ import_wh3_suite.py       # the same for the coordination suite report; ?battle=&arm= opens one replay
+├─ export_wh3_suite.py       # rebuilds public/media/game-agents/wh3-suite/ and wh3-two-clients.json from the suite report and the first multiplayer battle
 ├─ export_wh3_replay.py      # rebuilds public/media/game-agents/wh3-cavalry-flank.json from a recorded job
 ├─ export_wh3_branches.py    # rebuilds public/media/game-agents/wh3-checkpoint-branches.json from the checkpoint audit
 └─ replay.test.cjs           # focused tests of the replay's pure TypeScript logic
@@ -129,7 +131,7 @@ python3 -I scripts/export_wh3_branches.py \
 
 The exporter drops rows published during the restore's fast-forward, keeps positions as recorded (never interpolated), checks that every future starts from the same saved frame, and folds launches with identical recordings into one future (`same_as`). Without script, or with reduced motion, the figure is the finished state; with script it replays all futures together and loops.
 
-`ResultsGrid` reads the published benchmark's embedded report data at build time, so its dots always match the benchmark: the matched round M1 (gpt-6-sol, gpt-6-luna), gpt-6.1-sol's later round on four scenarios, and every recorded scripted baseline on the same six scenarios. Each dot links to its replay. `TeamPlan` is the native-multiplayer plan with its status as of 2 November 2026; update its steps as the work moves.
+`ResultsGrid` reads the published benchmark's embedded report data at build time, so its dots always match the benchmark: the matched round M1 (gpt-6-sol, gpt-6-luna), gpt-6.1-sol's later round on four scenarios, and every recorded scripted baseline on the same six scenarios. Each dot links to its replay. `SuiteGrid` draws the coordination suite: who controls what, six recorded maps on one clock (the same maps in the static figure and in playback, from `mini-maps.ts`) and the table of results; each map links to that battle's replay in the hosted report (`/benchmarks/total-war/suite/`). `TwoClients` replays the first PC + cloud VM battle as each machine recorded it. To refresh them, run `import_wh3_suite.py` and `export_wh3_suite.py`. `TeamPlan` is the native-multiplayer plan with its status as of 4 November 2026; update its steps as the work moves.
 
 ## The full benchmark
 

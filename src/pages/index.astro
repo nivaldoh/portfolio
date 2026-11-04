@@ -6,7 +6,8 @@ import BattleReplay from '../components/wh3/BattleReplay.astro';
 import HeroBattle from '../components/wh3/HeroBattle.astro';
 import CheckpointBranches from '../components/wh3/CheckpointBranches.astro';
 import ResultsGrid from '../components/wh3/ResultsGrid.astro';
-import TeamPlan from '../components/wh3/TeamPlan.astro';
+import SuiteGrid from '../components/wh3/SuiteGrid.astro';
+import TwoClients from '../components/wh3/TwoClients.astro';
 import DevelopmentRecordings from '../components/robocasa/DevelopmentRecordings.astro';
 import ResultsChart from '../components/tcg/ResultsChart.astro';
 import TeacherData from '../components/tcg/TeacherData.astro';
@@ -28,7 +29,7 @@ const tcg = byId['pokemon-tcg'];
 
 // The hero's index of the work below, in page order.
 const index = [
-  { n: '01', href: '#work', title: 'Agents in Total War', note: 'Live battles · saves · benchmark' },
+  { n: '01', href: '#work', title: 'Agents in Total War', note: 'Battles · benchmarks · saves · teams' },
   { n: '02', href: '#pokeagent', title: 'PokéAgent Challenge', note: 'NeurIPS 2025 quarterfinalist' },
   { n: '03', href: '#metamon', title: 'Metamon', note: 'UT Austin RPL' },
   { n: '04', href: '#pokemon-tcg', title: 'Pokémon TCG agents', note: 'Kaggle' },
@@ -78,9 +79,10 @@ const index = [
         </div>
         <div>
           <p class="feature__summary">
-            A Lua mod I built is the models’ only way into the game: game state in,
-            orders out. Nothing reads the screen or moves the mouse. A model sees
-            enemies only while its army can, and its thinking time counts against it.
+            I want to understand how models perform, decide and compare, and a game makes
+            decisions easy to see. A Lua mod I built is the only way in: game state in,
+            orders out. A model sees enemies only while its army can, and its thinking time
+            counts against it.
           </p>
           <ul class="link-row">
             <li><a href={`/projects/${game.id}/`}>Case study</a></li>
@@ -117,9 +119,9 @@ const index = [
         <CheckpointBranches>
           <figcaption class="chapter__caption">
             Six restores with five different orders; two played the same battle as “Both units
-            attack”. In my check of a restored battle, all 2,001 ticks matched the original.
-            Restores like these drive a small reinforcement-learning loop (early, mixed
-            results in the <a href={`/projects/${game.id}/#save-a-battle-try-another-future`}>case study</a>).
+            attack”. In my checks, restored battles match the original tick for tick, on land
+            and in four siege states. Restores like these drive a small reinforcement-learning
+            loop (early, mixed results in the <a href={`/projects/${game.id}/#save-a-battle-try-another-future`}>case study</a>).
           </figcaption>
         </CheckpointBranches>
       </section>
@@ -132,8 +134,8 @@ const index = [
             on very hard. Each dot is one battle: click it to watch the replay.
           </p>
           <p class="chapter__note">
-            Scripted rules lost all 27 of their battles here. Three battles per model is a
-            small sample, and I developed the prompts on these scenarios.
+            On these six scenarios, scripted rules lost all 27 of their battles. Three battles
+            per model is a small sample, and I developed the prompts on these scenarios.
           </p>
           <a class="action benchmark-cta" href="/benchmarks/total-war/index.html">
             <span class="benchmark-cta__text">
@@ -146,20 +148,39 @@ const index = [
         <ResultsGrid />
       </section>
 
-      <section class="chapter" id="multiplayer" aria-labelledby="ch-team">
+      <section class="chapter" id="coordination" aria-labelledby="ch-suite">
         <div class="chapter__head">
-          <h3 class="chapter__title" id="ch-team">Next: agents as teammates.</h3>
+          <h3 class="chapter__title" id="ch-suite">Same army. Six chains of command.</h3>
           <p class="chapter__lede">
-            Each agent gets its own copy of the game and sees only what its player can see.
-            The game’s own multiplayer joins them in one battle.
+            Six battles built to call for coordination, against the game’s AI on very hard, with
+            Claude Haiku 5.5 as the model. Colour shows who controls each unit. Pick a battle;
+            click a map for its full replay.
           </p>
         </div>
-        <TeamPlan steps={false} />
-        <p class="chapter__caption">
-          Built and tested offline; one live battle read through the new path. Next: a second
-          game licence, a cloud client, then the first multiplayer battle between agents
-          (<a href={`/projects/${game.id}/#next-agents-as-teammates`}>status</a>).
-        </p>
+        <SuiteGrid>
+          <figcaption class="chapter__caption">
+            One battle per pair, and I haven’t agreed a check for it yet, so these are
+            unverified leads, not rankings. “With tips” is a control: one model gets advice similar to “model over
+            scripts”, worded for direct orders. Tips alone did not turn its losses into wins. A
+            dash means that method didn’t play that battle.
+          </figcaption>
+        </SuiteGrid>
+      </section>
+
+      <section class="chapter chapter--split" id="multiplayer" aria-labelledby="ch-team">
+        <div class="chapter__head">
+          <h3 class="chapter__title" id="ch-team">Two machines, one battle.</h3>
+          <p class="chapter__lede">
+            My PC and a cloud VM shared a battle through the game’s own multiplayer. A move
+            sent from one reached the other, and all 553 unit positions they compared were
+            identical. This is how each agent will get its own copy of the game.
+          </p>
+          <p class="chapter__note">
+            Unverified so far: two battles with scripted moves, no check I’ve agreed on yet,
+            and no model has played this way.
+          </p>
+        </div>
+        <TwoClients />
       </section>
 
       <section class="game chapter" id="slay-the-spire" aria-labelledby="spire-title">
@@ -177,9 +198,23 @@ const index = [
       <section class="build" aria-labelledby="build-title">
         <h3 class="build__title" id="build-title">How I build it</h3>
         <p class="build__text">
-          Claude Code and Codex agents write most of the code. I decide what to build and
-          how to check it: nothing counts as working until a check I agreed on passes.
+          Claude Code and Codex agents write most of the code. I set the questions and decide
+          how each answer gets checked.
         </p>
+        <dl class="build__list">
+          <div>
+            <dt>The question</dt>
+            <dd>When a model loses, did it not know the tactic, or act too late? Battles never pause, so timing is part of the test.</dd>
+          </div>
+          <div>
+            <dt>The check</dt>
+            <dd>Nothing counts as working until a repeatable check I agreed on passes, and a check must first fail on a deliberately wrong version. Choices an agent makes alone stay marked in the code until I decide them.</dd>
+          </div>
+          <div>
+            <dt>The catch</dt>
+            <dd>Playing a restored siege myself, I built towers by hand. Supplies and construction changed; the game’s checksums didn’t. Direct readings of those values caught it, and the check requires both.</dd>
+          </div>
+        </dl>
       </section>
     </div>
   </section>
@@ -507,6 +542,30 @@ const index = [
     letter-spacing: 0.02em;
     color: var(--accent);
     font-weight: 400;
+  }
+
+  .build__list {
+    display: grid;
+    gap: 1rem 2.5rem;
+    margin: 0.4rem 0 0;
+  }
+
+  @media (min-width: 52rem) {
+    .build__list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .build__list dt {
+    margin-bottom: 0.2rem;
+    color: var(--fg-strong);
+  }
+
+  .build__list dd {
+    margin: 0;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    line-height: 1.45;
   }
 
   .build__text {
