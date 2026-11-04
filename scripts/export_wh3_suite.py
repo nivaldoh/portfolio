@@ -34,6 +34,16 @@ KEEP = 0.98  # share of fighting positions the suite maps frame: long chases str
 OUT_DIR = 'wh3-suite'
 MP_OUT = 'wh3-two-clients.json'
 TAGS = {'single': 'M', 'tips': 'M+', 'team': 'T', 'commander': 'C', 'gap': 'R', 'skills': 'S'}
+# Each battle's setup. A scenario names a goal and no solution, so these state no required tactic.
+PROBLEMS = {
+    'coord-two-fronts': 'Two separate fights at once, with one reserve unit that can only go to one of them.',
+    'coord-relief': 'A garrison of 226 men faces 540 enemy men, and a relief column starts about 460 m away.',
+    'coord-pincer': 'Two groups of 293 men start on either side of an enemy block of 698 men.',
+    'coord-breakout': 'Three enemy groups, 526 men in all, converge on an army of 451 men.',
+    'coord-detail': 'An army of 496 men faces a near wave of 368 men, with 225 more starting about 250 m behind it.',
+    'coord-rear-raid': 'The guns stand behind the line, and enemy cavalry goes after them.',
+}
+NOTES = {'gap': 'a model writes them, then suggests targets'}
 
 
 def kind_of(glyph):
@@ -169,7 +179,7 @@ def export_suite(html_path, out):
         battles.append({
             'id': name,
             'title': picture['title'],
-            'question': picture['question'],
+            'question': PROBLEMS[name],
             'results': {b['arm']: b['outcome'] for b in picture['battles']},
         })
 
@@ -180,7 +190,7 @@ def export_suite(html_path, out):
             'id': arm,
             'tag': TAGS[arm],
             'name': page['methods'][arm]['name'],
-            'note': page['methods'][arm]['note'],
+            'note': NOTES.get(arm, page['methods'][arm]['note']),
             'models': page['methods'][arm]['models'],
             'scripts': bool(page['methods'][arm].get('scripts')),
             'rules': bool(page['methods'][arm].get('rules')),

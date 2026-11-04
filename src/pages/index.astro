@@ -79,10 +79,11 @@ const index = [
         </div>
         <div>
           <p class="feature__summary">
-            I want to understand how models perform, decide and compare, and a game makes
-            decisions easy to see. A Lua mod I built is the only way in: game state in,
-            orders out. A model sees enemies only while its army can, and its thinking time
-            counts against it.
+            My goal is to better understand how AI models perform, how they make decisions
+            and how they compare to each other, and games are a very visual, concrete way to
+            do that. Models play through a Lua mod I built, which publishes the battle state
+            and carries out their orders. A model only sees enemy units while its army can
+            see them, and the battle keeps running while it thinks.
           </p>
           <ul class="link-row">
             <li><a href={`/projects/${game.id}/`}>Case study</a></li>
@@ -94,12 +95,12 @@ const index = [
 
       <section class="chapter" id="total-war" aria-labelledby="ch-live">
         <div class="chapter__head">
-          <h3 class="chapter__title" id="ch-live">Five seconds behind.</h3>
+          <h3 class="chapter__title" id="ch-live">A recorded battle</h3>
           <p class="chapter__lede">
-            A different battle, replayed in full: gpt-6-sol’s cavalry
-            (<span class="ink-model">in&nbsp;blue</span>) rides around the halberd screen and
-            into the guns behind it. The battle keeps moving while the model thinks, so its
-            orders act on a view of the battle seconds old.
+            This is a different battle, recorded in full. gpt-6-sol’s cavalry
+            (<span class="ink-model">in&nbsp;blue</span>) rides around the halberds and attacks
+            the guns behind them. Each batch of orders is based on a view of the battle that
+            is 3 to 13.5 seconds old.
           </p>
         </div>
         <BattleReplay variant="feature" notes={false} />
@@ -107,35 +108,38 @@ const index = [
 
       <section class="chapter" id="checkpoints" aria-labelledby="ch-save">
         <div class="chapter__head">
-          <h3 class="chapter__title" id="ch-save">Save a battle. Try another future.</h3>
+          <h3 class="chapter__title" id="ch-save">Saving and restoring a battle</h3>
           <p class="chapter__lede">
-            Total War can’t save mid-battle, so I built a
+            Total War can’t save in the middle of a battle, so I built a
             <a href="https://github.com/nivaldoh/wh3-battle-checkpoints" rel="noopener">save tool</a>
-            on the game’s own replay file: a restore fast-forwards to the saved moment, checking
-            the engine’s checksum on every tick, then plays on live. Below, one saved moment
-            plays out four ways.
+            on top of the game’s replay files. A restore fast-forwards to the saved moment
+            while checking the engine’s checksum on every tick, then continues at normal
+            speed. Here, one saved moment is restored with different orders and plays out in
+            four different ways.
           </p>
         </div>
         <CheckpointBranches>
           <figcaption class="chapter__caption">
-            Six restores with five different orders; two played the same battle as “Both units
-            attack”. In my checks, restored battles match the original tick for tick, on land
-            and in four siege states. Restores like these drive a small reinforcement-learning
-            loop (early, mixed results in the <a href={`/projects/${game.id}/#save-a-battle-try-another-future`}>case study</a>).
+            There were six restores with five different orders, and two of them played the same
+            battle as “Both units attack”. In my checks, restores given the same orders matched
+            the original on every tick, on land and in four siege states. I also used restores for a small
+            reinforcement learning experiment, which had mixed results and is paused
+            (<a href={`/projects/${game.id}/#saving-and-restoring-a-battle`}>case study</a>).
           </figcaption>
         </CheckpointBranches>
       </section>
 
       <section class="chapter chapter--split" id="benchmark" aria-labelledby="ch-bench">
         <div class="chapter__head">
-          <h3 class="chapter__title" id="ch-bench">Which models can win?</h3>
+          <h3 class="chapter__title" id="ch-bench">Benchmark results</h3>
           <p class="chapter__lede">
-            Six scenarios, each built around one tactical decision, against the game’s AI
-            on very hard. Each dot is one battle: click it to watch the replay.
+            The benchmark has six scenarios, each built around one tactical decision, and the
+            opponent is the game’s AI on very hard. Each dot is one battle, and you can click
+            it to watch the replay.
           </p>
           <p class="chapter__note">
-            On these six scenarios, scripted rules lost all 27 of their battles. Three battles
-            per model is a small sample, and I developed the prompts on these scenarios.
+            Scripted rules lost all 27 of their battles on these six scenarios. Three battles
+            per model is a small sample, and I developed the prompts on these same scenarios.
           </p>
           <a class="action benchmark-cta" href="/benchmarks/total-war/index.html">
             <span class="benchmark-cta__text">
@@ -150,34 +154,39 @@ const index = [
 
       <section class="chapter" id="coordination" aria-labelledby="ch-suite">
         <div class="chapter__head">
-          <h3 class="chapter__title" id="ch-suite">Same army. Six chains of command.</h3>
+          <h3 class="chapter__title" id="ch-suite">Comparing ways to control an army</h3>
           <p class="chapter__lede">
-            Six battles built to call for coordination, against the game’s AI on very hard, with
-            Claude Haiku 5.5 as the model. Colour shows who controls each unit. Pick a battle;
-            click a map for its full replay.
+            I also compare how models are organized. In each of six battles built to need
+            coordination, the methods command the same army against the game’s AI on very
+            hard, with Claude Haiku 5.5 wherever a model plays. The color of a unit shows who
+            controls it. You can pick a battle in the table, and each map links to its full
+            replay.
           </p>
         </div>
         <SuiteGrid>
           <figcaption class="chapter__caption">
-            One battle per pair, and I haven’t agreed a check for it yet, so these are
-            unverified leads, not rankings. “With tips” is a control: one model gets advice similar to “model over
-            scripts”, worded for direct orders. Tips alone did not turn its losses into wins. A
-            dash means that method didn’t play that battle.
+            Each method played each battle at most once and I haven’t settled on a check for this
+            comparison yet, so these results are unverified and don’t rank the methods. A dash
+            means the method didn’t play that battle. The “with tips” column is a control. Model
+            over scripts has tactics advice in its prompt, so one model got similar advice,
+            worded for direct orders, to test whether the advice alone explained the wins, and
+            that model lost all six battles.
           </figcaption>
         </SuiteGrid>
       </section>
 
       <section class="chapter chapter--split" id="multiplayer" aria-labelledby="ch-team">
         <div class="chapter__head">
-          <h3 class="chapter__title" id="ch-team">Two machines, one battle.</h3>
+          <h3 class="chapter__title" id="ch-team">Multiplayer across two machines</h3>
           <p class="chapter__lede">
-            My PC and a cloud VM shared a battle through the game’s own multiplayer. A move
-            sent from one reached the other, and all 553 unit positions they compared were
-            identical. This is how each agent will get its own copy of the game.
+            The next step is to give each agent its own copy of the game, so that it only sees
+            what its player can see. In a first test, my PC and a cloud VM shared a battle
+            through the game’s own multiplayer. A move sent from the PC reached the VM, and
+            all 553 unit positions the two machines compared were identical.
           </p>
           <p class="chapter__note">
-            Unverified so far: two battles with scripted moves, no check I’ve agreed on yet,
-            and no model has played this way.
+            This was one of two test battles with scripted moves. No approved check covers
+            them yet, so the result is unverified, and no model has played this way.
           </p>
         </div>
         <TwoClients />
@@ -189,32 +198,29 @@ const index = [
           <p class="game__kind">Same project · turn-based full runs</p>
         </div>
         <p class="feature__point">
-          gpt-6-luna plays complete Ironclad runs; the furthest reached Act 4, floor 54.
-          When one goes wrong, I first check whether the model chose badly or the interface
-          misled it. <a href={`/projects/${game.id}/#slay-the-spire`}>The runs</a>
+          gpt-6-luna plays complete Ironclad runs, and the furthest one reached Act 4, floor
+          54. When a run goes wrong, I first check whether the model chose badly or the
+          interface misled it. <a href={`/projects/${game.id}/#slay-the-spire`}>More on the runs</a>
         </p>
       </section>
 
       <section class="build" aria-labelledby="build-title">
         <h3 class="build__title" id="build-title">How I build it</h3>
         <p class="build__text">
-          Claude Code and Codex agents write most of the code. I set the questions and decide
-          how each answer gets checked.
+          Claude Code and Codex agents write most of the code, and I decide what to build and
+          test and how each answer gets checked. A feature only counts as working after it
+          passes a repeatable check that I’ve approved, and choices an agent makes on its own
+          are marked in the code until I review them.
         </p>
-        <dl class="build__list">
-          <div>
-            <dt>The question</dt>
-            <dd>When a model loses, did it not know the tactic, or act too late? Battles never pause, so timing is part of the test.</dd>
-          </div>
-          <div>
-            <dt>The check</dt>
-            <dd>Nothing counts as working until a repeatable check I agreed on passes, and a check must first fail on a deliberately wrong version. Choices an agent makes alone stay marked in the code until I decide them.</dd>
-          </div>
-          <div>
-            <dt>The catch</dt>
-            <dd>Playing a restored siege myself, I built towers by hand. Supplies and construction changed; the game’s checksums didn’t. Direct readings of those values caught it, and the check requires both.</dd>
-          </div>
-        </dl>
+        <p class="build__text">
+          One question behind the benchmark is whether a model that loses a battle didn’t know
+          the tactic or knew it and acted too late, since battles never pause while it thinks.
+        </p>
+        <p class="build__text">
+          In the checkpoint work, I played a restored siege myself and built towers by hand. That
+          changed supplies and construction without changing the game’s checksums, so the
+          siege check requires those readings alongside the checksums.
+        </p>
       </section>
     </div>
   </section>
@@ -542,30 +548,6 @@ const index = [
     letter-spacing: 0.02em;
     color: var(--accent);
     font-weight: 400;
-  }
-
-  .build__list {
-    display: grid;
-    gap: 1rem 2.5rem;
-    margin: 0.4rem 0 0;
-  }
-
-  @media (min-width: 52rem) {
-    .build__list {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  .build__list dt {
-    margin-bottom: 0.2rem;
-    color: var(--fg-strong);
-  }
-
-  .build__list dd {
-    margin: 0;
-    color: var(--fg-muted);
-    font-size: var(--step--1);
-    line-height: 1.45;
   }
 
   .build__text {

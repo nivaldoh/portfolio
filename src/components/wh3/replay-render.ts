@@ -434,7 +434,7 @@ export function decisionHTML(r: Replay, m: Moment): string {
               : o.status === 'acknowledged'
                 ? ''
                 : `<span class="p-status">${esc(o.status)}</span>`;
-          return `<li${rejected ? ' class="is-rejected"' : ''}><span class="p-unit">${esc(o.unit)}</span> — <span class="p-act">${esc(o.action)}</span>${status ? ` ${status}` : ''}</li>`;
+          return `<li${rejected ? ' class="is-rejected"' : ''}><span class="p-unit">${esc(o.unit)}</span>: <span class="p-act">${esc(o.action)}</span>${status ? ` ${status}` : ''}</li>`;
         })
         .join('')}</ul>`
     : `<p class="p-none">No new orders in this reply.</p>`;

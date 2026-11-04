@@ -4,7 +4,8 @@
 Usage: python3 -I scripts/import_wh3_suite.py SUITE_HTML
 
 Compressed replay bytes are copied exactly and loaded on demand, as import_wh3_benchmark.py
-does for the main report. Only loading, deep links, navigation and the dark theme change.
+does for the main report. Only loading, deep links, navigation, the dark theme and the page's
+own wording change. Model prompts and replies stay verbatim.
 A link with ?battle=<scenario>&arm=<method> opens that battle's replay.
 """
 import base64
@@ -64,6 +65,22 @@ script = replace_once(script, '    return choose(pictures[0]);', '''    const pa
     });''')
 script = script.replace('const ENEMY_INK = "#b86f00"', 'const ENEMY_INK = "#e69f00"')
 
+# The page's own wording, plain and in American spelling (see Writing in AGENTS.md).
+page = data['suite']['page']
+page['title'] = 'Comparing ways to control an army'
+page['dek'] = 'Six ways of commanding an army in six battles, with the same army for every method in each battle. The color of a unit shows who controls it.'
+page['readings']['lines'] = [
+    'Model over scripts won 4 of 5 battles and the same scripts alone won 2 of 4. One model won none of 6, with or without tips.',
+    'Each method played each battle at most once and no check has been approved yet, so these results are unverified and do not rank the methods.',
+]
+index = json.loads((ROOT / 'public/media/game-agents/wh3-suite/index.json').read_text())
+for method in index['methods']:
+    page['methods'][method['id']]['note'] = method['note']
+for battle in index['battles']:
+    picture = data['suite']['pictures'][battle['id']]
+    picture['question'] = battle['question']
+    picture['seen'] = picture['seen'].replace('west; Three', 'west, and Three').replace('fired; with', 'fired, and with')
+
 replays = data['replays']
 data['replays'] = {key: f'./replays/{key}.bin' for key in replays}
 payload = json.dumps(data, separators=(',', ':'), ensure_ascii=False).replace('<', '\\u003c')
@@ -72,6 +89,7 @@ output = replace_once(output, script_match[0], f'<script>{script}</script>')
 digest = base64.b64encode(hashlib.sha256(script.encode()).digest()).decode()
 output, count = re.subn(r"script-src 'sha256-[^']+'", f"connect-src 'self'; script-src 'sha256-{digest}'", output)
 assert count == 1
+output = replace_once(output, 'Colours here mean', 'Colors here mean')
 theme = '''
 /* Portfolio adaptation: same report and evidence, single dark theme. */
 :root { color-scheme: dark; --page:#0a0c10; --sheet:#12141a;

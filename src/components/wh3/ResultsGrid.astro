@@ -38,7 +38,7 @@ function rowOf(trial: any): RowKey | null {
   return null;
 }
 
-const scenarios = data.scenarios.map((s: any) => ({ name: s.name, short: s.short, id: s.id, cells: {} as Record<RowKey, Dot[]> }));
+const scenarios = data.scenarios.map((s: any) => ({ name: s.name, short: s.short.replace('defence', 'defense'), id: s.id, cells: {} as Record<RowKey, Dot[]> }));
 const byName = Object.fromEntries(scenarios.map((s: any) => [s.name, s]));
 data.report.groups.forEach((g: any, gi: number) => {
   const s = byName[g.definition.scenario_name];

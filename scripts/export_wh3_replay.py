@@ -69,6 +69,10 @@ def records(path: Path):
             yield number, value
 
 
+# Note titles as this site words them (AGENTS.md, Writing).
+NOTE_TITLES = {"The guns break first": "The gun line starts fleeing"}
+
+
 def title(text: str) -> str:
     return " ".join(word if index and word in SMALL_WORDS else word[:1].upper() + word[1:]
                     for index, word in enumerate(text.replace("_", " ").split()))
@@ -442,7 +446,7 @@ def build(episode: Path, notes: dict, clip=None) -> dict:
         "events": events,
         "notes": [{"t": r1(h["time_ms"] / 1000), "start": r1(max(0, h["time_ms"] / 1000 - (h.get("lead_in_s") or 0))),
                    "end": r1(h["end_ms"] / 1000) if h.get("end_ms") is not None else None,
-                   "title": h.get("title"), "text": h.get("text"), "units": h.get("units"),
+                   "title": NOTE_TITLES.get(h.get("title"), h.get("title")), "text": h.get("text"), "units": h.get("units"),
                    "kind": h.get("kind"), "feature": bool(h.get("feature")),
                    "label": "Analyst note (interpretation, written after the battle)"}
                   for h in highlights],
@@ -450,7 +454,7 @@ def build(episode: Path, notes: dict, clip=None) -> dict:
             "start": r1(max(0, featured["time_ms"] / 1000 - (featured.get("lead_in_s") or 0))),
             "at": r1(featured["time_ms"] / 1000),
             "end": r1(featured["end_ms"] / 1000) if featured.get("end_ms") is not None else None,
-            "title": featured.get("title"),
+            "title": NOTE_TITLES.get(featured.get("title"), featured.get("title")),
             "basis": "the report's 'Play key moment': the featured analyst note with its lead-in"},
         "stats": {"samples": len(times), "max_gap_s": r1(max(gaps)) if gaps else None},
     }

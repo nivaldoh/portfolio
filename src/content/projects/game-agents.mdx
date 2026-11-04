@@ -1,7 +1,7 @@
 ---
 title: 'Game agents: Total War and Slay the Spire'
-subtitle: 'Language models command real-time battles through a mod I built: the interface, a benchmark, six ways to command one army, mid-battle saves checked tick by tick and the first scripted battles across two machines'
-description: 'Language models command Total War: WARHAMMER III armies in real time through a Lua mod I built: a six-scenario benchmark with replays, a comparison of six ways to command one army, save and restore in the middle of a battle checked tick by tick, a small reinforcement-learning loop on saved moments, and the first scripted multiplayer battles across two machines. Plus full Slay the Spire runs.'
+subtitle: 'Language models command real-time battles through a mod I built. This page covers the interface, a benchmark, a comparison of control methods, mid-battle saves checked tick by tick and the first scripted battles across two machines.'
+description: 'Language models command Total War: WARHAMMER III armies in real time through a Lua mod I built: a six-scenario benchmark with replays, a comparison of control methods, save and restore in the middle of a battle checked tick by tick, a small reinforcement-learning loop on saved moments, and the first scripted multiplayer battles across two machines. Plus full Slay the Spire runs.'
 summary: 'Language models command armies in Total War through a Lua mod I built, and play full Slay the Spire runs through CommunicationMod.'
 period: '2026'
 order: 1
@@ -22,10 +22,10 @@ links:
   - label: Slay the Spire run notes
     url: https://github.com/nivaldoh/slay_the_spire_ai/blob/main/docs/spire/fullrun/README.md
 credits:
-  - 'Total War: WARHAMMER III, by Creative Assembly, published by SEGA. The game, its battle engine and its AI opponent are theirs; I built the mod and the tools around it.'
+  - 'Total War: WARHAMMER III, by Creative Assembly, published by SEGA. The game, its battle engine and its AI opponent are theirs, and I built the mod and the tools around it.'
   - 'rxi/json.lua for JSON inside the Total War mod, Frida for the checkpoint tool, twpatcher (Frodo45127) to skip the startup video, and RPFM’s schemas to decode game tables locally.'
   - 'Slay the Spire, by Mega Crit, played through the community mods ModTheSpire, BaseMod and CommunicationMod.'
-  - 'Language models from OpenAI (gpt-6-luna, gpt-6-sol, gpt-6.1-sol, gpt-6-astra), Anthropic (Claude Haiku 5.5) and, through OpenRouter, Z.ai (GLM-5.3), Moonshot AI (Kimi K3), Qwen (Qwen3.6-35B-A3B) and StepFun (Step-5 preview). I evaluate these models; I didn’t train them. Qwen3-0.6B was the base model for the small LoRA pilots.'
+  - 'Language models from OpenAI (gpt-6-luna, gpt-6-sol, gpt-6.1-sol, gpt-6-astra), Anthropic (Claude Haiku 5.5) and, through OpenRouter, Z.ai (GLM-5.3), Moonshot AI (Kimi K3), Qwen (Qwen3.6-35B-A3B) and StepFun (Step-5 preview). I evaluate these models and didn’t train them. Qwen3-0.6B was the base model for the small LoRA pilots.'
 ---
 
 import Plate from '../../components/Plate.astro';
@@ -67,9 +67,9 @@ The replay below is a different battle, recorded in full.
 
 ## What you’re looking at
 
-Halberds are built to stop cavalry. Here four Empire halberd units screen two units of handgunners and a cannon. gpt-6-sol commands six mounted Bretonnian units, and its first reply set the plan: “Advance the cavalry around the south side of the central obstruction to approach the enemy flank.” The recorded path follows it. The gun line broke between 3:06 and 3:56, and the game declared a win at 8:07.
+Here four Empire halberd units, which are built to stop cavalry, screen two units of handgunners and a cannon. gpt-6-sol commands six mounted Bretonnian units, and its first reply set the plan: “Advance the cavalry around the south side of the central obstruction to approach the enemy flank.” The recorded path follows it. The gun line broke between 3:06 and 3:56, and the game declared a win at 8:07.
 
-The view behind each batch of orders was a median 5.4 seconds old when the game applied it (3.0 to 13.5 s). The outlines in the replay show that gap. I count the delay as part of the result. Quoted reasons are what the model wrote in its replies, not a view of its internal reasoning.
+The view behind each batch of orders was a median 5.4 seconds old when the game applied it (3.0 to 13.5 s). The outlines in the replay show that gap, and I count the delay as part of the result. Quoted reasons are what the model wrote in its replies, and they don’t show its internal reasoning.
 
 <Details summary="This battle in numbers">
 
@@ -77,7 +77,6 @@ The view behind each batch of orders was a median 5.4 seconds old when the game 
 - **Replies.** The model was asked 84 times. 83 replies were applied (the last one, requested at 8:04, came after the battle had ended). 13 applied replies sent no new orders. Twice the harness refused a reply that broke the interface’s rules and asked again.
 - **Orders.** 211 attack, 88 move, 22 ability and 7 behavior orders were sent. The game rejected 10: four Mounted Yeomen Archers moves to unreachable destinations and the four shots queued behind them, one ability the unit doesn’t support, and one order to a fleeing unit.
 - **Timing.** Age of the view behind each applied batch, in battle time: median 5.4 s, mean 5.8 s, range 3.0 to 13.5 s across the 83 applied replies.
-- **Not typical.** In this scenario gpt-6-sol with low reasoning won 2 of its 9 recorded battles. This one is shown for the maneuver.
 
 </Details>
 
@@ -92,39 +91,39 @@ The mod is the only interface to the game. It publishes structured state, showin
 - The mod runs on the game’s script tick, a few times a second. It publishes an observation about once a second and after each order batch it applies.
 - One request is in flight at a time, and each prompt states how old the previous batch was when the game applied it. Scripted controllers answer within one tick.
 - The model sees its own units in full and enemy units only while its army can see them, plus the enemy roster from the lobby. Scoring and setup fields are removed. Values are exact numbers, so this is not the view a human player has.
-- Terrain arrives as a coarse grid of blocked 32 m cells, sampled at deployment. It is a hint, not a path planner.
-- “Acknowledged” means the game accepted an order, not that it was carried out. Rejections are recorded with the game’s reason.
+- Terrain arrives as a coarse grid of blocked 32 m cells, sampled at deployment, and the game does the pathfinding.
+- “Acknowledged” means the game accepted an order, which doesn’t mean it was carried out. Rejections are recorded with the game’s reason.
 - Each scenario’s setup is declared up front and checked in the game’s lobby, and a rematch replays the same start.
 
 </Details>
 
-## Save a battle, try another future
+## Saving and restoring a battle
 
-Total War can’t save in the middle of a battle. My checkpoint is the game’s own replay file, written mid-battle, plus the script’s random seed. A restore opens that replay, fast-forwards to the saved tick while comparing the engine’s checksum on every tick, then hands back control at normal speed. Below, one saved moment, restored with different orders, plays out four different battles.
+Total War can’t save in the middle of a battle. My checkpoint is the game’s own replay file, written mid-battle, plus the script’s random seed. A restore opens that replay, fast-forwards to the saved tick while comparing the engine’s checksum on every tick, then hands back control at normal speed. Below, one saved moment is restored with different orders and plays out in four different ways.
 
 <div class="wide">
   <CheckpointBranches>
-    <figcaption class="caption">Recorded positions from six restores of one moment at 4:30, with five different orders: Empire Spearmen and Handgunners (scripted orders, no model) against the game’s Savage Orcs. Two restores, a repeat and a running attack, played the same battle as “Both units attack”; the repeat matched for 4,184 ticks. The dotted line is the Orcs’ approach before the save.</figcaption>
+    <figcaption class="caption">Recorded positions from six restores of one moment at 4:30, with five different orders: Empire Spearmen and Handgunners (scripted orders, no model) against the game’s Savage Orcs. Two restores, a repeat and a running attack, played the same battle as “Both units attack”, and the repeat matched for 4,184 ticks. The dotted line is the Orcs’ approach before the save.</figcaption>
   </CheckpointBranches>
 </div>
 
-The check I agreed on restores a three-unit battle twice, and once with a changed order. On the current game build, both restores matched all 2,000 planned ticks, and the readings taken through each one (position, men, hit points, ammunition, morale, abilities, clock and script state) equaled the original. The changed restore split from the original soon after the new order, as it should. A separate check covers four saved siege states: eight restores of 2,400 ticks each matched, and all four changed-order controls split.
+The check I approved restores a three-unit battle twice, and once with a changed order. On the current game build, both restores matched all 2,000 planned ticks, and the readings taken through each one (position, men, hit points, ammunition, morale, abilities, clock and script state) equaled the original. The changed restore split from the original soon after the new order, as expected. A separate check covers four saved siege states: eight restores of 2,400 ticks each matched, and all four changed-order controls split.
 
-Checksums alone are not enough. When I built field towers by hand in a restored siege, supplies and construction changed and the checksums didn’t. The field readings caught it, so the siege check requires them alongside the checksums.
+When I built field towers by hand in a restored siege, supplies and construction changed but the checksums didn’t. The field readings showed the difference, so the siege check requires them alongside the checksums.
 
-I released the save as a small [public tool for players](https://github.com/nivaldoh/wh3-battle-checkpoints): type `save NAME` during a battle, then open NAME from Replays to play on from that moment. The release still targets the earlier game build (25961564); the port to the current build isn’t released yet.
+I released the save as a small [public tool for players](https://github.com/nivaldoh/wh3-battle-checkpoints): type `save NAME` during a battle, then open NAME from Replays to play on from that moment. The release still targets the earlier game build (25961564), and the port to the current build isn’t released yet.
 
 <Details summary="Reinforcement learning from saved moments">
 
-- **The loop.** A local Qwen3-0.6B with a LoRA adapter picks one of five order batches at a restored moment. A fixed script plays on to the engine’s result, which is the reward.
-- **What worked.** Trained on the recorded results of the moment above, the adapter chose to attack at a run, and the live game reproduced the win. A control trained on wrong labels chose to do nothing and lost, as it should. Before training the model already put 0.92 of its probability on winning orders, and trained on two moments at once it fell to always picking the second listed option. So this shows the loop runs end to end, not that the model learned much.
-- **What didn’t.** A synthetic test with no game: a fixed rule, fall back if the enemy is within 100 m, otherwise attack, over 200 training and 100 held-out generated positions. The policy collapsed onto attacking within about 12 updates. A revised version reached 0.955 to 0.975 on training positions but 0.75 to 0.78 held out, short of the planned 0.9. The experiment is paused.
+- **Setup.** A local Qwen3-0.6B with a LoRA adapter picks one of five order batches at a restored moment. A fixed script plays on to the engine’s result, which is the reward.
+- **First result.** Trained on the recorded results of the moment above, the adapter chose to attack at a run, and the live game reproduced the win. A control trained on wrong labels chose to do nothing and lost, as expected. Before training the model already put 0.92 of its probability on winning orders, and trained on two moments at once it fell to always picking the second listed option, so this shows that the loop runs end to end, but not that the model learned much.
+- **Synthetic test.** I also ran a test with no game, using a fixed rule (fall back if the enemy is within 100 m, otherwise attack) over 200 training and 100 held-out generated positions. The policy collapsed onto attacking within about 12 updates. A revised version reached 0.955 to 0.975 on training positions but 0.75 to 0.78 on held-out positions, short of the planned 0.9, and I paused the experiment.
 
 </Details>
 
-## Which models can win?
+## Benchmark results
 
-The benchmark has six scenarios, each built around one tactical decision, against the game’s AI on very hard.
+The benchmark has six scenarios, each built around one tactical decision, and the opponent is the game’s AI on very hard.
 
 <ArtDirectedPlate
   class="wide"
@@ -134,12 +133,12 @@ The benchmark has six scenarios, each built around one tactical decision, agains
     { media: '(max-width: 48rem)', src: scenariosMedium },
   ]}
   alt="Six small dark maps showing blue and gold unit starting positions over gray terrain, each labeled with a scenario name and small comparison bars."
-  caption="The six scenarios, with terrain and starting positions: cavalry assault, command a swarm, survive a swarm, caster assault, the last reserve (siege defence) and reinforcement defence."
+  caption="The six scenarios, with terrain and starting positions: cavalry assault, command a swarm, survive a swarm, caster assault, the last reserve (siege defense) and reinforcement defense."
 />
 
 <div class="wide">
   <ResultsGrid>
-    <span>Each dot is one battle; click it to watch the replay. Low reasoning effort, rules-only prompt, unpaused at 1x. gpt-6-sol and gpt-6-luna played the matched round of 16 October; gpt-6.1-sol played four of the scenarios afterwards with the same prompt version.</span>
+    <span>Each dot is one battle, and you can click it to watch the replay. Low reasoning effort, rules-only prompt, unpaused at 1x. gpt-6-sol and gpt-6-luna played the matched round of 16 October, and gpt-6.1-sol played four of the scenarios afterwards with the same prompt version.</span>
   </ResultsGrid>
 </div>
 
@@ -153,43 +152,43 @@ Three battles per model is too few to rank models, and I developed the prompts o
   caption="Three models on the cavalry scenario made different plans. Lines show soldiers lost (thin for each battle, thick for the mean), strips show accepted orders, and maps trace army routes. † pools every recorded cavalry battle for that model, across rounds and settings."
 />
 
-More enemies don’t automatically make a better test. With two or four extra Gyrocopters in the swarm battle, gpt-6.1-sol still won both times. Four extra cavalry in the siege did cause losses, partly by overwhelming the breach rather than by testing the reserve decision the scenario was built around. Each variant was a single battle. A harder variant should create a choice the controller can actually make.
+I also tried harder variants of some scenarios, with one battle per model on each variant. With two or four extra Gyrocopters in the swarm battle, gpt-6.1-sol still won both times. Four extra cavalry in the siege did cause losses, partly by overwhelming the breach rather than by testing the reserve decision the scenario was built around.
 
-## Same army, six chains of command
+## Comparing ways to control an army
 
-The same army can be commanded in many ways. The coordination suite plays each way on six small battles built to call for coordination, against the game’s AI on very hard. Every method with a model uses Claude Haiku 5.5 on low reasoning. Colour shows who controls each unit, read from each battle’s own record.
+The coordination suite compares different ways of commanding an army. It has six small battles built to need coordination, played against the game’s AI on very hard, and within each battle every method commands the same army. Every method with a model uses Claude Haiku 5.5 on low reasoning. The color of a unit shows who controls it, read from each battle’s own record.
 
 <div class="wide">
   <SuiteGrid>
-    <figcaption class="caption">Pick a battle to replay it; click a map for that battle’s full replay. A dash means the method didn’t play that battle.</figcaption>
+    <figcaption class="caption">You can pick a battle in the table, and each map links to its full replay. A dash means the method didn’t play that battle.</figcaption>
   </SuiteGrid>
 </div>
 
-Model over scripts won 4 of 5 and the same scripts alone won 2 of 4, while one model won none of 6. Model over scripts was built with a page of tactics advice, so its lead could have been the advice. The “with tips” column tests that: one model gets similar advice, worded for direct orders, and no scripts. Tips changed how it played (units shared a target for 54% of fighting time, against 28%), but it also won none of 6.
+Model over scripts won 4 of 5 battles and the same scripts alone won 2 of 4, while one model won none of 6. Model over scripts has a page of tactics advice in its prompt, so its lead could come from the advice. To test that, the “with tips” method gives one model similar advice, worded for direct orders, and no scripts. The advice changed how it played (units shared a target for 54% of fighting time, against 28%), but it also won none of 6.
 
-These are unverified leads, not rankings: one battle per pair, no agreed check yet, and I tuned the six battles on earlier rounds of the same battles. The [full comparison](/benchmarks/total-war/suite/index.html) has every replay, measure and cost.
+These results are unverified and don’t rank the methods. Each method played each battle at most once, I haven’t settled on a check yet, and the six battles were tuned on earlier rounds of the same battles. The [full comparison](/benchmarks/total-war/suite/index.html) has every replay, measure and cost.
 
-<Details summary="What each method does, and what this doesn’t show">
+<Details summary="What each method does and what the results don’t show">
 
-- **One model.** Orders every unit directly.
+- **One model.** It orders every unit directly.
 - **One model, with tips.** The same, plus similar tactics advice worded for direct orders.
-- **Three models.** One each for infantry, guns and knights, at the same time. They can’t talk to each other.
-- **Model over scripts.** One model gives standing instructions; scripts carry them out between its replies.
-- **Written rules.** Before each battle, models write frozen rules per unit class. In battle, a model only suggests targets every 30 seconds.
+- **Three models.** There is one model each for infantry, guns and knights, all playing at the same time, and they can’t talk to each other.
+- **Model over scripts.** One model gives standing instructions, and scripts carry them out between its replies.
+- **Written rules.** Before each battle, models write frozen rules per unit class. During the battle, a model only suggests targets every 30 seconds.
 - **Scripts only.** The same scripts with no model, at no cost.
-- **Paired result.** Model over scripts did better than one model on all 5 shared battles: it won 4, and in the fifth both lost and it scored higher (sign test p = 0.0625, the lowest five pairs can give). Against scripts alone it did better on 3 of 4 (p = 0.625), so the two aren’t separated.
-- **Unmeasured.** Model over scripts has never run without its tips, so the advice’s part in its wins is unknown.
-- **Coverage.** 32 of 34 planned battles played, on one game build. The tips battles ran later the same day, at a different code revision.
-- **Not as designed.** In Pincer the enemy block split in all six battles, in Defeat in detail the two waves arrived within 15 s of each other, and in Breakout neither win kept its infantry on one target.
-- **Status.** The suite’s check is only proposed, and its design choices wait for my review, so nothing here counts as verified yet.
+- **Paired result.** Model over scripts did better than one model on all 5 shared battles. It won 4, and in the fifth both lost and it scored higher (sign test p = 0.0625, the lowest five pairs can give). Against scripts alone it did better on 3 of 4 (p = 0.625), so those two aren’t separated.
+- **Not measured.** Model over scripts has never run without its tips, so I don’t know how much of its wins comes from the advice.
+- **Coverage.** 32 of 34 planned battles were played, on one game build. The tips battles ran later the same day, at a different code revision.
+- **Battles that didn’t play as designed.** In Pincer the enemy block split in all six battles, in Defeat in detail the two waves arrived within 15 s of each other, and in Breakout neither win kept its infantry on one target.
+- **Status.** The suite’s check is only proposed, and its design choices are waiting for my review.
 
 </Details>
 
-## Two machines, one battle
+## Multiplayer across two machines
 
-On one PC, agents can already split an army; that’s the “three models” column above. The next step gives each agent its own copy of the game, limited to what its player can see on that client. My code reads each client’s view and sends that client’s orders. The game’s own multiplayer carries the battle between clients.
+On one PC, agents can already split an army, as in the “three models” column above. The next step gives each agent its own copy of the game, limited to what its player can see on that client. My code reads each client’s view and sends that client’s orders, and the game’s own multiplayer carries the battle between clients.
 
-On 3 November my PC and a cloud VM played the first two battles this way, with scripted moves and lobbies set up by hand; neither ran to a recorded ending. In the first, a move sent from the PC appeared on the VM, and all 553 unit positions compared at 79 shared battle times were identical. In the second, both machines sent moves, and each phase moved only the named army on both clients. No language model has played this way yet, each result rests on one battle, and no check is agreed yet.
+On 3 November my PC and a cloud VM played the first two battles this way, with scripted moves and lobbies set up by hand, and neither has a recorded ending. In the first, a move sent from the PC appeared on the VM, and all 553 unit positions compared at 79 shared battle times were identical. In the second, both machines sent moves, and each phase moved only the named army on both clients. No language model has played this way yet, and each result comes from a single battle with no approved check behind it yet.
 
 <div class="wide">
   <TwoClients>
@@ -204,23 +203,23 @@ On 3 November my PC and a cloud VM played the first two battles this way, with s
 <Details summary="What makes it hard">
 
 - An order sent from one client’s script must reach every client’s simulation. Creative Assembly’s modding notes warn that game changes made from interface scripts can desync a multiplayer match. The first two battles showed no desync, which is too little to rule it out.
-- Agents need the lobby and the Start Battle button without a person. Following the game’s internal command names found the command behind that button, and a Frida trace of one real click confirmed it. Called directly on one client, it replaced that click once; the lobby still ran on scripted menu clicks. Two of the four launches in that session that reached the menus stalled, cause unknown.
+- Agents have to use the lobby and the Start Battle button without a person. An agent working overnight followed the game’s internal command names to the command behind that button, and a Frida trace of one real click confirmed it. Called directly on one client, it replaced that click once, while the lobby still ran on scripted menu clicks. Two of the four launches in that session that reached the menus stalled, cause unknown.
 - No client may pause or slow the battle while a model thinks, and the slowest client can slow everyone.
 - Each order is sent at most once. If an acknowledgement is lost, the effect is unknown and the order is not resent.
-- Times from different machines are never compared without a measured offset; battle time comes from the engine.
+- Times from different machines are never compared without a measured offset, and battle time comes from the engine.
 
 </Details>
 
 ## How I build it
 
-I want to understand how models perform, how they decide and how they compare, and games make that visible. I run the project with Claude Code and Codex: the agents write most of the code, and I set the questions, the requirements and how each answer is checked. One question that shaped the benchmark: when a model loses, did it not know the tactic, or act too late while the battle kept moving?
+I run the project with Claude Code and Codex. The agents write most of the code, and I set the questions and requirements and decide how each answer gets checked. One question behind the benchmark is whether a model that loses a battle didn’t know the tactic or knew it and acted too late while the battle kept moving.
 
-- **Nothing counts as working until a check I agreed on passes**, and only at the revision where it passed. Passing tests and single battles are evidence, not proof.
-- **A check must fail on a deliberately wrong version before it counts.** The tests are replayed against 357 planted bugs; the last full replay caught 355, and the two misses are still open.
-- **Agents may not edit an existing test in the same change as the code it judges**; the gate lists such edits for review. A separate reviewer agent sees the diff and the raw output, never the author’s explanation.
-- **Choices an agent makes without me are marked in the code** until I decide them.
+- A feature counts as working only at a revision where a check I’ve approved passed. Passing tests and single battles are evidence but aren’t enough.
+- A check has to fail on a deliberately wrong version before it counts. The tests are replayed against 357 planted bugs. The last full replay caught 355, and the two misses are still open.
+- Agents aren’t allowed to edit an existing test in the same change as the code it judges, and the gate lists such edits for review. A separate reviewer agent sees the diff and the raw output but never the author’s explanation.
+- Choices an agent makes without me are marked in the code until I decide them.
 
-It catches real problems. One night, 10 wrong versions of the pre-commit gate and its hooks passed every test; new tests now catch all 10. “Pauses” in restored battles turned out to be clock jumps in WSL (24 of 24 gaps), so delays and view ages now use the engine’s battle clock.
+Ten wrong versions of the pre-commit gate and its hooks once passed every test, and new tests now catch all of them. “Pauses” in restored battles turned out to be clock jumps in WSL (24 of 24 gaps), so delays and view ages now use the engine’s battle clock.
 
 ## In the game
 
@@ -239,19 +238,17 @@ The mod can also show each reply inside the game. Both captures are from early d
     widths={[480, 800, 1200, 1600]}
     sizes="(min-width: 76rem) 35rem, (min-width: 52rem) 48vw, 100vw"
     alt="Total War: WARHAMMER III siege: a fortified town with walls and gates in the background, blue-bannered Dwarf regiments crossing open ground toward it, unit cards and a supplies counter in the interface."
-    caption="14 October 2026: a siege-defence smoke test. A scripted controller defends a walled settlement with five Khorne units as five Dwarf units advance."
+    caption="14 October 2026: a siege-defense smoke test. A scripted controller defends a walled settlement with five Khorne units as five Dwarf units advance."
   />
 </PlatePair>
 
 <h2 id="slay-the-spire">Slay the Spire: full runs</h2>
 
-In Slay the Spire a bad choice can end a run an hour later. A model plays complete Ironclad runs via CommunicationMod: at each decision it sees a summary of the public game state, the legal choices labeled one by one, its recent decisions and its own notes. When a recorded run shows a mistake, I change one part of the prompt, memory or interface and run again.
+A model plays complete Ironclad runs via CommunicationMod, and a run can end an hour after the bad choice that caused it. At each decision it sees a summary of the public game state, the legal choices labeled one by one, its recent decisions and its own notes. When a recorded run shows a mistake, I change one part of the prompt, memory or interface and run again.
 
 <RunProgress class="wide" />
 
-No run has won yet.
-
-Some mistakes came from the interface, not the model. With the Gambling Chip relic, the game asks at the start of a fight which cards to discard and redraw, but the prompt said only “Choose up to 99 card(s) from your hand”, like any other card choice. On floor 42 of one run the model selected Impervious+ “to block the Transient’s full 30 damage and avoid dying this turn”, and the card went to the discard pile. The newest prompt names what asked for the selection; it hasn’t had a full run yet.
+No run has won yet, and some of the mistakes came from the interface. With the Gambling Chip relic, the game asks at the start of a fight which cards to discard and redraw, but the prompt said only “Choose up to 99 card(s) from your hand”, like any other card choice. On floor 42 of one run the model selected Impervious+ “to block the Transient’s full 30 damage and avoid dying this turn”, and the card went to the discard pile. The newest prompt names what asked for the selection, but it hasn’t had a full run yet.
 
 <Details summary="Interface, pilots and plans">
 

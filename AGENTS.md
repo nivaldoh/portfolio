@@ -36,6 +36,16 @@ Tests use Node's built-in `node:test` and strict assertions in `scripts/replay.t
 
 For UI changes, preview the homepage and project pages at phone, tablet, and desktop widths. Check keyboard controls, reduced motion, disabled JavaScript, and relevant failure/retry behavior.
 
+## Writing
+
+Visible text has to sound like the owner wrote it, because the site speaks in their name. Owner, 2026-11-04: "The text reads like AI slop though. For instance, everything is a punchline. A bit painful to see." Before writing, read the abstract and introduction of `public/media/robocasa/teleporting-bread-and-changing-goals.pdf` and the "My part, briefly" section of `src/content/projects/pokeagent-metamon.mdx`.
+
+- Say what the thing is and what happened, in whole sentences joined with words like so, but, because and while. Give numbers without commentary. End a paragraph on a fact.
+- No punchlines. That means no tagline headings with a full stop, no paired contrasts built for effect ("X changed, Y didn't"), no short closing sentence added for rhythm, no "X, not Y", no slogans like "state in, orders out", no clever labels like "The catch", and no hook questions. If a sentence is there for how it sounds, cut it.
+- Headings say what the section contains: "Benchmark results", "How it works", "Competition result".
+- American spelling. No semicolons or em dashes in visible text.
+- State a limit once, in plain words, where it applies.
+
 ## Commit & Pull Request Guidelines
 
 History uses short, plain-language action summaries, such as `sync SITE_URL with the Pages domain`; no mandatory prefix convention is evident. Keep commits focused.
