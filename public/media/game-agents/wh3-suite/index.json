@@ -1,0 +1,161 @@
+{
+ "source_sha256": "263448cf807bfb19a5b55e166cc68f6dd125d2e4c1450afb287553f4c77c7f2e",
+ "methods": [
+  {
+   "id": "single",
+   "tag": "M",
+   "name": "One model",
+   "note": "controls everything",
+   "models": [
+    "all"
+   ],
+   "scripts": false,
+   "rules": false,
+   "won": 0,
+   "played": 6
+  },
+  {
+   "id": "tips",
+   "tag": "M+",
+   "name": "One model, with tips",
+   "note": "told how to fight",
+   "models": [
+    "all"
+   ],
+   "scripts": false,
+   "rules": false,
+   "won": 0,
+   "played": 6
+  },
+  {
+   "id": "team",
+   "tag": "T",
+   "name": "Three models",
+   "note": "cannot talk to each other",
+   "models": [
+    "front",
+    "ranged",
+    "mobile"
+   ],
+   "scripts": false,
+   "rules": false,
+   "won": 1,
+   "played": 5
+  },
+  {
+   "id": "commander",
+   "tag": "C",
+   "name": "Model over scripts",
+   "note": "also told how to fight",
+   "models": [
+    "all"
+   ],
+   "scripts": true,
+   "rules": false,
+   "won": 4,
+   "played": 5
+  },
+  {
+   "id": "gap",
+   "tag": "R",
+   "name": "Written rules",
+   "note": "written before the battle, then target hints",
+   "models": [
+    "front",
+    "ranged",
+    "mobile"
+   ],
+   "scripts": false,
+   "rules": true,
+   "won": 1,
+   "played": 6
+  },
+  {
+   "id": "skills",
+   "tag": "S",
+   "name": "Scripts only",
+   "note": "no model at all",
+   "models": [],
+   "scripts": true,
+   "rules": false,
+   "won": 2,
+   "played": 4
+  }
+ ],
+ "battles": [
+  {
+   "id": "coord-two-fronts",
+   "title": "Two fronts",
+   "question": "Two fights at once and one reserve. Where does it go?",
+   "results": {
+    "single": "lost",
+    "team": "lost",
+    "commander": "won",
+    "gap": "lost",
+    "skills": "lost",
+    "tips": "lost"
+   }
+  },
+  {
+   "id": "coord-relief",
+   "title": "Relief",
+   "question": "Can the garrison hold until the column arrives?",
+   "results": {
+    "single": "lost",
+    "gap": "won",
+    "commander": "won",
+    "team": "lost",
+    "skills": "lost",
+    "tips": "lost"
+   }
+  },
+  {
+   "id": "coord-pincer",
+   "title": "Pincer",
+   "question": "Can two groups strike one block at the same moment?",
+   "results": {
+    "commander": "lost",
+    "gap": "lost",
+    "single": "lost",
+    "team": "lost",
+    "skills": "won",
+    "tips": "lost"
+   }
+  },
+  {
+   "id": "coord-breakout",
+   "title": "Breakout",
+   "question": "Can the army beat one force before the other two close in?",
+   "results": {
+    "gap": "lost",
+    "team": "lost",
+    "commander": "won",
+    "single": "lost",
+    "skills": "won",
+    "tips": "lost"
+   }
+  },
+  {
+   "id": "coord-detail",
+   "title": "Defeat in detail",
+   "question": "Can the army finish the near wave before the far wave arrives?",
+   "results": {
+    "gap": "lost",
+    "single": "lost",
+    "team": "won",
+    "commander": "won",
+    "tips": "lost"
+   }
+  },
+  {
+   "id": "coord-rear-raid",
+   "title": "Rear raid",
+   "question": "Can the army hold its line and guard its guns at the same time?",
+   "results": {
+    "single": "lost",
+    "gap": "lost",
+    "tips": "lost"
+   }
+  }
+ ]
+}
