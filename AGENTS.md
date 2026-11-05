@@ -40,6 +40,8 @@ For UI changes, preview the homepage and project pages at phone, tablet, and des
 
 Visible text has to sound like the owner wrote it, because the site speaks in their name. Owner, 2026-11-04: "The text reads like AI slop though. For instance, everything is a punchline. A bit painful to see." Before writing, read the abstract and introduction of `public/media/robocasa/teleporting-bread-and-changing-goals.pdf` and the "My part, briefly" section of `src/content/projects/pokeagent-metamon.mdx`.
 
+- Keep it short, because the figures do the explaining. On the homepage a section gets one or two lines. Owner, 2026-11-04, picking the shortest of four drafts: "Also note that not everything needs an explanation. There's still too much text in the page." Their chosen example: "Six ways of controlling an army, in six battles. One battle per pair so far, so this can't rank them yet."
+- Don't choose a headline or a house style alone. Offer a few real drafts in different styles and let the owner pick. An editor agent's approval says nothing about whether it sounds like them.
 - Say what the thing is and what happened, in whole sentences joined with words like so, but, because and while. Give numbers without commentary. End a paragraph on a fact.
 - No punchlines. That means no tagline headings with a full stop, no paired contrasts built for effect ("X changed, Y didn't"), no short closing sentence added for rhythm, no "X, not Y", no slogans like "state in, orders out", no clever labels like "The catch", and no hook questions. If a sentence is there for how it sounds, cut it.
 - Headings say what the section contains: "Benchmark results", "How it works", "Competition result".

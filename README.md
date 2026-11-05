@@ -37,7 +37,7 @@ src/
 │  └─ posts/                 # .md / .mdx blog posts → /writing/ (not linked from the nav yet)
 ├─ components/
 │  ├─ Plate, Details, ProjectPanel, BeamSection, Career, RecordedVideo, ...
-│  ├─ wh3/                   # HeroBattle (homepage opening), BattleReplay (recorded replay), CheckpointBranches, ResultsGrid, SuiteGrid and TwoClients (small synced maps, mini-maps.ts), TeamPlan
+│  ├─ wh3/                   # HeroBattle (homepage opening), BattleReplay (recorded replay), CheckpointBranches, ResultsGrid, SuiteGrid and TwoClients (small synced maps, mini-maps.ts)
 │  ├─ slay/                  # RunProgress: the furthest full run (homepage and the game-agents case study)
 │  ├─ game-agents/           # small figures for the Total War case study
 │  ├─ robocasa/              # DevelopmentRecordings: the homepage clips
@@ -131,7 +131,7 @@ python3 -I scripts/export_wh3_branches.py \
 
 The exporter drops rows published during the restore's fast-forward, keeps positions as recorded (never interpolated), checks that every future starts from the same saved frame, and folds launches with identical recordings into one future (`same_as`). Without script, or with reduced motion, the figure is the finished state; with script it replays all futures together and loops.
 
-`ResultsGrid` reads the published benchmark's embedded report data at build time, so its dots always match the benchmark: the matched round M1 (gpt-6-sol, gpt-6-luna), gpt-6.1-sol's later round on four scenarios, and every recorded scripted baseline on the same six scenarios. Each dot links to its replay. `SuiteGrid` draws the coordination suite: who controls what, six recorded maps on one clock (the same maps in the static figure and in playback, from `mini-maps.ts`) and the table of results; each map links to that battle's replay in the hosted report (`/benchmarks/total-war/suite/`). `TwoClients` replays the first PC + cloud VM battle as each machine recorded it. To refresh them, run `import_wh3_suite.py` and `export_wh3_suite.py`. `TeamPlan` is the native-multiplayer plan with its status as of 4 November 2026; update its steps as the work moves.
+`ResultsGrid` reads the published benchmark's embedded report data at build time, so its dots always match the benchmark: the matched round M1 (gpt-6-sol, gpt-6-luna), gpt-6.1-sol's later round on four scenarios, and every recorded scripted baseline on the same six scenarios. Each dot links to its replay. `SuiteGrid` draws the coordination suite: who controls what, six recorded maps on one clock (the same maps in the static figure and in playback, from `mini-maps.ts`) and the table of results; each map links to that battle's replay in the hosted report (`/benchmarks/total-war/suite/`). `TwoClients` replays the first PC + cloud VM battle as each machine recorded it. To refresh them, run `import_wh3_suite.py` and `export_wh3_suite.py`.
 
 ## The full benchmark
 

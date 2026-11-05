@@ -11,7 +11,6 @@ export function initSuite(root: HTMLElement) {
   const rows = [...root.querySelectorAll<HTMLElement>('[data-sg-row]')];
   const cols = [...root.querySelectorAll<HTMLElement>('[data-sg-method]')];
   const title = root.querySelector<HTMLElement>('[data-sg-title]');
-  const question = root.querySelector<HTMLElement>('[data-sg-question]');
   const time = root.querySelector<HTMLElement>('[data-sg-time]');
   const toggle = root.querySelector<HTMLButtonElement>('[data-sg-toggle]');
   const cache = new Map<string, Promise<MapSet>>();
@@ -35,10 +34,7 @@ export function initSuite(root: HTMLElement) {
       const on = row.dataset.sgRow === id;
       row.classList.toggle('sg__row--on', on);
       row.querySelector('button')?.setAttribute('aria-pressed', String(on));
-      if (on) {
-        if (title) title.textContent = row.dataset.title ?? '';
-        if (question) question.textContent = row.dataset.question ?? '';
-      }
+      if (on && title) title.textContent = row.dataset.title ?? '';
     }
     let set: MapSet;
     try {

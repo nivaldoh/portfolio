@@ -1,6 +1,6 @@
 ---
 title: 'Game agents: Total War and Slay the Spire'
-subtitle: 'Language models command real-time battles through a mod I built. This page covers the interface, a benchmark, a comparison of control methods, mid-battle saves checked tick by tick and the first scripted battles across two machines.'
+subtitle: 'Language models command real-time battles through a mod I built.'
 description: 'Language models command Total War: WARHAMMER III armies in real time through a Lua mod I built: a six-scenario benchmark with replays, a comparison of control methods, save and restore in the middle of a battle checked tick by tick, a small reinforcement-learning loop on saved moments, and the first scripted multiplayer battles across two machines. Plus full Slay the Spire runs.'
 summary: 'Language models command armies in Total War through a Lua mod I built, and play full Slay the Spire runs through CommunicationMod.'
 period: '2026'
@@ -35,7 +35,6 @@ import CheckpointBranches from '../../components/wh3/CheckpointBranches.astro';
 import ResultsGrid from '../../components/wh3/ResultsGrid.astro';
 import SuiteGrid from '../../components/wh3/SuiteGrid.astro';
 import TwoClients from '../../components/wh3/TwoClients.astro';
-import TeamPlan from '../../components/wh3/TeamPlan.astro';
 import ControllerModes from '../../components/game-agents/ControllerModes.astro';
 import PlatePair from '../../components/game-agents/PlatePair.astro';
 import ArtDirectedPlate from '../../components/game-agents/ArtDirectedPlate.astro';
@@ -156,17 +155,13 @@ I also tried harder variants of some scenarios, with one battle per model on eac
 
 ## Comparing ways to control an army
 
-The coordination suite compares different ways of commanding an army. It has six small battles built to need coordination, played against the game’s AI on very hard, and within each battle every method commands the same army. Every method with a model uses Claude Haiku 5.5 on low reasoning. The color of a unit shows who controls it, read from each battle’s own record.
+Six ways of controlling an army, in six battles, against the game’s AI on very hard. Every method with a model uses Claude Haiku 5.5 on low reasoning.
 
 <div class="wide">
-  <SuiteGrid>
-    <figcaption class="caption">You can pick a battle in the table, and each map links to its full replay. A dash means the method didn’t play that battle.</figcaption>
-  </SuiteGrid>
+  <SuiteGrid />
 </div>
 
-Model over scripts won 4 of 5 battles and the same scripts alone won 2 of 4, while one model won none of 6. Model over scripts has a page of tactics advice in its prompt, so its lead could come from the advice. To test that, the “with tips” method gives one model similar advice, worded for direct orders, and no scripts. The advice changed how it played (units shared a target for 54% of fighting time, against 28%), but it also won none of 6.
-
-These results are unverified and don’t rank the methods. Each method played each battle at most once, I haven’t settled on a check yet, and the six battles were tuned on earlier rounds of the same battles. The [full comparison](/benchmarks/total-war/suite/index.html) has every replay, measure and cost.
+Model over scripts won 4 of 5 battles and the same scripts alone won 2 of 4, while one model won none of 6. One model given similar tactics advice and no scripts also won none of 6. One battle per pair so far, so this can’t rank them yet. The [full comparison](/benchmarks/total-war/suite/index.html) has every replay, measure and cost.
 
 <Details summary="What each method does and what the results don’t show">
 
@@ -186,18 +181,12 @@ These results are unverified and don’t rank the methods. Each method played ea
 
 ## Multiplayer across two machines
 
-On one PC, agents can already split an army, as in the “three models” column above. The next step gives each agent its own copy of the game, limited to what its player can see on that client. My code reads each client’s view and sends that client’s orders, and the game’s own multiplayer carries the battle between clients.
-
-On 3 November my PC and a cloud VM played the first two battles this way, with scripted moves and lobbies set up by hand, and neither has a recorded ending. In the first, a move sent from the PC appeared on the VM, and all 553 unit positions compared at 79 shared battle times were identical. In the second, both machines sent moves, and each phase moved only the named army on both clients. No language model has played this way yet, and each result comes from a single battle with no approved check behind it yet.
+My PC and a cloud VM played two short test battles through the game’s own multiplayer on 3 November, with scripted moves and no recorded ending. In the first, a move sent from the PC appeared on the VM, and all 553 unit positions compared at 79 shared battle times were identical. No language model has played this way yet.
 
 <div class="wide">
   <TwoClients>
-    <figcaption class="caption">The first 100 seconds of the first battle as each machine recorded it, at the battle times both sampled. Only the PC sent a move here.</figcaption>
+    <figcaption class="caption">The first 100 seconds of the first battle as each machine recorded it.</figcaption>
   </TwoClients>
-</div>
-
-<div class="wide">
-  <TeamPlan />
 </div>
 
 <Details summary="What makes it hard">
