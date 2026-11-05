@@ -10,7 +10,6 @@ import SuiteGrid from '../components/wh3/SuiteGrid.astro';
 import TwoClients from '../components/wh3/TwoClients.astro';
 import DevelopmentRecordings from '../components/robocasa/DevelopmentRecordings.astro';
 import ResultsChart from '../components/tcg/ResultsChart.astro';
-import TeacherData from '../components/tcg/TeacherData.astro';
 import HybridSearch from '../components/pokeagent/HybridSearch.astro';
 import SelfPlayDiagram from '../components/pokeagent/SelfPlayDiagram.astro';
 import MetamonPRs from '../components/pokeagent/MetamonPRs.astro';
@@ -199,7 +198,7 @@ const index = [
           title="PokéAgent Challenge"
           href="/projects/pokeagent-metamon/"
           facts={['Quarterfinalist · Gen 1 OU', 'Quarterfinalist · Gen 9 OU']}
-          summary="I competed as MetaHorns. My Gen 9 OU entry combined two existing agents: PokéChamp’s minimax search looks one turn ahead, and Metamon, trained with offline RL on human battles, proposes the moves and scores each position. I also packaged Metamon self-play to run on Google Cloud Run."
+          summary="I competed as MetaHorns. My Gen 9 OU entry put Metamon, an offline RL agent, inside PokéChamp’s minimax search."
           links={[
             { label: 'Case study', url: '/projects/pokeagent-metamon/' },
             { label: 'Official brackets', url: BRACKETS_URL },
@@ -211,7 +210,7 @@ const index = [
           <div class="figure-pair" slot="media">
             <div class="figure-pair__item">
               <h4 class="figure-pair__title">Deciding a turn</h4>
-              <HybridSearch />
+              <HybridSearch compact />
             </div>
             <div class="figure-pair__item">
               <h4 class="figure-pair__title">Generating training data</h4>
@@ -229,7 +228,7 @@ const index = [
           eyebrow="03 / Open source · UT Austin RPL"
           title="Metamon"
           href="/projects/pokeagent-metamon/#metamon-contributions"
-          summary="From January to March 2026 I worked on Metamon with PhD student Jake Grigsby at UT Austin’s Robot Perception and Learning Lab. My main merged change took its team validation from about a second per team to about a millisecond."
+          summary="I worked on Metamon with PhD student Jake Grigsby at UT Austin’s Robot Perception and Learning Lab. My main merged change took its team validation from about a second per team to about a millisecond."
           links={[
             { label: 'Case study', url: '/projects/pokeagent-metamon/#metamon-contributions' },
             { label: 'Repository', url: 'https://github.com/UT-Austin-RPL/metamon' },
@@ -248,12 +247,11 @@ const index = [
           eyebrow="04 / Kaggle competition"
           title="Pokémon TCG agents"
           href={`/projects/${tcg.id}/`}
-          summary="A Kaggle competition close to Metamon’s problem, but with no archive of human games to learn from. I recorded games between four scripted players, cloned them, then fine-tuned with PPO. A later specialist won 82.6% against one teacher, but when I checked, every win came from the opponent running out of cards."
+          summary="I recorded games between four scripted players, cloned them, then fine-tuned with PPO. A later specialist won 82.6% against one teacher, but every win came from the opponent running out of cards."
           links={[{ label: 'Case study', url: `/projects/${tcg.id}/` }]}
           layout="wide"
           size="small"
         >
-          <TeacherData />
           <ResultsChart slot="media" variant="multi-deck" compact />
         </ProjectPanel>
       </li>
@@ -265,7 +263,7 @@ const index = [
           level={3}
           eyebrow="05 / Robot evaluation"
           title="Changing goals during robot execution"
-          summary="I extended RoboCasa365, a kitchen simulation benchmark from the same UT Austin lab as Metamon, so the goal or the scene can change mid-episode, and recorded when each controller received the change. In 4 goal-change episodes, GR00T N1.5 always completed the original task, but never the new goal. Astra, my code-writing LLM agent with ground-truth state and evaluator feedback, met the new goal in 1 of 5 episodes. The clips are not from the evaluation."
+          summary="I extended RoboCasa365 so the goal or the scene can change mid-episode. In 4 goal-change episodes GR00T N1.5 never met the new goal, and Astra, my code-writing agent with ground-truth state, met it in 1 of 5. The clips are not from the evaluation."
           links={[
             { label: 'Paper (PDF, workshop submission, under review)', url: '/media/robocasa/teleporting-bread-and-changing-goals.pdf' },
             { label: 'Code', url: 'https://github.com/nivaldoh/robocasa/tree/main/robocasa/scenarios' },
@@ -284,9 +282,6 @@ const index = [
     <div class="feature__head about__head">
       <h2 class="section-heading" id="about-title">Background</h2>
       <p class="about__bio">
-        I’m a software and AI engineer in São Paulo. After eight years
-        building cloud and data systems, I now work on agents in games and
-        robotics while studying for an MS in Computer Science at UT Austin.
         The agent work began in 2025, when a post by Prof. Yuke Zhu pointed
         me to the PokéAgent Challenge. Metamon and RoboCasa365 both come from
         his lab.

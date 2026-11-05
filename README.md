@@ -41,7 +41,7 @@ src/
 │  ├─ slay/                  # RunProgress: the furthest full run (homepage and the game-agents case study)
 │  ├─ game-agents/           # small figures for the Total War case study
 │  ├─ robocasa/              # DevelopmentRecordings: the homepage clips
-│  ├─ tcg/                   # ResultsChart, TeacherData, TrainingLoop
+│  ├─ tcg/                   # ResultsChart, TrainingLoop
 │  └─ pokeagent/             # HybridSearch, MetamonPRs, SelfPlayDiagram, TournamentBrackets
 ├─ layouts/                  # BaseLayout, CaseStudyLayout, PostLayout
 ├─ pages/

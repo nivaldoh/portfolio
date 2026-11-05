@@ -17,10 +17,12 @@
 // Schematic: three options with two replies each. The scores are
 // illustrative; no search traces were kept. Static HTML and CSS, no script.
 interface Props {
+  /** The homepage panel: a shorter caption. */
+  compact?: boolean;
   class?: string;
 }
 
-const { class: className } = Astro.props;
+const { compact = false, class: className } = Astro.props;
 
 // Leaf scores, illustrative. Each option keeps its worst reply; the option
 // with the best worst case wins (here the switch, at index 1).
@@ -148,8 +150,7 @@ const ALT =
     </div>
   </div>
   <figcaption>
-    One turn of my Gen 9 OU entry: PokéChamp’s minimax search, with Metamon’s
-    policy and critic inside it. Schematic, with illustrative scores.
+    {compact ? 'Schematic, with illustrative scores.' : 'One turn of my Gen 9 OU entry: PokéChamp’s minimax search, with Metamon’s policy and critic inside it. Schematic, with illustrative scores.'}
   </figcaption>
 </figure>
 

@@ -52,14 +52,9 @@ const REPO = 'https://github.com/UT-Austin-RPL/metamon';
 
 // What was slow, what changed, what came of it.
 const validator = [
-  { label: 'Before', text: 'A new Showdown process per team file. Each one reloaded the game data, and rebuilt Showdown first because the script ran from the repository root' },
-  { label: 'After', text: 'One validator process for the whole run, with teams sent one line at a time over a pipe' },
+  { label: 'Before', text: 'A new Showdown process per team file' },
+  { label: 'After', text: 'One validator process for the whole run' },
   { label: 'Result', text: '200 Gen 9 OU teams in 0.6 s instead of 3.4 minutes, re-timed in October 2026' },
-];
-
-const also = [
-  { icon: 'funnel', text: 'Usage statistics filtered by Smogon rank' },
-  { icon: 'backoff', text: 'Scraper: exponential backoff and a concurrency cap, after timeouts' },
 ];
 ---
 
@@ -91,21 +86,6 @@ const also = [
           </div>
         ))}
       </dl>
-
-      <ul class="mpr__changes" aria-label="Also in this pull request">
-        {also.map((change) => (
-          <li class="mpr__change">
-            <svg class="mpr__icon" viewBox="0 0 16 16" aria-hidden="true">
-              {change.icon === 'funnel' && <path d="M2 3h12l-4.6 5.4v4.8l-2.8-1.4V8.4z" />}
-              {change.icon === 'backoff' && <path d="M1 10.5a1 1 0 0 1 2 0a2 2 0 0 1 4 0a4 4 0 0 1 8 0" />}
-            </svg>
-            <span class="mpr__text">{change.text}</span>
-          </li>
-        ))}
-      </ul>
-      <p class="mpr__note">
-        Follow-up: <a href={`${REPO}/pull/70`}>#70</a>, a small fix merged the next day.
-      </p>
     </li>
 
     <li class="mpr__card mpr__card--experiment">
@@ -128,7 +108,6 @@ const also = [
           <svg class="mpr__icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M9 1.5 3.5 9h4L6.5 14.5 12.5 7h-4z" /></svg>
           <span class="mpr__text">
             An encoder rewrite that runs under CUDA graphs
-            <span class="mpr__tag">~10% faster at inference</span>
           </span>
         </li>
         <li class="mpr__change">
@@ -150,11 +129,6 @@ const also = [
           </li>
           <li class="mpr__step"><span class="mpr__chip mpr__chip--keep">Keep</span></li>
         </ol>
-        <p class="mpr__why">
-          Built so a coding agent could try many small optimizations and keep
-          only the ones that pass. The baseline ran in a different compile
-          mode, so the 10% isn’t the rewrite alone.
-        </p>
       </div>
     </li>
   </ul>
@@ -167,9 +141,6 @@ const also = [
 
   .mpr__meta,
   .mpr__title,
-  .mpr__note {
-    margin: 0;
-  }
 
   .mpr__list,
   .mpr__changes {
@@ -298,12 +269,6 @@ const also = [
     color: var(--fg-strong);
   }
 
-  .mpr__note {
-    margin-top: 0.8rem;
-    font-size: var(--step--1);
-    line-height: 1.4;
-    color: var(--fg-muted);
-  }
 
   .mpr__changes {
     display: grid;
@@ -339,19 +304,6 @@ const also = [
     stroke-linejoin: round;
   }
 
-  .mpr__tag {
-    display: inline-block;
-    margin-left: 0.5rem;
-    padding: 0 0.4rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-control);
-    font-family: var(--font-mono);
-    font-size: var(--step--2);
-    line-height: 1.5;
-    color: var(--fg-muted);
-    white-space: nowrap;
-    vertical-align: 0.08em;
-  }
 
   /* ---------- The experiment ---------- */
   .mpr__card--experiment {
@@ -441,13 +393,6 @@ const also = [
     content: '✗ ';
   }
 
-  .mpr__why {
-    margin: 0.8rem 0 0;
-    font-size: var(--step--1);
-    line-height: 1.45;
-    color: var(--fg-muted);
-    text-wrap: pretty;
-  }
 
   @container mpr-open (min-width: 30rem) {
     .mpr__gates {

@@ -20,7 +20,6 @@ const SUMMIT_URL = 'https://beamsummit.org/slides/2023/Sho-Rust.pdf';
 const contributions = [
   {
     title: 'LogElements as a Beam PTransform',
-    note: 'Python SDK transform with unit tests',
     project: 'Apache Beam',
     ref: 'PR #23879',
     year: '2022',
@@ -28,7 +27,6 @@ const contributions = [
   },
   {
     title: 'Firestore configuration source',
-    note: 'An alternative to Google Sheets for configuring Megalista’s Dataflow pipeline',
     project: 'Google Megalista',
     ref: 'PR #12',
     year: '2021',
@@ -44,16 +42,10 @@ const contributions = [
       Starting an experimental Rust SDK for Apache Beam
     </h2>
     <p>
-      In late 2022 I started a Rust SDK for Apache Beam, based on the
-      TypeScript SDK. It was low-level distributed-systems work: speaking
-      Beam’s portability protos, processing bundles on the worker and running
-      pipelines on an async DirectRunner, plus the first coders and an Impulse
-      transform. By December the smallest possible pipeline ran end to end.
-    </p>
-    <p>
-      In January 2023 Google’s Dataflow team started its own Rust SDK during a
-      hackathon. In the upstream discussion, the suggestion was to move that
-      work over to my branch:
+      In late 2022 I started a Rust SDK for Apache Beam, based on the TypeScript
+      SDK. In January 2023 Google’s Dataflow team started its own during a
+      hackathon, and in the upstream discussion the suggestion was to move that
+      work to my branch:
     </p>
     <figure class="beam__quote">
       <blockquote>
@@ -63,9 +55,8 @@ const contributions = [
       <figcaption>Robert Bradshaw, <a href={DISCUSSION_URL} rel="noopener">apache/beam #21089</a></figcaption>
     </figure>
     <p>
-      Contributors opened pull requests against it, and in February 2023 a
-      community fork picked it up. At Beam Summit 2023 the fork’s maintainer
-      traced its history back to my repository.
+      A community fork picked it up in February 2023, and its maintainer traced
+      its history back to my repository at Beam Summit 2023.
     </p>
     <ul class="link-row">
       <li><a href={SDK_URL} rel="noopener">Code</a></li>
@@ -90,7 +81,6 @@ const contributions = [
       {contributions.map((c) => (
         <li>
           <a href={c.url} rel="noopener">{c.title}</a>
-          <p class="contribs__note">{c.note}</p>
           <p class="contribs__meta">{c.project}, {c.ref}, {c.year}</p>
         </li>
       ))}
@@ -180,11 +170,6 @@ const contributions = [
     border-bottom: 1px solid var(--rule);
   }
 
-  .contribs__note {
-    margin: 0.15rem 0 0;
-    font-size: var(--step--1);
-    color: var(--fg);
-  }
 
   .contribs__meta {
     margin: 0.1rem 0 0;
