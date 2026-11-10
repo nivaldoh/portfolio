@@ -30,7 +30,7 @@ const index = [
   { n: '02', href: '#pokeagent', title: 'PokéAgent Challenge', note: 'NeurIPS 2025 · quarterfinalist in both tracks' },
   { n: '03', href: '#metamon', title: 'Metamon', note: 'UT Austin RPL · validation from 1 s to 1 ms' },
   { n: '04', href: '#pokemon-tcg', title: 'Pokémon TCG agents', note: 'Kaggle · behavior cloning, then PPO' },
-  { n: '05', href: '#robocasa', title: 'Changing robot goals', note: 'RoboCasa365 · workshop paper under review' },
+  { n: '05', href: '#robocasa', title: 'Changing robot goals', note: 'RoboCasa365 · technical report' },
   { n: '06', href: '#beam', title: 'Apache Beam in Rust', note: '2022 · continued by a community fork' },
   { n: '07', href: '#about', title: 'Data engineering', note: '8+ years · Globant, Globo, DP6' },
 ];
@@ -71,7 +71,15 @@ const skills = [
       </p>
       <p class="intro__open">
         Open to AI and research engineering roles:
-        <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+        <span class="intro__reach">
+          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+          {SOCIAL_LINKS.map((l) => (
+            <>
+              <span aria-hidden="true"> · </span>
+              <a href={l.url} rel="me noopener">{l.label}</a>
+            </>
+          ))}
+        </span>
       </p>
     </div>
     <nav class="hero__index" aria-label="Selected work">
@@ -269,7 +277,7 @@ const skills = [
           title="Changing goals during robot execution"
           summary="I extended RoboCasa365 so the goal or the scene can change mid-episode. In 4 goal-change episodes GR00T N1.5 never met the new goal, and Astra, my code-writing agent with ground-truth state, met it in 1 of 5. The clips are not from the evaluation."
           links={[
-            { label: 'Paper (PDF, workshop submission, under review)', url: '/media/robocasa/teleporting-bread-and-changing-goals.pdf' },
+            { label: 'Technical report (PDF)', url: '/media/robocasa/teleporting-bread-and-changing-goals.pdf' },
             { label: 'Code', url: 'https://github.com/nivaldoh/robocasa/tree/main/robocasa/scenarios' },
           ]}
           layout="wide"
@@ -380,6 +388,10 @@ const skills = [
   .intro__open {
     margin: 0.4rem 0 0;
     font-size: var(--step--1);
+  }
+
+  .intro__reach {
+    display: block;
   }
 
   @media (min-width: 64rem) {
