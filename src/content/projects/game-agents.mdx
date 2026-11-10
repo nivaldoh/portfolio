@@ -201,7 +201,7 @@ My PC and a cloud VM played two short test battles through the game’s own mult
 
 ## How I build it
 
-I run the project with Claude Code and Codex. The agents write most of the code, and I set the questions and requirements and decide how each answer gets checked. One question behind the benchmark is whether a model that loses a battle didn’t know the tactic or knew it and acted too late while the battle kept moving.
+I set the questions and requirements and decide how each answer gets checked. Claude Code and Codex agents write most of the code under the rules below. One question behind the benchmark is whether a model that loses a battle didn’t know the tactic or knew it and acted too late while the battle kept moving.
 
 - A feature counts as working only at a revision where a check I’ve approved passed. Passing tests and single battles are evidence but aren’t enough.
 - A check has to fail on a deliberately wrong version before it counts. The tests are replayed against 357 planted bugs. The last full replay caught 355, and the two misses are still open.

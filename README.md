@@ -45,7 +45,7 @@ src/
 │  └─ pokeagent/             # HybridSearch, MetamonPRs, SelfPlayDiagram, TournamentBrackets
 ├─ layouts/                  # BaseLayout, CaseStudyLayout, PostLayout
 ├─ pages/
-│  ├─ index.astro            # / — in-game opening, intro with the index of the work, Total War chapters (#work: replay, #checkpoints, #benchmark, #coordination, #multiplayer, how it is built) and Slay the Spire, the PokéAgent → RoboCasa thread (#thread), Beam, background (#about), contact (#contact)
+│  ├─ index.astro            # / — in-game opening, intro with the index of the work, Total War chapters (#work: replay, #checkpoints, #benchmark, my part) and Slay the Spire, the PokéAgent → RoboCasa thread (#thread), Beam, background (#about), contact (#contact)
 │  ├─ projects/[slug].astro  # /projects/<slug>/
 │  ├─ writing/               # /writing/, /writing/<slug>/
 │  ├─ 404.astro
@@ -53,11 +53,10 @@ src/
 ├─ assets/work/<project>/    # images, optimised by astro:assets at build time
 ├─ data/                     # build-time inputs (e.g. the Beam code excerpt)
 ├─ styles/global.css         # tokens, type scale, shared presentation units, prose
-└─ consts.ts                 # site title, description, URL, email, résumé path, social links
+└─ consts.ts                 # site title, description, URL, email, social links
 public/
 ├─ benchmarks/total-war/     # full reports (the main benchmark and suite/, the control-method comparison) and compressed replays loaded on demand
 ├─ media/<project>/          # videos, posters and JSON served as-is (replay data, chart data)
-├─ nivaldo-tokuda-resume.pdf
 ├─ fonts/                    # Self-hosted Newsreader and its OFL license
 ├─ og-default.jpg            # social card (1200×630): the opening's frame and headline
 ├─ favicon.svg               # plain dark square

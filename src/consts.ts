@@ -6,7 +6,6 @@ export const SITE_URL = 'https://portfolio-818.pages.dev';
 export const AUTHOR = 'Nivaldo Tokuda';
 
 export const EMAIL = 'ntokuda@utexas.edu';
-export const RESUME_URL = '/nivaldo-tokuda-resume.pdf';
 
 // External profile links (used in Footer and the contact section).
 export const SOCIAL_LINKS: { label: string; url: string }[] = [

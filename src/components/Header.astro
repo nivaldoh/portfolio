@@ -1,5 +1,5 @@
 ---
-import { SITE_TITLE, RESUME_URL } from '../consts';
+import { SITE_TITLE } from '../consts';
 
 const path = Astro.url.pathname;
 const inProjects = path.startsWith('/projects/');
@@ -7,7 +7,6 @@ const inProjects = path.startsWith('/projects/');
 const links = [
   { href: '/#work', label: 'Work', current: inProjects },
   { href: '/#about', label: 'About', current: false },
-  { href: RESUME_URL, label: 'Résumé', current: false },
   { href: '/#contact', label: 'Contact', current: false },
 ];
 ---
