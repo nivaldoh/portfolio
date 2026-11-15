@@ -24,19 +24,13 @@ const METAMON_PR_65 = 'https://github.com/UT-Austin-RPL/metamon/pull/65';
 const ROBOCASA_REPORT = '/media/robocasa/teleporting-bread-and-changing-goals.pdf';
 const ROBOCASA_SCENARIOS = 'https://github.com/nivaldoh/robocasa/tree/main/robocasa/scenarios';
 
-// The work itself, in page order, above the sections that explain it. The Beam
-// links repeat BeamSection's.
+// Work samples: the merged pull requests, newest first. The Beam ones repeat
+// BeamSection's links.
 const workSamples = [
-  { title: 'Total War mod, harness and benchmark', url: GAME_REPO, meta: 'Code · GitHub, nivaldoh/slay_the_spire_ai' },
-  { title: 'Total War benchmark report', url: BENCHMARK, meta: 'Report · six scenarios, every battle replay' },
-  { title: 'PokéAgent Gen 9 OU entry: Metamon inside PokéChamp’s search', url: POKECHAMP_ENTRY, meta: 'Code · GitHub, nivaldoh/pokechamp' },
-  { title: 'PokéAgent self-play on Cloud Run Jobs', url: SELF_PLAY, meta: 'Code · GitHub, nivaldoh/metamon_pokeagent_comp' },
-  { title: 'Faster team validation in Metamon', url: METAMON_PR_65, meta: 'Merged pull request · UT-Austin-RPL/metamon #65' },
-  { title: 'Teleporting Bread and Changing Goals', url: ROBOCASA_REPORT, meta: 'Technical report on RoboCasa365 · PDF' },
-  { title: 'RoboCasa365 goal-change and scene-change scenarios', url: ROBOCASA_SCENARIOS, meta: 'Code · GitHub, nivaldoh/robocasa' },
-  { title: 'Experimental Rust SDK for Apache Beam', url: 'https://github.com/nivaldoh/beam/tree/rust_sdk/sdks/rust', meta: 'Code · GitHub, nivaldoh/beam' },
-  { title: 'LogElements as a Beam PTransform', url: 'https://github.com/apache/beam/pull/23879', meta: 'Merged pull request · apache/beam #23879' },
-  { title: 'Firestore configuration source', url: 'https://github.com/google/megalista/pull/12', meta: 'Merged pull request · google/megalista #12' },
+  { title: 'Faster team validation', url: METAMON_PR_65, meta: 'Metamon (UT Austin RPL), PR #65, 2026' },
+  { title: 'Fix for creating usage stats files', url: 'https://github.com/UT-Austin-RPL/metamon/pull/70', meta: 'Metamon (UT Austin RPL), PR #70, 2026' },
+  { title: 'LogElements as a Beam PTransform', url: 'https://github.com/apache/beam/pull/23879', meta: 'Apache Beam, PR #23879, 2022' },
+  { title: 'Firestore configuration source', url: 'https://github.com/google/megalista/pull/12', meta: 'Google Megalista, PR #12, 2021' },
 ];
 
 // Links to the work itself. The case-study pages stay out of the homepage.
@@ -472,7 +466,7 @@ const skills = [
     }
   }
 
-  /* ---------- Work samples: every project's links in one list ---------- */
+  /* ---------- Work samples: the merged pull requests ---------- */
   .samples {
     padding-bottom: clamp(3rem, 6vw, 4.5rem);
   }
