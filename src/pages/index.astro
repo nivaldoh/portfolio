@@ -22,7 +22,6 @@ const GAME_REPO = 'https://github.com/nivaldoh/slay_the_spire_ai';
 const totalWarLinks = [
   { title: 'Code for the mod, harness and benchmark', url: GAME_REPO, meta: 'GitHub, nivaldoh/slay_the_spire_ai' },
   { title: 'Full benchmark report', url: '/benchmarks/total-war/index.html', meta: 'Six scenarios, every battle replay' },
-  { title: 'Mid-battle save tool', url: 'https://github.com/nivaldoh/wh3-battle-checkpoints', meta: 'GitHub, nivaldoh/wh3-battle-checkpoints' },
 ];
 const spireLinks = [
   { title: 'Full-run notes', url: `${GAME_REPO}/blob/main/docs/spire/fullrun/README.md`, meta: 'GitHub, docs/spire/fullrun' },
@@ -116,7 +115,7 @@ const skills = [
         </div>
       </div>
       <div class="feature__links">
-        <WorkLinks items={totalWarLinks} columns={3} label="Total War links" />
+        <WorkLinks items={totalWarLinks} columns={2} label="Total War links" />
       </div>
 
       <section class="chapter" id="total-war" aria-labelledby="ch-live">
@@ -134,9 +133,8 @@ const skills = [
         <div class="chapter__head">
           <h3 class="chapter__title" id="ch-save">Saving and restoring a battle</h3>
           <p class="chapter__lede">
-            Total War can’t save in the middle of a battle, so I built a
-            <a href="https://github.com/nivaldoh/wh3-battle-checkpoints" rel="noopener">save tool</a>.
-            Here, one saved moment plays out with different orders.
+            Total War can’t save in the middle of a battle, so I built a save tool. Here, one
+            saved moment plays out with different orders.
           </p>
         </div>
         <CheckpointBranches>
@@ -296,11 +294,6 @@ const skills = [
       </p>
     </div>
     <Career />
-  </section>
-
-  <section id="writing" class="writing container" aria-labelledby="writing-title">
-    <h2 class="section-heading" id="writing-title">Writing</h2>
-    <p class="writing__status">In construction.</p>
   </section>
 
   <section id="contact" class="contact container" aria-labelledby="contact-title">
@@ -821,18 +814,6 @@ const skills = [
   .about__bio {
     margin: 0;
     max-width: 52ch;
-  }
-
-  /* ---------- Writing ---------- */
-  .writing {
-    padding-top: var(--space-section);
-  }
-
-  .writing__status {
-    margin: 0;
-    font: 0.8rem/1.4 var(--font-mono);
-    letter-spacing: 0.02em;
-    color: var(--fg-muted);
   }
 
   /* ---------- Contact ---------- */

@@ -34,7 +34,7 @@ src/
 ├─ content.config.ts         # Collection schemas (posts, projects)
 ├─ content/
 │  ├─ projects/              # .mdx case studies → /projects/<slug>/ (not linked from the homepage)
-│  └─ posts/                 # .md / .mdx blog posts → /writing/ (none yet; the homepage's Writing section says "In construction.")
+│  └─ posts/                 # .md / .mdx blog posts → /writing/ (none yet; /writing/ says "In construction.")
 ├─ components/
 │  ├─ Plate, Details, ProjectPanel, WorkLinks, BeamSection, Career, RecordedVideo, ...
 │  ├─ wh3/                   # HeroBattle (homepage opening), BattleReplay (recorded replay), CheckpointBranches, ResultsGrid, SuiteGrid and TwoClients (small synced maps, mini-maps.ts)
@@ -45,7 +45,7 @@ src/
 │  └─ pokeagent/             # HybridSearch, MetamonPRs, SelfPlayDiagram, TournamentBrackets
 ├─ layouts/                  # BaseLayout, CaseStudyLayout, PostLayout
 ├─ pages/
-│  ├─ index.astro            # / — in-game opening, intro with the index of the work, Total War chapters (#work: replay, #checkpoints, #benchmark, my part) and Slay the Spire, the PokéAgent → RoboCasa thread (#thread), Beam, background (#about), Writing (#writing), contact (#contact)
+│  ├─ index.astro            # / — in-game opening, intro with the index of the work, Total War chapters (#work: replay, #checkpoints, #benchmark, my part) and Slay the Spire, the PokéAgent → RoboCasa thread (#thread), Beam, background (#about), contact (#contact)
 │  ├─ projects/[slug].astro  # /projects/<slug>/
 │  ├─ writing/               # /writing/, /writing/<slug>/
 │  ├─ 404.astro
@@ -74,7 +74,7 @@ scripts/
 
 ## Case studies
 
-Each case study is an `.mdx` file in `src/content/projects/`. The file name is the URL slug, and the frontmatter supplies the page header. The owner did not write these pages (2026-11-14), so the homepage and the hosted benchmark reports don't link them: they stay built at their URLs and reachable through each other's previous/next pager, and the homepage's Writing section (`#writing`) says "In construction." until the owner's own posts replace them.
+Each case study is an `.mdx` file in `src/content/projects/`. The file name is the URL slug, and the frontmatter supplies the page header. The owner did not write these pages (2026-11-14), so the homepage and the hosted benchmark reports don't link them: they stay built at their URLs and reachable through each other's previous/next pager, and the Writing page (`/writing/`, in the nav) says "In construction." until the owner's own posts replace them.
 
 ```yaml
 ---
@@ -166,7 +166,7 @@ interactive: false              # optional; signal that the post embeds componen
 ---
 ```
 
-Drafts (`draft: true`) are visible in `npm run dev` and hidden in `npm run build`, but their source is still public if committed. Keep private drafts in the ignored `dev/` folder until ready to share. No posts are included yet. When no published posts exist, `/writing/` redirects to the homepage's Writing section (`/#writing`), the RSS feed has no entries, and pages omit RSS discovery. The navigation's Writing link points at that section; once real posts exist, list them there.
+Drafts (`draft: true`) are visible in `npm run dev` and hidden in `npm run build`, but their source is still public if committed. Keep private drafts in the ignored `dev/` folder until ready to share. No posts are included yet. When no published posts exist, `/writing/` says "In construction.", the RSS feed has no entries, and pages omit RSS discovery. The navigation links `/writing/`, which lists the posts once they exist.
 
 ## Images
 

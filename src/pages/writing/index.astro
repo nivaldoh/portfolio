@@ -6,9 +6,6 @@ import { getCollection } from 'astro:content';
 const posts = (
   await getCollection('posts', ({ data }) => import.meta.env.DEV || !data.draft)
 ).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
-
-// Keep the authoring route useful without shipping an empty writing section.
-if (posts.length === 0) return Astro.redirect('/#writing');
 ---
 
 <BaseLayout
@@ -16,10 +13,23 @@ if (posts.length === 0) return Astro.redirect('/#writing');
   title="Writing"
   description="Essays and technical writeups."
 >
-  <h1 style="font-size: 1.6rem; margin: 0 0 1.6rem;">Writing</h1>
+  <h1 class="section-heading writing__title">Writing</h1>
   {posts.length === 0 ? (
-    <p style="color: var(--fg-muted);">No posts yet.</p>
+    <p class="writing__status">In construction.</p>
   ) : (
     <PostList posts={posts} />
   )}
 </BaseLayout>
+
+<style>
+  .writing__title {
+    margin: 0 0 1rem;
+  }
+
+  .writing__status {
+    margin: 0;
+    font: 0.8rem/1.4 var(--font-mono);
+    letter-spacing: 0.02em;
+    color: var(--fg-muted);
+  }
+</style>
