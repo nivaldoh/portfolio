@@ -33,10 +33,10 @@ This produces `dist/` and serves it at `http://localhost:4321`. Nothing leaves y
 src/
 ├─ content.config.ts         # Collection schemas (posts, projects)
 ├─ content/
-│  ├─ projects/              # .mdx case studies → /projects/<slug>/ (the homepage reads their titles and summaries)
-│  └─ posts/                 # .md / .mdx blog posts → /writing/ (not linked from the nav yet)
+│  ├─ projects/              # .mdx case studies → /projects/<slug>/ (not linked from the homepage)
+│  └─ posts/                 # .md / .mdx blog posts → /writing/ (none yet; the homepage's Writing section says "In construction.")
 ├─ components/
-│  ├─ Plate, Details, ProjectPanel, BeamSection, Career, RecordedVideo, ...
+│  ├─ Plate, Details, ProjectPanel, WorkLinks, BeamSection, Career, RecordedVideo, ...
 │  ├─ wh3/                   # HeroBattle (homepage opening), BattleReplay (recorded replay), CheckpointBranches, ResultsGrid, SuiteGrid and TwoClients (small synced maps, mini-maps.ts)
 │  ├─ slay/                  # RunProgress: the furthest full run (homepage and the game-agents case study)
 │  ├─ game-agents/           # small figures for the Total War case study
@@ -45,7 +45,7 @@ src/
 │  └─ pokeagent/             # HybridSearch, MetamonPRs, SelfPlayDiagram, TournamentBrackets
 ├─ layouts/                  # BaseLayout, CaseStudyLayout, PostLayout
 ├─ pages/
-│  ├─ index.astro            # / — in-game opening, intro with the index of the work, Total War chapters (#work: replay, #checkpoints, #benchmark, my part) and Slay the Spire, the PokéAgent → RoboCasa thread (#thread), Beam, background (#about), contact (#contact)
+│  ├─ index.astro            # / — in-game opening, intro with the index of the work, Total War chapters (#work: replay, #checkpoints, #benchmark, my part) and Slay the Spire, the PokéAgent → RoboCasa thread (#thread), Beam, background (#about), Writing (#writing), contact (#contact)
 │  ├─ projects/[slug].astro  # /projects/<slug>/
 │  ├─ writing/               # /writing/, /writing/<slug>/
 │  ├─ 404.astro
@@ -74,7 +74,7 @@ scripts/
 
 ## Case studies
 
-Each case study is an `.mdx` file in `src/content/projects/`. The file name is the URL slug, and the frontmatter supplies the page header (and the homepage title and summary where the homepage uses them):
+Each case study is an `.mdx` file in `src/content/projects/`. The file name is the URL slug, and the frontmatter supplies the page header. The owner did not write these pages (2026-11-14), so the homepage and the hosted benchmark reports don't link them: they stay built at their URLs and reachable through each other's previous/next pager, and the homepage's Writing section (`#writing`) says "In construction." until the owner's own posts replace them.
 
 ```yaml
 ---
@@ -97,7 +97,7 @@ In the body, headings start at `h2`. Text sits in a 42rem reading column; give a
 
 Every public claim must match its evidence, with evaluation scope and limitations alongside reported numbers. Keep private editorial notes in the ignored `dev/` folder; the site does not depend on its contents.
 
-Homepage panels (`ProjectPanel.astro`) take their copy as props, and a panel's title links to a case study only when it is given an `href`. RoboCasa365 has no case study, and the homepage does not link the Pokémon TCG or PokéAgent/Metamon case studies (they stay reachable through the previous/next pager). RoboCasa365's panel uses `DevelopmentRecordings.astro`, the GR00T scene-change and Astra goal-change clips as ambient loops (`RecordedVideo` with `ambient`): muted, playing while on screen, with a Pause/Play toggle, and click-to-play with native controls under reduced motion or without JavaScript. The web copies and their posters live in `public/media/robocasa/`; the supplied source MP4s are archived locally in ignored `dev/robocasa/originals/`. The paper is served from `public/media/robocasa/teleporting-bread-and-changing-goals.pdf`, and `/projects/robocasa/` redirects to the homepage panel. Project evidence links accept absolute URLs or root-relative paths.
+Homepage panels (`ProjectPanel.astro`) take their copy as props. Their `links` are the work itself (code, pull requests, reports, results), each with a title saying what it is and a line saying where it lives, rendered by `WorkLinks.astro` in the style of the Beam section's merged contributions; the Total War and Slay the Spire sections use the same list. Pokémon TCG has no public code (the simulator's license), so its panel has no links. RoboCasa365's panel uses `DevelopmentRecordings.astro`, the GR00T scene-change and Astra goal-change clips as ambient loops (`RecordedVideo` with `ambient`): muted, playing while on screen, with a Pause/Play toggle, and click-to-play with native controls under reduced motion or without JavaScript. The web copies and their posters live in `public/media/robocasa/`; the supplied source MP4s are archived locally in ignored `dev/robocasa/originals/`. The paper is served from `public/media/robocasa/teleporting-bread-and-changing-goals.pdf`, and `/projects/robocasa/` redirects to the homepage panel. Project evidence links accept absolute URLs or root-relative paths.
 
 Projects 02–05 (PokéAgent, Metamon, Pokémon TCG, RoboCasa365) sit on one dated timeline, `#thread`, with two milestones between them; their panels use `level={3}` under the section's own heading. PokéAgent's panel shows `HybridSearch.astro`, a schematic of the Gen 9 OU entry, a Metamon + PokéChamp minimax hybrid (nivaldoh/pokechamp @ fb520c9; the leaf scores are illustrative), beside the compact `SelfPlayDiagram`. Metamon's panel shows `MetamonPRs.astro`: the two merged pull requests and the encoder experiment (#111) from the lab's private development repository, unlinked. The Background section draws work and study on one axis with `Career.astro`, whose "now" line is the build date.
 
@@ -166,7 +166,7 @@ interactive: false              # optional; signal that the post embeds componen
 ---
 ```
 
-Drafts (`draft: true`) are visible in `npm run dev` and hidden in `npm run build`, but their source is still public if committed. Keep private drafts in the ignored `dev/` folder until ready to share. No posts are included yet. When no published posts exist, `/writing/` redirects to `/#work`, the RSS feed has no entries, and pages omit RSS discovery. The writing section is not linked from the navigation; add it back to `src/components/Header.astro` once real posts exist.
+Drafts (`draft: true`) are visible in `npm run dev` and hidden in `npm run build`, but their source is still public if committed. Keep private drafts in the ignored `dev/` folder until ready to share. No posts are included yet. When no published posts exist, `/writing/` redirects to the homepage's Writing section (`/#writing`), the RSS feed has no entries, and pages omit RSS discovery. The navigation's Writing link points at that section; once real posts exist, list them there.
 
 ## Images
 

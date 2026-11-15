@@ -7,6 +7,7 @@ const inProjects = path.startsWith('/projects/');
 const links = [
   { href: '/#work', label: 'Work', current: inProjects },
   { href: '/#about', label: 'About', current: false },
+  { href: '/#writing', label: 'Writing', current: path.startsWith('/writing/') },
   { href: '/#contact', label: 'Contact', current: false },
 ];
 ---

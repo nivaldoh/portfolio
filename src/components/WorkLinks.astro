@@ -1,0 +1,65 @@
+---
+// Links to the work itself (code, pull requests, reports, results): each one
+// named for what it is, with where it lives on the line below. The homepage
+// uses it for every project, the Beam section's merged contributions included.
+
+interface Props {
+  items: { title: string; url: string; meta: string }[];
+  /** Accessible name for the list, e.g. "Metamon links". */
+  label: string;
+  /** Columns on wide screens; one column on narrow ones. */
+  columns?: 1 | 2 | 3;
+}
+
+// A parent's scoped styles don't reach this list, so a parent that places
+// it (margins, grid columns) wraps it in an element of its own.
+const { items, label, columns = 1 } = Astro.props;
+---
+
+<ul class:list={['work-links', `work-links--${columns}`]} aria-label={label}>
+  {items.map((item) => (
+    <li>
+      <a href={item.url} rel={item.url.startsWith('http') ? 'noopener' : undefined}>{item.title}</a>
+      <p class="work-links__meta">{item.meta}</p>
+    </li>
+  ))}
+</ul>
+
+<style>
+  .work-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .work-links li {
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .work-links__meta {
+    margin: 0.1rem 0 0;
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  @media (min-width: 60rem) {
+    .work-links--2,
+    .work-links--3 {
+      display: grid;
+    }
+
+    /* The Beam section's spacing, which the other lists copy. */
+    .work-links--2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 4rem;
+    }
+
+    .work-links--3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: 2.5rem;
+    }
+  }
+</style>

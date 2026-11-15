@@ -257,7 +257,7 @@ output = output.replace('background: #f1f0eb;', 'background: var(--note);')
 output = replace_once(output, '<body>', '''<body>
   <nav class="wrap portfolio-nav" aria-label="Portfolio">
     <a href="/#work">← Nivaldo Tokuda / Selected work</a>
-    <a href="/projects/game-agents/">About this project</a>
+    <a href="https://github.com/nivaldoh/slay_the_spire_ai">Code</a>
     <span>Snapshot · 16 October 2026</span>
   </nav>''')
 rows = ''.join('<tr><th scope="row">' + html.escape(s['short']) + '</th>' +
@@ -266,7 +266,7 @@ fallback = '''<noscript><style>#watch, main.wrap, #method { display:none; }</sty
   <h2>Matched round, 16 October 2026</h2>
   <p>The interactive report needs JavaScript. These are the recorded wins from three battles per model per scenario, on low reasoning effort with a rules-only prompt and very hard game AI. Prompts were developed on these scenarios; this is not a held-out leaderboard.</p>
   <table><thead><tr><th>Scenario</th><th>gpt-6-sol</th><th>gpt-6-luna</th></tr></thead><tbody>''' + rows + '''</tbody></table>
-  <p><a href="/projects/game-agents/">Read the case study and view a recorded battle still</a>.</p>
+  <p><a href="/#total-war">View a recorded battle still on the homepage</a>.</p>
   </section></noscript>'''
 output, count = re.subn(r'<noscript>.*?</noscript>', lambda _: fallback, output, flags=re.S)
 assert count == 1

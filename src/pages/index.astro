@@ -1,7 +1,7 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProjectPanel from '../components/ProjectPanel.astro';
+import WorkLinks from '../components/WorkLinks.astro';
 import BattleReplay from '../components/wh3/BattleReplay.astro';
 import HeroBattle from '../components/wh3/HeroBattle.astro';
 import CheckpointBranches from '../components/wh3/CheckpointBranches.astro';
@@ -16,13 +16,17 @@ import BeamSection from '../components/BeamSection.astro';
 import Career from '../components/Career.astro';
 import { EMAIL, SOCIAL_LINKS } from '../consts';
 
-const projects = await getCollection(
-  'projects',
-  ({ data }) => import.meta.env.DEV || !data.draft
-);
-const byId = Object.fromEntries(projects.map((p) => [p.id, p]));
-const game = byId['game-agents'];
-const tcg = byId['pokemon-tcg'];
+const GAME_REPO = 'https://github.com/nivaldoh/slay_the_spire_ai';
+
+// Links to the work itself. The case-study pages stay out of the homepage.
+const totalWarLinks = [
+  { title: 'Code for the mod, harness and benchmark', url: GAME_REPO, meta: 'GitHub, nivaldoh/slay_the_spire_ai' },
+  { title: 'Full benchmark report', url: '/benchmarks/total-war/index.html', meta: 'Six scenarios, every battle replay' },
+  { title: 'Mid-battle save tool', url: 'https://github.com/nivaldoh/wh3-battle-checkpoints', meta: 'GitHub, nivaldoh/wh3-battle-checkpoints' },
+];
+const spireLinks = [
+  { title: 'Full-run notes', url: `${GAME_REPO}/blob/main/docs/spire/fullrun/README.md`, meta: 'GitHub, docs/spire/fullrun' },
+];
 
 // The index of the work below, in page order, each with its result.
 const index = [
@@ -102,21 +106,17 @@ const skills = [
       <div class="feature__head">
         <div>
           <p class="eyebrow">01 / Total War: WARHAMMER III</p>
-          <h2 class="section-heading" id="feature-title">
-            <a href={`/projects/${game.id}/`}>Agents in a real-time strategy game</a>
-          </h2>
+          <h2 class="section-heading" id="feature-title">Agents in a real-time strategy game</h2>
         </div>
         <div>
           <p class="feature__summary">
             Models play Total War: WARHAMMER III through a Lua mod I built. The battle keeps
             running while they think.
           </p>
-          <ul class="link-row">
-            <li><a href={`/projects/${game.id}/`}>Case study</a></li>
-            <li><a href="https://github.com/nivaldoh/slay_the_spire_ai" rel="noopener">Code</a></li>
-            <li><a href="/benchmarks/total-war/index.html">Benchmark</a></li>
-          </ul>
         </div>
+      </div>
+      <div class="feature__links">
+        <WorkLinks items={totalWarLinks} columns={3} label="Total War links" />
       </div>
 
       <section class="chapter" id="total-war" aria-labelledby="ch-live">
@@ -174,8 +174,10 @@ const skills = [
         </div>
         <p class="feature__point">
           gpt-6-luna plays complete Ironclad runs, and the furthest one reached Act 4, floor 54.
-          <a href={`/projects/${game.id}/#slay-the-spire`}>More on the runs</a>
         </p>
+        <div class="game__links">
+          <WorkLinks items={spireLinks} label="Slay the Spire links" />
+        </div>
       </section>
 
       <section class="build" aria-labelledby="build-title">
@@ -188,7 +190,6 @@ const skills = [
           <li>
             I decide how each feature is checked. A check has to fail on a deliberately wrong
             version before it counts, and a feature only counts as working once its check passes.
-            <a href={`/projects/${game.id}/#how-i-build-it`}>How I build it</a>
           </li>
         </ul>
       </section>
@@ -208,14 +209,12 @@ const skills = [
           level={3}
           eyebrow="02 / NeurIPS 2025 competition"
           title="PokéAgent Challenge"
-          href="/projects/pokeagent-metamon/"
           facts={['Quarterfinalist · Gen 1 OU', 'Quarterfinalist · Gen 9 OU']}
           summary="I competed as MetaHorns. My Gen 9 OU entry put Metamon, an offline RL agent, inside PokéChamp’s minimax search."
           links={[
-            { label: 'Case study', url: '/projects/pokeagent-metamon/' },
-            { label: 'Official brackets', url: BRACKETS_URL },
-            { label: 'Hybrid code', url: 'https://github.com/nivaldoh/pokechamp/tree/635aa8d81a1fe73e817fd3d01e5c14a8485917e9' },
-            { label: 'Self-play code', url: 'https://github.com/nivaldoh/metamon_pokeagent_comp/tree/443b841252792e81775133208fa5c3c820b5cb31' },
+            { title: 'Official brackets', url: BRACKETS_URL, meta: 'PokéAgent Challenge leaderboard' },
+            { title: 'Gen 9 OU entry: Metamon inside PokéChamp’s search', url: 'https://github.com/nivaldoh/pokechamp/tree/635aa8d81a1fe73e817fd3d01e5c14a8485917e9', meta: 'GitHub, nivaldoh/pokechamp, a fork of PokéChamp' },
+            { title: 'Self-play on Cloud Run Jobs', url: 'https://github.com/nivaldoh/metamon_pokeagent_comp/tree/443b841252792e81775133208fa5c3c820b5cb31', meta: 'GitHub, nivaldoh/metamon_pokeagent_comp' },
           ]}
           textFirst
         >
@@ -239,11 +238,10 @@ const skills = [
           level={3}
           eyebrow="03 / Open source · UT Austin RPL"
           title="Metamon"
-          href="/projects/pokeagent-metamon/#metamon-contributions"
           summary="I worked on Metamon with PhD student Jake Grigsby at UT Austin’s Robot Perception and Learning Lab. My main merged change took its team validation from about a second per team to about a millisecond."
           links={[
-            { label: 'Case study', url: '/projects/pokeagent-metamon/#metamon-contributions' },
-            { label: 'Repository', url: 'https://github.com/UT-Austin-RPL/metamon' },
+            { title: 'Faster team validation', url: 'https://github.com/UT-Austin-RPL/metamon/pull/65', meta: 'UT-Austin-RPL/metamon, PR #65, merged January 2026' },
+            { title: 'Fix for creating usage stats files', url: 'https://github.com/UT-Austin-RPL/metamon/pull/70', meta: 'UT-Austin-RPL/metamon, PR #70, merged February 2026' },
           ]}
           layout="wide"
         >
@@ -254,13 +252,11 @@ const skills = [
       <li class="thread__step">
         <p class="thread__when">Jun–Jul 2026</p>
         <ProjectPanel
-          id={tcg.id}
+          id="pokemon-tcg"
           level={3}
           eyebrow="04 / Kaggle competition"
           title="Pokémon TCG agents"
-          href={`/projects/${tcg.id}/`}
           summary="I recorded games between four scripted players, cloned them, then fine-tuned with PPO. A later specialist won 82.6% against one teacher, but every win came from the opponent running out of cards."
-          links={[{ label: 'Case study', url: `/projects/${tcg.id}/` }]}
           layout="wide"
           size="small"
         >
@@ -277,8 +273,8 @@ const skills = [
           title="Changing goals during robot execution"
           summary="I extended RoboCasa365 so the goal or the scene can change mid-episode. In 4 goal-change episodes GR00T N1.5 never met the new goal, and Astra, my code-writing agent with ground-truth state, met it in 1 of 5. The clips are not from the evaluation."
           links={[
-            { label: 'Technical report (PDF)', url: '/media/robocasa/teleporting-bread-and-changing-goals.pdf' },
-            { label: 'Code', url: 'https://github.com/nivaldoh/robocasa/tree/main/robocasa/scenarios' },
+            { title: 'Teleporting Bread and Changing Goals', url: '/media/robocasa/teleporting-bread-and-changing-goals.pdf', meta: 'Technical report, PDF, September 2026' },
+            { title: 'Goal-change and scene-change scenarios', url: 'https://github.com/nivaldoh/robocasa/tree/main/robocasa/scenarios', meta: 'GitHub, nivaldoh/robocasa, a fork of RoboCasa' },
           ]}
           layout="wide"
         >
@@ -300,6 +296,11 @@ const skills = [
       </p>
     </div>
     <Career />
+  </section>
+
+  <section id="writing" class="writing container" aria-labelledby="writing-title">
+    <h2 class="section-heading" id="writing-title">Writing</h2>
+    <p class="writing__status">In construction.</p>
   </section>
 
   <section id="contact" class="contact container" aria-labelledby="contact-title">
@@ -562,18 +563,13 @@ const skills = [
     margin: 0;
   }
 
-  .feature__head .section-heading a {
-    color: var(--fg-strong);
-    text-decoration: none;
-  }
-
-  .feature__head .section-heading a:hover {
-    color: var(--accent);
-  }
-
   .feature__summary {
     margin: 0 0 0.9rem;
     max-width: 52ch;
+  }
+
+  .feature__links {
+    margin: -0.5rem 0 clamp(2.5rem, 5vw, 3.5rem);
   }
 
   /* The one thing to see in the replay, set just above it. */
@@ -631,6 +627,7 @@ const skills = [
 
   .game__links {
     margin-top: 0.8rem;
+    max-width: 34rem;
   }
 
   /* A finding under a figure: smaller than the point, set off by a rule. */
@@ -824,6 +821,18 @@ const skills = [
   .about__bio {
     margin: 0;
     max-width: 52ch;
+  }
+
+  /* ---------- Writing ---------- */
+  .writing {
+    padding-top: var(--space-section);
+  }
+
+  .writing__status {
+    margin: 0;
+    font: 0.8rem/1.4 var(--font-mono);
+    letter-spacing: 0.02em;
+    color: var(--fg-muted);
   }
 
   /* ---------- Contact ---------- */

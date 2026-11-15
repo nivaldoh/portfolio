@@ -1,8 +1,8 @@
 ---
 // Homepage entry for a piece of work: real media, a title, a sentence or two
-// (plus anything in the default slot, under the summary) and its evidence
-// links. The title links to a case study only when `href`
-// is given; work without its own page stays on the homepage.
+// (plus anything in the default slot, under the summary) and links to the
+// work itself, each named with where it lives (WorkLinks).
+import WorkLinks from './WorkLinks.astro';
 
 interface Props {
   /** Unique slug: the panel's anchor and its heading id. */
@@ -13,9 +13,8 @@ interface Props {
   eyebrow?: string;
   /** A few short results, shown as chips under the title. */
   facts?: string[];
-  /** Case-study page, if the work has one. */
-  href?: string;
-  links?: { label: string; url: string }[];
+  /** Code, pull requests, reports: what each is, and where it lives. */
+  links?: { title: string; url: string; meta: string }[];
   /** `wide`: media beside the text on desktop, below it on narrow screens.
       `stacked`: media above the text, or below it with `textFirst`. */
   layout?: 'wide' | 'stacked';
@@ -34,7 +33,6 @@ const {
   summary,
   eyebrow,
   facts = [],
-  href,
   links = [],
   layout = 'stacked',
   textFirst = false,
@@ -59,9 +57,7 @@ const mediaFirst = layout === 'stacked' && !textFirst;
   )}
   <div class="panel__text">
     {eyebrow && <p class="eyebrow">{eyebrow}</p>}
-    <Heading class="panel__title" id={headingId}>
-      {href ? <a href={href}>{title}</a> : title}
-    </Heading>
+    <Heading class="panel__title" id={headingId}>{title}</Heading>
     {facts.length > 0 && (
       <ul class="panel__facts">
         {facts.map((fact) => <li>{fact}</li>)}
@@ -70,11 +66,9 @@ const mediaFirst = layout === 'stacked' && !textFirst;
     <p class="panel__summary">{summary}</p>
     <slot />
     {links.length > 0 && (
-      <ul class="link-row">
-        {links.map((link) => (
-          <li><a href={link.url} rel={link.url.startsWith('http') ? 'noopener' : undefined}>{link.label}</a></li>
-        ))}
-      </ul>
+      <div class="panel__links">
+        <WorkLinks items={links} label={`${title} links`} />
+      </div>
     )}
   </div>
   {!mediaFirst && (
@@ -115,15 +109,6 @@ const mediaFirst = layout === 'stacked' && !textFirst;
     color: var(--fg-strong);
   }
 
-  .panel__title a {
-    color: var(--fg-strong);
-    text-decoration: none;
-  }
-
-  .panel__title a:hover {
-    color: var(--accent);
-  }
-
   .panel__facts {
     display: flex;
     flex-wrap: wrap;
@@ -144,6 +129,11 @@ const mediaFirst = layout === 'stacked' && !textFirst;
   .panel__summary {
     margin: 0.7rem 0 0.9rem;
     max-width: 52ch;
+  }
+
+  .panel__links {
+    margin-top: 1.3rem;
+    max-width: 34rem;
   }
 
   .panel--small .panel__media {

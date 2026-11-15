@@ -105,8 +105,8 @@ output = replace_once(output, '</style>', theme + '</style>')
 output = output.replace('background: #f1f0eb;', 'background: var(--note);')
 output = replace_once(output, '<body>', '''<body>
   <nav class="wrap portfolio-nav" aria-label="Portfolio">
-    <a href="/#coordination">← Nivaldo Tokuda / Selected work</a>
-    <a href="/projects/game-agents/">About this project</a>
+    <a href="/#work">← Nivaldo Tokuda / Selected work</a>
+    <a href="https://github.com/nivaldoh/slay_the_spire_ai">Code</a>
     <span>Snapshot · 4 November 2026</span>
   </nav>''')
 

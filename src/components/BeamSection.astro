@@ -2,6 +2,7 @@
 // Apache Beam Rust SDK and other selected open-source contributions.
 // Homepage only, so the copy lives here rather than in a collection.
 import { Code } from 'astro:components';
+import WorkLinks from './WorkLinks.astro';
 // Verbatim from nivaldoh/beam @ df950aa (branch rust_sdk),
 // sdks/rust/src/tests/primitives_test.rs lines 27–36, dedented.
 import example from '../data/beam-rust-example.rs?raw';
@@ -20,16 +21,12 @@ const SUMMIT_URL = 'https://beamsummit.org/slides/2023/Sho-Rust.pdf';
 const contributions = [
   {
     title: 'LogElements as a Beam PTransform',
-    project: 'Apache Beam',
-    ref: 'PR #23879',
-    year: '2022',
+    meta: 'Apache Beam, PR #23879, 2022',
     url: 'https://github.com/apache/beam/pull/23879',
   },
   {
     title: 'Firestore configuration source',
-    project: 'Google Megalista',
-    ref: 'PR #12',
-    year: '2021',
+    meta: 'Google Megalista, PR #12, 2021',
     url: 'https://github.com/google/megalista/pull/12',
   },
 ];
@@ -77,14 +74,9 @@ const contributions = [
 
   <div class="beam__more">
     <h3 class="beam__label">Other merged contributions</h3>
-    <ul class="contribs">
-      {contributions.map((c) => (
-        <li>
-          <a href={c.url} rel="noopener">{c.title}</a>
-          <p class="contribs__meta">{c.project}, {c.ref}, {c.year}</p>
-        </li>
-      ))}
-    </ul>
+    <div class="contribs">
+      <WorkLinks items={contributions} columns={2} label="Other merged contributions" />
+    </div>
   </div>
 </section>
 
@@ -158,26 +150,6 @@ const contributions = [
     margin: 0 0 0.8rem;
   }
 
-  .contribs {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    border-top: 1px solid var(--border);
-  }
-
-  .contribs li {
-    padding: 0.9rem 0;
-    border-bottom: 1px solid var(--rule);
-  }
-
-
-  .contribs__meta {
-    margin: 0.1rem 0 0;
-    color: var(--fg-muted);
-    font-size: var(--step--1);
-    font-variant-numeric: tabular-nums lining-nums;
-  }
-
   @media (min-width: 60rem) {
     .beam {
       grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
@@ -197,9 +169,6 @@ const contributions = [
 
     .contribs {
       grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      column-gap: 4rem;
     }
   }
 </style>

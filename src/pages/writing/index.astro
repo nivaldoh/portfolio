@@ -8,7 +8,7 @@ const posts = (
 ).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
 // Keep the authoring route useful without shipping an empty writing section.
-if (posts.length === 0) return Astro.redirect('/#work');
+if (posts.length === 0) return Astro.redirect('/#writing');
 ---
 
 <BaseLayout
