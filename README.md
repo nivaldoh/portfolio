@@ -45,7 +45,7 @@ src/
 │  └─ pokeagent/             # HybridSearch, MetamonPRs, SelfPlayDiagram, TournamentBrackets
 ├─ layouts/                  # BaseLayout, CaseStudyLayout, PostLayout
 ├─ pages/
-│  ├─ index.astro            # / — in-game opening, intro with the index of the work, Total War chapters (#work: replay, #checkpoints, #benchmark, my part) and Slay the Spire, the PokéAgent → RoboCasa thread (#thread), Beam, background (#about), contact (#contact)
+│  ├─ index.astro            # / — in-game opening, intro with the index of the work, work samples (#samples, every project's links in one list), Total War chapters (#work: replay, #checkpoints, #benchmark, my part) and Slay the Spire, the PokéAgent → RoboCasa thread (#thread), Beam, background (#about), contact (#contact)
 │  ├─ projects/[slug].astro  # /projects/<slug>/
 │  ├─ writing/               # /writing/, /writing/<slug>/
 │  ├─ 404.astro

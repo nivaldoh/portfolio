@@ -17,11 +17,32 @@ import Career from '../components/Career.astro';
 import { EMAIL, SOCIAL_LINKS } from '../consts';
 
 const GAME_REPO = 'https://github.com/nivaldoh/slay_the_spire_ai';
+const BENCHMARK = '/benchmarks/total-war/index.html';
+const POKECHAMP_ENTRY = 'https://github.com/nivaldoh/pokechamp/tree/635aa8d81a1fe73e817fd3d01e5c14a8485917e9';
+const SELF_PLAY = 'https://github.com/nivaldoh/metamon_pokeagent_comp/tree/443b841252792e81775133208fa5c3c820b5cb31';
+const METAMON_PR_65 = 'https://github.com/UT-Austin-RPL/metamon/pull/65';
+const ROBOCASA_REPORT = '/media/robocasa/teleporting-bread-and-changing-goals.pdf';
+const ROBOCASA_SCENARIOS = 'https://github.com/nivaldoh/robocasa/tree/main/robocasa/scenarios';
+
+// The work itself, in page order, above the sections that explain it. The Beam
+// links repeat BeamSection's.
+const workSamples = [
+  { title: 'Total War mod, harness and benchmark', url: GAME_REPO, meta: 'Code · GitHub, nivaldoh/slay_the_spire_ai' },
+  { title: 'Total War benchmark report', url: BENCHMARK, meta: 'Report · six scenarios, every battle replay' },
+  { title: 'PokéAgent Gen 9 OU entry: Metamon inside PokéChamp’s search', url: POKECHAMP_ENTRY, meta: 'Code · GitHub, nivaldoh/pokechamp' },
+  { title: 'PokéAgent self-play on Cloud Run Jobs', url: SELF_PLAY, meta: 'Code · GitHub, nivaldoh/metamon_pokeagent_comp' },
+  { title: 'Faster team validation in Metamon', url: METAMON_PR_65, meta: 'Merged pull request · UT-Austin-RPL/metamon #65' },
+  { title: 'Teleporting Bread and Changing Goals', url: ROBOCASA_REPORT, meta: 'Technical report on RoboCasa365 · PDF' },
+  { title: 'RoboCasa365 goal-change and scene-change scenarios', url: ROBOCASA_SCENARIOS, meta: 'Code · GitHub, nivaldoh/robocasa' },
+  { title: 'Experimental Rust SDK for Apache Beam', url: 'https://github.com/nivaldoh/beam/tree/rust_sdk/sdks/rust', meta: 'Code · GitHub, nivaldoh/beam' },
+  { title: 'LogElements as a Beam PTransform', url: 'https://github.com/apache/beam/pull/23879', meta: 'Merged pull request · apache/beam #23879' },
+  { title: 'Firestore configuration source', url: 'https://github.com/google/megalista/pull/12', meta: 'Merged pull request · google/megalista #12' },
+];
 
 // Links to the work itself. The case-study pages stay out of the homepage.
 const totalWarLinks = [
   { title: 'Code for the mod, harness and benchmark', url: GAME_REPO, meta: 'GitHub, nivaldoh/slay_the_spire_ai' },
-  { title: 'Full benchmark report', url: '/benchmarks/total-war/index.html', meta: 'Six scenarios, every battle replay' },
+  { title: 'Full benchmark report', url: BENCHMARK, meta: 'Six scenarios, every battle replay' },
 ];
 const spireLinks = [
   { title: 'Full-run notes', url: `${GAME_REPO}/blob/main/docs/spire/fullrun/README.md`, meta: 'GitHub, docs/spire/fullrun' },
@@ -98,6 +119,11 @@ const skills = [
         ))}
       </ol>
     </nav>
+  </section>
+
+  <section id="samples" class="samples container" aria-labelledby="samples-title">
+    <h2 class="section-heading samples__title" id="samples-title">Work samples</h2>
+    <WorkLinks items={workSamples} columns={2} label="Work samples" />
   </section>
 
   <section id="work" class="feature" aria-labelledby="feature-title">
@@ -211,8 +237,8 @@ const skills = [
           summary="I competed as MetaHorns. My Gen 9 OU entry put Metamon, an offline RL agent, inside PokéChamp’s minimax search."
           links={[
             { title: 'Official brackets', url: BRACKETS_URL, meta: 'PokéAgent Challenge leaderboard' },
-            { title: 'Gen 9 OU entry: Metamon inside PokéChamp’s search', url: 'https://github.com/nivaldoh/pokechamp/tree/635aa8d81a1fe73e817fd3d01e5c14a8485917e9', meta: 'GitHub, nivaldoh/pokechamp, a fork of PokéChamp' },
-            { title: 'Self-play on Cloud Run Jobs', url: 'https://github.com/nivaldoh/metamon_pokeagent_comp/tree/443b841252792e81775133208fa5c3c820b5cb31', meta: 'GitHub, nivaldoh/metamon_pokeagent_comp' },
+            { title: 'Gen 9 OU entry: Metamon inside PokéChamp’s search', url: POKECHAMP_ENTRY, meta: 'GitHub, nivaldoh/pokechamp, a fork of PokéChamp' },
+            { title: 'Self-play on Cloud Run Jobs', url: SELF_PLAY, meta: 'GitHub, nivaldoh/metamon_pokeagent_comp' },
           ]}
           textFirst
         >
@@ -238,7 +264,7 @@ const skills = [
           title="Metamon"
           summary="I worked on Metamon with PhD student Jake Grigsby at UT Austin’s Robot Perception and Learning Lab. My main merged change took its team validation from about a second per team to about a millisecond."
           links={[
-            { title: 'Faster team validation', url: 'https://github.com/UT-Austin-RPL/metamon/pull/65', meta: 'UT-Austin-RPL/metamon, PR #65, merged January 2026' },
+            { title: 'Faster team validation', url: METAMON_PR_65, meta: 'UT-Austin-RPL/metamon, PR #65, merged January 2026' },
             { title: 'Fix for creating usage stats files', url: 'https://github.com/UT-Austin-RPL/metamon/pull/70', meta: 'UT-Austin-RPL/metamon, PR #70, merged February 2026' },
           ]}
           layout="wide"
@@ -271,8 +297,8 @@ const skills = [
           title="Changing goals during robot execution"
           summary="I extended RoboCasa365 so the goal or the scene can change mid-episode. In 4 goal-change episodes GR00T N1.5 never met the new goal, and Astra, my code-writing agent with ground-truth state, met it in 1 of 5. The clips are not from the evaluation."
           links={[
-            { title: 'Teleporting Bread and Changing Goals', url: '/media/robocasa/teleporting-bread-and-changing-goals.pdf', meta: 'Technical report, PDF, September 2026' },
-            { title: 'Goal-change and scene-change scenarios', url: 'https://github.com/nivaldoh/robocasa/tree/main/robocasa/scenarios', meta: 'GitHub, nivaldoh/robocasa, a fork of RoboCasa' },
+            { title: 'Teleporting Bread and Changing Goals', url: ROBOCASA_REPORT, meta: 'Technical report, PDF, September 2026' },
+            { title: 'Goal-change and scene-change scenarios', url: ROBOCASA_SCENARIOS, meta: 'GitHub, nivaldoh/robocasa, a fork of RoboCasa' },
           ]}
           layout="wide"
         >
@@ -444,6 +470,16 @@ const skills = [
       grid-column: 2;
       text-align: left;
     }
+  }
+
+  /* ---------- Work samples: every project's links in one list ---------- */
+  .samples {
+    padding-bottom: clamp(3rem, 6vw, 4.5rem);
+  }
+
+  .samples__title {
+    margin: 0 0 1rem;
+    font-size: var(--step-2);
   }
 
   /* ---------- Total War: numbers and chapters ---------- */
